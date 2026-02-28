@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Suivi tram – Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --realtime: #4caf50;
+            --theoretical: #ff9800;
+            --radar-color: #00d2ff;
+            --radar-at-stop: #ffd700;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body {
+            background: var(--bg-dark); color: var(--text-main);
+            height: var(--app-height, 100vh); width: 100vw;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        #page-content {
+            flex: 1; overflow-y: auto; padding: 16px 16px 76px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        #suivi-content {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        .input-card {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+        }
+        .input-card label {
+            display: block; font-size: .78rem; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em;
+        }
+        .input-row { display: flex; gap: 10px; }
+        .trip-input {
+            flex: 1; background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); font-size: .95rem;
+            padding: 10px 12px; outline: none; min-width: 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+            transition: border-color .2s;
+        }
+        .trip-input:focus { border-color: var(--radar-color); }
+        .trip-input::placeholder { color: #444; }
+        .track-btn {
+            background: var(--radar-color); color: #000; border: none;
+            border-radius: 8px; font-size: .9rem; font-weight: 700;
+            padding: 10px 16px; cursor: pointer; white-space: nowrap;
+            flex-shrink: 0; transition: opacity .2s;
+        }
+        .track-btn:hover { opacity: .85; }
+
+        .info-card {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+        .card-header {
+            padding: 10px 16px; background: var(--bg-hover);
+            border-bottom: 1px solid var(--border);
+            font-size: .78rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .05em;
+        }
+        .card-body { padding: 16px; }
+
+        .delay-value { font-size: 2.4rem; font-weight: 700; line-height: 1; }
+        .delay-value.ontime { color: var(--realtime); }
+        .delay-value.late   { color: #ff5252; }
+        .delay-value.early  { color: var(--theoretical); }
+        .delay-label { font-size: .85rem; color: var(--text-muted); margin-top: 6px; }
+        .last-update { font-size: .72rem; color: var(--text-muted); margin-top: 8px; }
+
+        .radar-info {
+            font-size: .85rem;
+            color: var(--radar-color);
+            background: rgba(0, 210, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .radar-info.at-stop {
+            color: var(--radar-at-stop);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .radar-icon {
+            width: 12px; height: 12px;
+            border: 2px solid var(--radar-color);
+            border-radius: 50%;
+            flex-shrink: 0;
+            animation: radar-pulse 2s infinite;
+        }
+        .radar-info.at-stop .radar-icon {
+            border-color: var(--radar-at-stop);
+        }
+        .radar-static {
+            width: 8px; height: 8px;
+            background: var(--radar-color);
+            border-radius: 50%; flex-shrink: 0;
+        }
+        .radar-info.at-stop .radar-static { background: var(--radar-at-stop); }
+        @keyframes radar-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+            50%       { box-shadow: 0 0 0 5px rgba(0, 210, 255, 0); }
+        }
+
+        .stop-select {
+            width: 100%; background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); font-size: .95rem;
+            padding: 10px 32px 10px 12px; outline: none;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            transition: border-color .2s;
+        }
+        .stop-select:focus { border-color: var(--radar-color); }
+        .stop-select option { background: #1e1e1e; }
+        .arrival-display { display: flex; align-items: baseline; gap: 8px; margin-top: 14px; }
+        .arrival-time { font-size: 2rem; font-weight: 700; color: var(--radar-color); }
+        .arrival-unit { font-size: 1rem; color: var(--text-muted); }
+        .arrival-clock { font-size: .85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .trip-meta { display: flex; align-items: center; gap: 10px; }
+        .line-badge-sm {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .9rem; color: white; flex-shrink: 0;
+        }
+        .trip-meta-dest { font-size: 1rem; font-weight: 600; }
+        .trip-meta-text { font-size: .72rem; color: #555; font-family: monospace; margin-top: 2px; }
+
+        .state-idle {
+            text-align: center; padding: 40px 20px;
+            color: var(--text-muted); font-size: 1rem; line-height: 1.7;
+        }
+        .state-idle { font-size: 3rem; display: block; margin-bottom: 14px; }
+        .error-msg {
+            background: rgba(255,82,82,.1); border: 1px solid rgba(255,82,82,.3);
+            border-radius: 10px; padding: 14px 16px;
+            color: #ff8a80; font-size: .9rem; line-height: 1.6;
+        }
+        .loading-msg {
+            display: flex; align-items: center; gap: 12px;
+            padding: 20px; color: var(--text-muted); font-size: .95rem;
+        }
+        .spinner {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid #333; border-top-color: var(--radar-color);
+            animation: spin .7s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 60px; background: var(--bg-panel);
+            border-top: 1px solid var(--border); z-index: 1000;
+        }
+        .nav-buttons { display: flex; height: 100%; }
+        .nav-link {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px; text-decoration: none;
+            color: var(--text-muted); font-size: .9rem;
+            transition: all .2s; position: relative;
+        }
+        .nav-link:hover { background: var(--bg-hover); }
+        .nav-link.active { color: var(--radar-color); }
+        .nav-link.active::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: var(--radar-color);
+        }
+        .nav-icon { font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+    <div id="page-content">
+        <div class="input-card">
+            <label>Trip ID du tram</label>
+            <div class="input-row">
+                <input type="text" class="trip-input" id="trip-input"
+                       placeholder="ex: SEM:31764271"
+                       autocomplete="off" autocorrect="off" spellcheck="false">
+                <button class="track-btn" id="track-btn" onclick="suivi.start()">Trouver</button>
+            </div>
+        </div>
+        <div id="suivi-content">
+            <div class="state-idle">
+                Copiez un <b>tripId</b> depuis la page Horaires<br>
+                <span style="font-size:.85rem">Appuyez sur ⎘ à côté de « Temps Réel »</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-nav">
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-link"><span class="nav-icon">🕐</span><span>Horaires</span></a>
+            <a href="suivi.html"  class="nav-link active"><span class="nav-icon">🚋</span><span>Suivi</span></a>
+            <a href="infotrafic.html" class="nav-link"><span class="nav-icon">⚠️</span><span>Infotrafic</span></a>
+        </div>
+    </div>
+
+<script>
+const API_BASE    = "https://data.mobilites-m.fr/api/routers/default/index";
+const LINE_COLORS = { A:'#006eb7', B:'#00a459', C:'#e2007a', D:'#f29400', E:'#5c2a90' };
+const LINES_IDS   = { A:'SEM:A',   B:'SEM:B',   C:'SEM:C',   D:'SEM:D',   E:'SEM:E'   };
+
+const suivi = {
+    tripId: null,
+    lineId: null, lineColor: '#888', lineName: '?',
+    topology: [],
+    schedule: [],
+    destination: null,
+    selectedStopCluster: null,
+    _interval: null,
+
+    init() {
+        document.getElementById('trip-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') this.start();
+        });
+        try {
+            const raw = localStorage.getItem('suivi_ctx');
+            if (raw) {
+                const ctx = JSON.parse(raw);
+                if (ctx.tripId) {
+                    document.getElementById('trip-input').value = ctx.tripId;
+                    this.tripId = ctx.tripId;
+                    if (ctx.lineLetter && LINE_COLORS[ctx.lineLetter]) {
+                        this.lineName  = ctx.lineLetter;
+                        this.lineId    = LINES_IDS[ctx.lineLetter];
+                        this.lineColor = LINE_COLORS[ctx.lineLetter];
+                    }
+                    localStorage.removeItem('suivi_ctx');
+                    this._begin();
+                }
+            }
+        } catch(e) {}
+    },
+
+    start() {
+        const raw = document.getElementById('trip-input').value.trim();
+        if (!raw) return;
+        if (!raw.startsWith('SEM:')) {
+            this._showError('Le tripId doit commencer par <b>SEM:</b><br><small>ex : SEM:31764277</small>');
+            return;
+        }
+        this._reset();
+        this.tripId    = raw;
+        this.lineId    = null;
+        this.lineColor = '#888';
+        this.lineName  = '?';
+        this._begin();
+    },
+
+    _reset() {
+        if (this._interval) clearInterval(this._interval);
+        this.schedule = []; this.topology = [];
+        this.destination = null;
+        this.selectedStopCluster = null;
+    },
+
+    _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+
+    _setSearching(on) {
+        const btn = document.getElementById('track-btn');
+        const inp = document.getElementById('trip-input');
+        if (btn) { btn.disabled = on; btn.textContent = on ? 'Chargement…' : 'Trouver'; }
+        if (inp) inp.disabled = on;
+    },
+
+    async _begin() {
+        this._setSearching(true);
+        if (this.lineId) {
+            this._showLoading(`Ligne ${this.lineName} — Recherche du tram ${this.tripId}…`);
+            try {
+                const found = await this._loadTopoAndScan();
+                if (!found) throw new Error(
+                    'Ce tripId est introuvable dans les horaires actuels.\n' +
+                    'Les tripIds changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                );
+            } catch(e) {
+                this._showError(e.message || 'Erreur inconnue');
+                this._setSearching(false);
+                return;
+            }
+        } else {
+            const letters = Object.keys(LINES_IDS);
+            let found = false;
+            for (let i = 0; i < letters.length; i++) {
+                const letter = letters[i];
+                this.lineName  = letter;
+                this.lineId    = LINES_IDS[letter];
+                this.lineColor = LINE_COLORS[letter];
+
+                this._showLoading(`Recherche sur la ligne ${letter}…`);
+                found = await this._loadTopoAndScan();
+                if (found) break;
+
+                if (i < letters.length - 1) {
+                    const next = letters[i + 1];
+                    for (let s = 10; s > 0; s--) {
+                        this._showLoading(`Tram non trouvé sur la ligne ${letter}. Recherche sur la ligne ${next} dans ${s}s…`);
+                        await this._sleep(1000);
+                    }
+                }
+            }
+            if (!found) {
+                this._showError(
+                    'Ce tripId est introuvable sur aucune ligne.\n' +
+                    'Les tripIds changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                );
+                this._setSearching(false);
+                return;
+            }
+        }
+
+        this._setSearching(false);
+        this._render();
+        this._interval = setInterval(async () => {
+            await this._refreshPartial();
+            this._updateCards();
+        }, 10000);
+    },
+
+    async _loadTopoAndScan() {
+        try {
+            const res = await fetch(`${API_BASE}/routes/${this.lineId}/clusters`);
+            if (!res.ok) return false;
+            const data = await res.json();
+            this.topology = data.map(s => ({ cluster: s.code || s.id, name: s.name }));
+        } catch(e) { return false; }
+
+        const schedule = [];
+        for (const { cluster, name } of this.topology) {
+            try {
+                const res  = await fetch(`${API_BASE}/clusters/${cluster}/stoptimes`);
+                if (!res.ok) continue;
+                const data = await res.json();
+                for (const pattern of data) {
+                    for (const t of pattern.times) {
+                        if (t.tripId !== this.tripId) continue;
+                        const sched = t.scheduledDeparture ?? t.scheduledArrival;
+                        const rt    = t.realtimeDeparture  ?? t.realtimeArrival ?? sched;
+                        schedule.push({ cluster, name,
+                            scheduledSec: sched, realtimeSec: rt,
+                            isRealtime: t.realtimeState === 'UPDATED' });
+                        if (!this.destination) {
+                            const desc = pattern.pattern?.desc || '';
+                            this.destination = desc.split(' > ')[1] || desc || 'Terminus';
+                        }
+                        const letter = pattern.pattern?.id?.split(':')[1];
+                        if (letter && LINE_COLORS[letter]) {
+                            this.lineName  = letter;
+                            this.lineId    = LINES_IDS[letter];
+                            this.lineColor = LINE_COLORS[letter];
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+
+        if (!schedule.length) return false;
+        schedule.sort((a, b) => a.scheduledSec - b.scheduledSec);
+        this.schedule = schedule;
+        return true;
+    },
+
+    async _refreshPartial() {
+        const now = this._getNow();
+        const upcoming = this.schedule.filter(s => s.realtimeSec > now - 60);
+        for (const entry of upcoming) {
+            try {
+                const res  = await fetch(`${API_BASE}/clusters/${entry.cluster}/stoptimes`);
+                if (!res.ok) continue;
+                const data = await res.json();
+                for (const pattern of data) {
+                    for (const t of pattern.times) {
+                        if (t.tripId !== this.tripId) continue;
+                        const rt = t.realtimeDeparture ?? t.realtimeArrival ?? entry.scheduledSec;
+                        entry.realtimeSec = rt;
+                        entry.isRealtime  = t.realtimeState === 'UPDATED';
+                    }
+                }
+            } catch(e) {}
+        }
+    },
+
+    _getNow() {
+        const n = new Date();
+        let s = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+        if (n.getHours() < 4) s += 86400;
+        return s;
+    },
+    _getDelay() {
+        const now = this._getNow();
+        for (const s of this.schedule)
+            if (s.scheduledSec > now) return s.realtimeSec - s.scheduledSec;
+        const last = this.schedule[this.schedule.length - 1];
+        return last ? last.realtimeSec - last.scheduledSec : 0;
+    },
+    _getPosition() {
+        const now = this._getNow();
+        let lastPassed = null, nextStop = null;
+        for (const s of this.schedule) {
+            if (s.realtimeSec <= now) lastPassed = s;
+            else if (!nextStop)       nextStop   = s;
+        }
+        return { lastPassed, nextStop };
+    },
+    _getUpcoming() {
+        const now = this._getNow();
+        return this.schedule.filter(s => s.realtimeSec > now);
+    },
+    _fmtTime(sec) {
+        const s = sec % 86400;
+        return `${Math.floor(s/3600).toString().padStart(2,'0')}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}`;
+    },
+    _delayDisplay(min) {
+        if (Math.abs(min) <= 0) return { t: 'À l\'heure', c: 'ontime', l: 'Trafic normal' };
+        if (min > 0) return { t: `+${min} min`, c: 'late',  l: min >= 5 ? 'Retard important' : 'Léger retard' };
+        return { t: `${min} min`, c: 'early', l: 'En avance' };
+    },
+    _buildPosHtml(lastPassed, nextStop) {
+        if (nextStop) {
+            return `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStop.name}</b></div>`;
+        }
+        if (lastPassed) {
+            return `<div class="radar-info at-stop"><div class="radar-static"></div> Au terminus</div>`;
+        }
+        return `<div class="radar-info"><div class="radar-icon"></div> Position inconnue</div>`;
+    },
+
+    _render() {
+        const dmin = Math.round(this._getDelay() / 60);
+        const { t: dText, c: dClass, l: dLabel } = this._delayDisplay(dmin);
+        const { lastPassed, nextStop } = this._getPosition();
+        const upcoming = this._getUpcoming();
+        const hhmm = new Date().toLocaleTimeString('fr-FR');
+
+        const stopOpts = upcoming.map(s =>
+            `<option value="${s.cluster}">${s.name}</option>`
+        ).join('');
+
+        document.getElementById('suivi-content').innerHTML = `
+            <div class="info-card">
+                <div class="card-body">
+                    <div class="trip-meta">
+                        <div class="line-badge-sm" style="background:${this.lineColor}">${this.lineName}</div>
+                        <div>
+                            <div class="trip-meta-dest">Destination : ${this.destination || 'Terminus'}</div>
+                            <div class="trip-meta-text">${this.tripId}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Ponctualité</div>
+                <div class="card-body">
+                    <div class="delay-value ${dClass}" id="delay-value">${dText}</div>
+                    <div class="delay-label" id="delay-label">${dLabel}</div>
+                    <div class="last-update">Mis à jour à <span id="delay-ts">${hhmm}</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Position en temps réel</div>
+                <div class="card-body">
+                    <div id="pos-box">${this._buildPosHtml(lastPassed, nextStop)}</div>
+                    <div class="last-update">Mis à jour à <span id="pos-ts">${hhmm}</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Arrivée à un arrêt</div>
+                <div class="card-body">
+                    ${upcoming.length === 0
+                        ? '<div style="color:var(--text-muted);font-size:.9rem">Terminus atteint</div>'
+                        : `<select class="stop-select" id="stop-selector" onchange="suivi.onStopChange(this.value)">
+                               <option value="" disabled selected>Choisir un arrêt…</option>
+                               ${stopOpts}
+                           </select>
+                           <div id="arrival-result"></div>`
+                    }
+                </div>
+            </div>
+        `;
+    },
+
+    _updateCards() {
+        const dmin = Math.round(this._getDelay() / 60);
+        const { t, c, l } = this._delayDisplay(dmin);
+        const hhmm = new Date().toLocaleTimeString('fr-FR');
+
+        const dv = document.getElementById('delay-value');
+        const dl = document.getElementById('delay-label');
+        const dt = document.getElementById('delay-ts');
+        if (dv) { dv.textContent = t; dv.className = `delay-value ${c}`; }
+        if (dl) dl.textContent = l;
+        if (dt) dt.textContent = hhmm;
+
+        const { lastPassed, nextStop } = this._getPosition();
+        const pb = document.getElementById('pos-box');
+        const pt = document.getElementById('pos-ts');
+        if (pb) pb.innerHTML = this._buildPosHtml(lastPassed, nextStop);
+        if (pt) pt.textContent = hhmm;
+
+        const sel = document.getElementById('stop-selector');
+        if (sel) {
+            const currentVal = sel.value;
+            const upcoming = this._getUpcoming();
+            const noChoice = !currentVal || currentVal === '';
+            sel.innerHTML = `<option value="" disabled ${noChoice ? 'selected' : ''}>Choisir un arrêt…</option>` +
+                upcoming.map(s => `<option value="${s.cluster}">${s.name}</option>`).join('');
+
+            if (!noChoice) {
+                const stillUpcoming = upcoming.some(s => s.cluster === currentVal);
+                if (stillUpcoming) {
+                    sel.value = currentVal;
+                    this.showArrival(currentVal);
+                } else {
+                    sel.value = '';
+                    this.selectedStopCluster = null;
+                    const ar = document.getElementById('arrival-result');
+                    if (ar) ar.innerHTML = '';
+                }
+            }
+        }
+    },
+
+    onStopChange(cluster) {
+        if (!cluster || cluster === '') return;
+        this.selectedStopCluster = cluster;
+        this.showArrival(cluster);
+    },
+
+    showArrival(cluster) {
+        const entry = this.schedule.find(s => s.cluster === cluster);
+        const el    = document.getElementById('arrival-result');
+        if (!entry || !el) return;
+
+        const mins = Math.max(0, Math.round((entry.realtimeSec - this._getNow()) / 60));
+        const timeHtml = mins === 0
+            ? `<span style="color:var(--radar-at-stop);font-size:1.9rem;font-weight:700">Imminent</span>`
+            : `<span class="arrival-time">${mins}</span><span class="arrival-unit">min</span>`;
+
+        el.innerHTML = `
+            <div class="arrival-display">${timeHtml}</div>
+            <div class="arrival-clock">
+                Passage prévu à <b>${this._fmtTime(entry.realtimeSec)}</b>
+                <span style="margin-left:8px;font-size:.78rem;color:${entry.isRealtime ? 'var(--realtime)' : 'var(--theoretical)'}">
+                    ${entry.isRealtime ? '● Temps réel' : '● Théorique'}
+                </span>
+            </div>`;
+    },
+
+    _showLoading(msg) {
+        document.getElementById('suivi-content').innerHTML =
+            `<div class="loading-msg"><div class="spinner"></div>${msg}</div>`;
+    },
+    _showError(msg) {
+        document.getElementById('suivi-content').innerHTML =
+            `<div class="error-msg">⚠️ ${msg.replace(/\n/g, '<br>')}</div>`;
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => suivi.init());
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/ouestmontram/sw.js")
+    .then(() => console.log("Service Worker enregistré"));
+}
+</script>
+</body>
+</html>

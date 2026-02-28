@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --realtime: #4caf50;
+            --theoretical: #ff9800;
+            --radar-color: #00d2ff;
+            --radar-at-stop: #ffd700;
+            
+            --color-a: #006eb7;
+            --color-b: #00a459;
+            --color-c: #e2007a;
+            --color-d: #f29400;
+            --color-e: #5c2a90;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: var(--app-height, 100vh);
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .col {
+            height: 100%;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+        .col::-webkit-scrollbar { width: 6px; }
+        .col::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+        #col-lines {
+            width: 80px;
+            min-width: 80px;
+            align-items: center;
+            padding: 20px 0;
+            background-color: #0a0a0a;
+            z-index: 3;
+        }
+
+        #col-stops {
+            width: 320px;
+            min-width: 320px;
+            background-color: var(--bg-panel);
+            transition: transform 0.3s ease;
+            z-index: 2;
+        }
+
+        #col-times {
+            flex: 1;
+            background-color: var(--bg-dark);
+            padding: 20px;
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg-panel);
+            z-index: 10;
+        }
+
+        .line-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            opacity: 0.5;
+            color: white;
+        }
+        .line-badge.active {
+            opacity: 1;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .stop-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stop-item:hover, .stop-item.active { background-color: var(--bg-hover); }
+
+        .destination-group {
+            margin-bottom: 30px;
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .destination-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .passage {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 0;
+            font-size: 1.1rem;
+        }
+        .passage-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .passage + .passage { border-top: 1px dashed var(--border); }
+        
+        .time-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .status-dot.realtime { background: var(--realtime); box-shadow: 0 0 8px var(--realtime); }
+        .status-dot.theoretical { background: var(--theoretical); }
+
+        .radar-info {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--radar-color);
+            background: rgba(0, 210, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        .radar-info.at-stop {
+            color: var(--radar-at-stop);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .trip-copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 5px;
+            color: #555;
+            font-size: 0.75rem;
+            line-height: 1;
+            transition: color 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .trip-copy-btn:hover { color: var(--radar-color); background: rgba(0,210,255,0.1); }
+        .trip-copy-btn.copied { color: var(--realtime); }
+
+        .radar-icon {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--radar-color);
+            border-radius: 50%;
+            position: relative;
+            animation: radar-pulse 2s infinite;
+        }
+        
+        .radar-static {
+            width: 8px;
+            height: 8px;
+            background: var(--radar-color);
+            border-radius: 50%;
+        }
+        
+        .at-stop .radar-static {
+            background: var(--radar-at-stop);
+        }
+
+        @keyframes radar-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(0, 210, 255, 0); }
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 20px;
+            font-size: 1.1rem;
+        }
+
+        .lines-separator {
+            width: 32px;
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        .fav-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s, background 0.2s;
+            opacity: 0.5;
+            background: #2a2a2a;
+            border: 2px solid #444;
+        }
+        .fav-badge:hover { opacity: 0.8; }
+        .fav-badge.active {
+            opacity: 1;
+            transform: scale(1.1);
+            background: rgba(255, 210, 0, 0.15);
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .fav-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.4rem;
+            line-height: 1;
+            padding: 4px 6px;
+            border-radius: 8px;
+            transition: transform 0.2s, background 0.2s;
+            color: #666;
+            vertical-align: middle;
+        }
+        .fav-toggle-btn:hover { background: rgba(255,255,255,0.07); transform: scale(1.15); }
+        .fav-toggle-btn.is-fav { color: #ffd700; }
+
+        .fav-stop-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .fav-stop-item:hover { background-color: var(--bg-hover); }
+
+        .fav-line-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .fav-stop-info { flex: 1; overflow: hidden; }
+        .fav-stop-name { font-size: 1rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fav-stop-line { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+        .fav-remove-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #555;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .fav-remove-btn:hover { color: #e74c3c; background: rgba(231,76,60,0.12); }
+
+        .search-container {
+            padding: 15px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--radar-color);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-results {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .search-result-name {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .search-result-lines {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-line-badge {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .times-group {
+            margin-bottom: 20px;
+            background: var(--bg-panel);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .times-group-header {
+            padding: 12px 15px;
+            background: var(--bg-hover);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .times-group-line {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .times-group-destination {
+            flex: 1;
+            font-size: 0.95rem;
+            font-weight: 500;
+            min-width: 0;
+        }
+
+        .times-group-times {
+            padding: 10px 15px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .time-simple {
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .time-simple.realtime {
+            color: var(--realtime);
+        }
+
+        .time-simple.theoretical {
+            color: var(--theoretical);
+        }
+
+        #bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-buttons {
+            display: flex;
+            height: 100%;
+        }
+
+        .nav-link {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-hover);
+        }
+
+        .nav-link.active {
+            color: var(--radar-color);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--radar-color);
+        }
+
+        .nav-icon {
+            font-size: 1.3rem;
+        }
+
+        @media (max-width: 768px) {
+            #bottom-nav {
+                display: block;
+            }
+
+            body { flex-direction: column; position: relative; }
+            .col { width: 100% !important; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
+            #col-lines { width: 100%; flex-direction: row; height: 80px; min-height: 80px; padding: 0 10px; justify-content: space-around; }
+            .lines-separator { display: none; }
+            #col-stops { height: calc(var(--app-height, 100vh) - 140px); position: absolute; top: 80px; left: 0; transform: translateX(0); transition: transform 0.3s; }
+            #col-times { height: calc(var(--app-height, 100vh) - 140px); position: absolute; top: 80px; left: 0; transform: translateX(0); transition: transform 0.3s; }
+            body.view-times #col-stops { transform: translateX(-100%); }
+            body.view-times #col-times { transform: translateX(0); }
+            body:not(.view-times) #col-stops { transform: translateX(0); }
+            body:not(.view-times) #col-times { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div id="col-lines" class="col"></div>
+
+    <div id="col-stops" class="col">
+        <div class="header">
+            <h2 id="line-title">Sélectionnez une ligne</h2>
+        </div>
+        <div id="stops-list">
+            <div class="empty">Aucune ligne sélectionnée</div>
+        </div>
+    </div>
+
+    <div id="col-times" class="col">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <h2 id="stop-title" style="flex: 1;">...</h2>
+                <button id="fav-toggle-btn" class="fav-toggle-btn" onclick="app.toggleFavorite()" title="Ajouter aux favoris" style="display:none;">☆</button>
+            </div>
+            <div id="refresh-status" style="font-size: 0.9rem; color: var(--text-muted);"></div>
+        </div>
+        <div id="times-content" style="flex: 1;">
+            <div class="empty">Sélectionnez un arrêt</div>
+        </div>
+<footer style="font-size: 0.7rem; color: var(--text-muted); text-align: center; padding: 10px;">
+    Données : <a href="https://data.mobilites-m.fr/" target="_blank" style="color: var(--radar-color);">Mobilités M</a> 
+    | <a href="mentions.html" style="color: var(--text-muted);">Mentions légales & Licence</a>
+</footer>
+    </div>
+
+    <script>
+        const API_BASE = "https://data.mobilites-m.fr/api/routers/default/index";
+        const LINES = [
+            { id: "SEM:A", name: "A", color: "var(--color-a)" },
+            { id: "SEM:B", name: "B", color: "var(--color-b)" },
+            { id: "SEM:C", name: "C", color: "var(--color-c)" },
+            { id: "SEM:D", name: "D", color: "var(--color-d)" },
+            { id: "SEM:E", name: "E", color: "var(--color-e)" }
+        ];
+
+        const SPECIAL_STOPS = [
+            { line: "A", stopCode: "SEM:GENMOUNIER",   direction: "1", atStopThreshold: 0, departDelay: 25  },
+            { line: "A", stopCode: "SEM:GENALB",       direction: "1", atStopThreshold: 10, departDelay: 15  },
+            { line: "A", stopCode: "SEM:GENALB",       direction: "2", atStopThreshold: 15, departDelay: 0  },
+            { line: "A", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  },
+            { line: "A", stopCode: "SEM:GENGARES",     direction: "1", atStopThreshold: 15, departDelay: 0  },
+            { line: "A", stopCode: "SEM:GENGARES",     direction: "2", atStopThreshold: 15, departDelay: 0  },
+            { line: "B", stopCode: "SEM:GENGARES",     direction: "1", atStopThreshold: 15, departDelay: 0  },
+            { line: "B", stopCode: "SEM:GENGARES",     direction: "2", atStopThreshold: 15, departDelay: 0  },
+            { line: "B", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  },
+            { line: "D", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  }
+        ];
+
+        const app = {
+            currentLine: null,
+            currentStop: null,
+            currentStopName: null,
+            lineTopology: [],
+            refreshInterval: null,
+            favorites: [],
+            viewingFavorites: false,
+            atStopSince: {},
+
+            init() {
+                this.favorites = JSON.parse(localStorage.getItem('tram_favorites') || '[]');
+                this.renderLines();
+                if(window.innerWidth > 768) {
+                    this.selectLine("SEM:A"); 
+                } else {
+                    this.showSearchBar();
+                }
+            },
+
+            async showSearchBar() {
+                document.getElementById('line-title').innerText = 'Rechercher un arrêt';
+                
+                const refreshStatus = document.getElementById('refresh-status');
+                refreshStatus.style.display = 'none';
+                
+                if (!this.allStops) {
+                    await this.loadAllStops();
+                }
+
+                const html = `
+                    <div class="search-container">
+                        <input type="text" 
+                               class="search-input" 
+                               id="stop-search-input" 
+                               placeholder="Rechercher un arrêt..."
+                               autocomplete="off">
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                `;
+                
+                document.getElementById('stops-list').innerHTML = html;
+                
+                const input = document.getElementById('stop-search-input');
+                input.addEventListener('input', (e) => this.filterStops(e.target.value));
+                
+                this.filterStops('');
+            },
+
+            async loadAllStops() {
+                try {
+                    const allStopsMap = new Map();
+                    
+                    for (const line of LINES) {
+                        const response = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${line.id}/stops`);
+                        const stops = await response.json();
+                        
+                        for (const stop of stops) {
+                            if (!allStopsMap.has(stop.cluster)) {
+                                allStopsMap.set(stop.cluster, {
+                                    id: stop.cluster,
+                                    cluster: stop.cluster,
+                                    name: stop.name,
+                                    lat: stop.lat,
+                                    lon: stop.lon,
+                                    lines: new Set([line.name])
+                                });
+                            } else {
+                                allStopsMap.get(stop.cluster).lines.add(line.name);
+                            }
+                        }
+                    }
+                    
+                    this.allStops = Array.from(allStopsMap.values());
+                    
+                    const victorHugo = this.allStops.find(s => s.name.toLowerCase().includes('victor hugo'));
+                    if (victorHugo) {
+                        this.victorHugoLat = victorHugo.lat;
+                        this.victorHugoLon = victorHugo.lon;
+                    }
+                        
+                } catch (error) {
+                    console.error('Erreur lors du chargement des arrêts:', error);
+                    this.allStops = [];
+                }
+            },
+
+            calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            },
+
+            filterStops(query) {
+                const searchResults = document.getElementById('search-results');
+                
+                if (!this.allStops) {
+                    searchResults.innerHTML = '<div class="empty">Chargement...</div>';
+                    return;
+                }
+                
+                const filtered = query.trim() === '' 
+                    ? this.allStops
+                    : this.allStops.filter(stop => 
+                        stop.name.toLowerCase().includes(query.toLowerCase())
+                      );
+                
+                if (filtered.length === 0) {
+                    searchResults.innerHTML = '<div class="empty">Aucun arrêt trouvé</div>';
+                    return;
+                }
+                
+                const sorted = [...filtered].sort((a, b) => {
+                    if (!this.victorHugoLat || !this.victorHugoLon) {
+                        return 0;
+                    }
+                    const distA = this.calculateDistance(this.victorHugoLat, this.victorHugoLon, a.lat, a.lon);
+                    const distB = this.calculateDistance(this.victorHugoLat, this.victorHugoLon, b.lat, b.lon);
+                    return distA - distB;
+                });
+                
+                const html = sorted.map(stop => {
+                    const lineColors = {
+                        'A': '#006eb7',
+                        'B': '#00a459',
+                        'C': '#e2007a',
+                        'D': '#f29400',
+                        'E': '#5c2a90'
+                    };
+                    
+                    const linesBadges = Array.from(stop.lines)
+                        .sort()
+                        .map(line => `<span class="search-line-badge" style="background-color: ${lineColors[line]}">${line}</span>`)
+                        .join('');
+                    
+                    return `
+                        <div class="search-result-item" onclick="app.selectStopFromSearch('${stop.id}', '${stop.name.replace(/'/g, "\\'")}')">
+                            <div class="search-result-name">${stop.name}</div>
+                            <div class="search-result-lines">
+                                ${linesBadges}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                searchResults.innerHTML = html;
+            },
+
+            async selectStopFromSearch(stopId, stopName) {
+                this.searchMode = true;
+                this.currentStop = { id: stopId, name: stopName };
+                
+                document.getElementById('stop-title').innerText = stopName;
+                
+                const favBtn = document.getElementById('fav-toggle-btn');
+                if (favBtn) favBtn.style.display = 'none';
+                
+                const refreshStatus = document.getElementById('refresh-status');
+                refreshStatus.style.display = 'block';
+                
+                document.body.classList.add('view-times');
+                
+                await this.loadTimesForAllLines(stopId, stopName);
+                
+                if (this.searchRefreshInterval) clearInterval(this.searchRefreshInterval);
+                this.searchRefreshInterval = setInterval(() => {
+                    this.loadTimesForAllLines(stopId, stopName);
+                }, 15000);
+            },
+
+            async loadTimesForAllLines(stopId, stopName) {
+                const container = document.getElementById('times-content');
+                if (!container.querySelector('.times-group')) {
+                    container.innerHTML = '<div class="empty">Chargement des horaires...</div>';
+                }
+                
+                try {
+                    const response = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${stopId}/stoptimes`);
+                    const data = await response.json();
+                    
+                    const now_date = new Date();
+                    const refreshStatus = document.getElementById('refresh-status');
+                    refreshStatus.innerText = `Actualisé à ${now_date.getHours().toString().padStart(2,'0')}:${now_date.getMinutes().toString().padStart(2,'0')}:${now_date.getSeconds().toString().padStart(2,'0')}`;
+                    
+                    const timesMap = new Map();
+                    const now = Math.floor(Date.now() / 1000);
+                    
+                    for (const pattern of data) {
+                        const patternId = pattern.pattern.id;
+                        const lineName = patternId.split(':')[1];
+                        
+                        if (!['A', 'B', 'C', 'D', 'E'].includes(lineName)) continue;
+                        
+                        const line = LINES.find(l => l.name === lineName);
+                        if (!line) continue;
+                        
+                        const times = pattern.times
+                            .filter(t => t.realtimeState !== 'CANCELED')
+                            .slice(0, 2);
+                        
+                        if (times.length === 0) continue;
+                        
+                        const destination = pattern.pattern.desc.split(' > ')[1] || pattern.pattern.desc;
+                        const key = lineName + '|' + destination;
+                        
+                        if (timesMap.has(key)) {
+                            const existing = timesMap.get(key);
+                            const merged = [...existing.times, ...times].sort(
+                                (a, b) => (a.realtimeDeparture - b.realtimeDeparture)
+                            ).slice(0, 2);
+                            existing.times = merged;
+                        } else {
+                            timesMap.set(key, {
+                                line: lineName,
+                                lineId: line.id,
+                                color: line.color,
+                                destination,
+                                times,
+                                serviceDay: pattern.times[0]?.serviceDay || 0,
+                                patternStops: pattern.pattern.stops || []
+                            });
+                        }
+                    }
+                    
+                    const allTimes = Array.from(timesMap.values());
+                    
+                    if (allTimes.length === 0) {
+                        container.innerHTML = '<div class="empty">Aucun horaire disponible</div>';
+                        return;
+                    }
+                    
+                    const lineOrder = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4 };
+                    allTimes.sort((a, b) => lineOrder[a.line] - lineOrder[b.line]);
+                    
+                    const isFirstLoad = !container.querySelector('.times-group');
+
+                    const renderTimesHtml = (group) => group.times.map(time => {
+                        const departureTime = group.serviceDay + time.realtimeDeparture;
+                        const minutes = Math.floor((departureTime - now) / 60);
+                        const isRealtime = time.realtimeState === 'UPDATED';
+                        const cssClass = isRealtime ? 'realtime' : 'theoretical';
+                        const displayTime = minutes < 0 ? 0 : minutes;
+                        return `<div class="time-simple ${cssClass}">${displayTime} min</div>`;
+                    }).join('');
+
+                    if (isFirstLoad) {
+                        const html = allTimes.map(group => {
+                            const stopInPattern = group.patternStops.find(s => s.cluster === stopId);
+                            const stopIdForLine = stopInPattern ? stopInPattern.id : stopId;
+                            const cardId = 'tg-' + (group.line + group.destination).replace(/[^a-zA-Z0-9]/g, '_');
+                            return `
+                                <div class="times-group" id="${cardId}">
+                                    <div class="times-group-header">
+                                        <div class="times-group-line" style="background-color: ${group.color}">${group.line}</div>
+                                        <div class="times-group-destination">${group.destination}</div>
+                                        <a href="#"
+                                           onclick="app.switchToClassicMode('${group.lineId}', '${stopIdForLine}', '${stopName.replace(/'/g, "\'")}'); return false;"
+                                           style="color: var(--radar-color); font-size: 0.85rem; text-decoration: none; margin-left: auto; white-space: nowrap;">
+                                            Voir plus →
+                                        </a>
+                                    </div>
+                                    <div class="times-group-times" id="${cardId}-times">
+                                        ${renderTimesHtml(group)}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        container.innerHTML = `<div>${html}</div>`;
+                    } else {
+                        for (const group of allTimes) {
+                            const cardId = 'tg-' + (group.line + group.destination).replace(/[^a-zA-Z0-9]/g, '_');
+                            const timesEl = document.getElementById(cardId + '-times');
+                            if (timesEl) timesEl.innerHTML = renderTimesHtml(group);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Erreur lors du chargement des horaires:', error);
+                    container.innerHTML = '<div class="empty">Erreur de chargement</div>';
+                }
+            },
+
+            renderLines() {
+                const container = document.getElementById("col-lines");
+                const linesBadges = LINES.map(line => `
+                    <div class="line-badge" data-id="${line.id}" style="background-color: ${line.color};" onclick="app.selectLine('${line.id}')">
+                        ${line.name}
+                    </div>
+                `).join('');
+                container.innerHTML = linesBadges + `
+                    <div class="lines-separator"></div>
+                    <div class="fav-badge" id="fav-tab-badge" title="Favoris" onclick="app.selectFavorites()">⭐</div>
+                `;
+            },
+
+            matchesLine(patternId, lineId) {
+                return patternId === lineId || patternId.startsWith(lineId + ":");
+            },
+
+            deduplicateStops(stops) {
+                const seenClusters = new Set();
+                const uniqueStops = [];
+                
+                for (const stop of stops) {
+                    if (!seenClusters.has(stop.cluster)) {
+                        seenClusters.add(stop.cluster);
+                        uniqueStops.push(stop);
+                    } else {
+                        break;
+                    }
+                }
+                
+                return uniqueStops;
+            },
+
+            async selectLine(lineId) {
+                this.currentLine = lineId;
+                this.viewingFavorites = false;
+                this.searchMode = false;
+                document.querySelectorAll('.line-badge').forEach(b => b.classList.toggle('active', b.dataset.id === lineId));
+                const favBadge = document.getElementById('fav-tab-badge');
+                if (favBadge) favBadge.classList.remove('active');
+                document.getElementById('line-title').innerText = `Ligne ${LINES.find(l=>l.id===lineId).name}`;
+                document.getElementById('stops-list').innerHTML = `<div class="empty">Chargement des arrêts...</div>`;
+                this.clearTimes();
+                this.showMobileStops();
+
+                try {
+                    const resClusters = await fetch(`${API_BASE}/routes/${lineId}/clusters`);
+                    const clusters = await resClusters.json();
+
+                    const resStops = await fetch(`${API_BASE}/routes/${lineId}/stops`);
+                    let stopsData = await resStops.json();
+                    
+                    stopsData = this.deduplicateStops(stopsData);
+                    
+                    this.lineTopology = stopsData;
+
+                    document.getElementById('stops-list').innerHTML = clusters.map(stop => `
+                        <div class="stop-item" id="stop-${stop.code}" onclick="app.selectStop('${stop.code}', '${stop.name.replace(/'/g, "\\'")}')">
+                            <span>${stop.name}</span>
+                            <span style="color: var(--text-muted); font-size: 0.8em;">❯</span>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error(e);
+                    document.getElementById('stops-list').innerHTML = `<div class="empty">Erreur lors du chargement des arrêts.</div>`;
+                }
+            },
+
+            async selectStop(clusterCode, stopName) {
+                this.currentStop = clusterCode;
+                this.currentStopName = stopName;
+                document.querySelectorAll('.stop-item').forEach(el => el.classList.remove('active'));
+                const el = document.getElementById(`stop-${clusterCode}`);
+                if(el) el.classList.add('active');
+
+                document.getElementById('stop-title').innerText = stopName;
+                
+                const favBtn = document.getElementById('fav-toggle-btn');
+                favBtn.style.display = 'inline-block';
+                this.updateFavButton();
+
+                document.body.classList.add('view-times'); 
+                
+                this.fetchTimes();
+                if (this.refreshInterval) clearInterval(this.refreshInterval);
+                this.refreshInterval = setInterval(() => this.fetchTimes(), 10000);
+            },
+
+            async fetchTimes() {
+                if (!this.currentStop) return;
+                
+                const container = document.getElementById('times-content');
+                
+                try {
+                    const res = await fetch(`${API_BASE}/clusters/${this.currentStop}/stoptimes`);
+                    if (!res.ok) throw new Error();
+                    const data = await res.json();
+
+                    const linePassages = data.filter(p => this.matchesLine(p.pattern.id, this.currentLine));
+                    
+                    if (linePassages.length === 0) {
+                        container.innerHTML = `<div class="empty">Aucun passage prévu.</div>`;
+                        return;
+                    }
+
+                    const byDestination = linePassages.reduce((acc, passage) => {
+                        const dest = passage.pattern.desc || "Destination inconnue";
+                        if (!acc[dest]) acc[dest] = [];
+                        passage.times.forEach(t => {
+                            t.patternInfo = passage.pattern; 
+                        });
+                        acc[dest].push(...passage.times);
+                        return acc;
+                    }, {});
+
+                    let html = '';
+                    for (const [dest, times] of Object.entries(byDestination)) {
+                        times.sort((a, b) => (a.realtimeDeparture || a.scheduledDeparture) - (b.realtimeDeparture || b.scheduledDeparture));
+
+                        html += `<div class="destination-group">
+                            <div class="destination-title">
+                                <span>Vers <b>${dest}</b></span>
+                            </div>`;
+                        
+                        const displayedTimes = times.slice(0, 4);
+                        
+                        for (let i = 0; i < displayedTimes.length; i++) {
+                            const timeData = displayedTimes[i];
+                            const isFirst = (i === 0);
+                            const uniqueId = `radar-${timeData.tripId}`;
+                            
+                            html += this.formatPassage(timeData, uniqueId);
+
+                            if (isFirst && timeData.realtime) {
+                                setTimeout(() => {
+                                    this.locateTram(timeData.tripId, this.currentStop, dest, uniqueId, timeData);
+                                }, 100); 
+                            }
+                        }
+                        html += `</div>`;
+                    }
+
+                    const scrollContainer = document.getElementById('col-times');
+                    const savedScroll = scrollContainer ? scrollContainer.scrollTop : 0;
+                    
+                    container.innerHTML = html;
+                    
+                    if (scrollContainer) scrollContainer.scrollTop = savedScroll;
+                    
+                    const refreshEl = document.getElementById('refresh-status');
+                    refreshEl.style.display = 'block';
+                    refreshEl.innerText = `Actualisé à ${new Date().toLocaleTimeString()}`;
+
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            copyTripId(tripId, btnEl) {
+                try {
+                    const line = LINES.find(l => l.id === this.currentLine);
+                    const ctx = {
+                        tripId,
+                        lineLetter:  line ? line.name : null,
+                        clusterCode: this.currentStop
+                    };
+                    localStorage.setItem('suivi_ctx', JSON.stringify(ctx));
+                } catch(e) {}
+                navigator.clipboard.writeText(tripId).catch(() => {});
+                btnEl.textContent = '✓';
+                btnEl.classList.add('copied');
+                setTimeout(() => { btnEl.textContent = '⎘'; btnEl.classList.remove('copied'); }, 1500);
+            },
+
+            formatPassage(timeData, elementId) {
+                const now = new Date();
+                let currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                if (now.getHours() < 4) currentSec += 86400;
+
+                const passageSec = timeData.realtimeDeparture || timeData.scheduledDeparture;
+                const diffMin = Math.floor((passageSec - currentSec) / 60);
+
+                let timeText;
+                if (diffMin < 0) timeText = "Départ en cours";
+                else if (diffMin === 0) timeText = "Imminent";
+                else if (diffMin > 59) timeText = `${Math.floor(diffMin/60)}h${(diffMin%60).toString().padStart(2,'0')}`;
+                else timeText = `${diffMin} min`;
+
+                const isRealtime = timeData.realtime;
+                const dotClass = isRealtime ? 'realtime' : 'theoretical';
+                const safeId = (timeData.tripId || '').replace(/'/g, "\\'");
+
+                return `
+                    <div class="passage">
+                        <div class="passage-row">
+                            <span>${timeText}</span>
+                            <div class="time-box">
+                                <div class="status-dot ${dotClass}"></div>
+                                <span style="font-size: 0.8em; color: var(--text-muted);">${isRealtime ? 'Temps Réel' : 'Théorique'}</span>
+                                ${isRealtime ? `<button class="trip-copy-btn" onclick="event.stopPropagation();app.copyTripId('${safeId}',this)" title="Copier le tripId">⎘</button>` : ''}
+                            </div>
+                        </div>
+                        <div id="${elementId}" class="radar-box"></div>
+                    </div>
+                `;
+            },
+
+            getStopConfig(lineId, stopCode, destination) {
+                const lineName = LINES.find(l => l.id === lineId)?.name || '';
+                const destWord = (destination || '').toLowerCase().split(' ')[0];
+
+                let direction = '1';
+                if (this.lineTopology.length > 0) {
+                    const firstStop = this.lineTopology[0].name.toLowerCase();
+                    const lastStop  = this.lineTopology[this.lineTopology.length - 1].name.toLowerCase();
+                    if (lastStop.includes(destWord))       direction = '1';
+                    else if (firstStop.includes(destWord)) direction = '2';
+                }
+
+                const match = SPECIAL_STOPS.find(s =>
+                    s.line      === lineName &&
+                    s.stopCode  === stopCode &&
+                    s.direction === direction
+                );
+                return match
+                    ? { atStopThreshold: match.atStopThreshold, departDelay: match.departDelay }
+                    : { atStopThreshold: 30, departDelay: 0 };
+            },
+
+            async locateTram(tripId, currentStopCode, destination, elementId, timeData) {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+
+                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Localisation...</div>`;
+
+                const now = new Date();
+                let currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                if (now.getHours() < 4) currentSec += 86400;
+                const passageSec = timeData.realtimeDeparture || timeData.scheduledDeparture;
+                const currentTimeSec = passageSec - currentSec;
+
+                console.log(`[RADAR] trip=${tripId} stop=${currentStopCode} → temps API : ${currentTimeSec}s (realtime=${timeData.realtime})`);
+
+                if (currentTimeSec < 0) {
+                    const currentName = this.getStopName(currentStopCode);
+                    const cfg = this.getStopConfig(this.currentLine, currentStopCode, destination);
+                    if (currentTimeSec >= -cfg.departDelay) {
+                        el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${currentName}</b></div>`;
+                    } else {
+                        el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${currentName}</b></div>`;
+                    }
+                    return;
+                }
+
+                const { atStopThreshold } = this.getStopConfig(this.currentLine, currentStopCode, destination);
+                if (currentTimeSec <= atStopThreshold) {
+                    const currentName = this.getStopName(currentStopCode);
+                    if (!this.atStopSince[tripId]) this.atStopSince[tripId] = Date.now();
+                    const elapsedReal = (Date.now() - this.atStopSince[tripId]) / 1000;
+                    if (elapsedReal > atStopThreshold) {
+                        delete this.atStopSince[tripId];
+                        el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${currentName}</b></div>`;
+                    } else {
+                        el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${currentName}</b></div>`;
+                    }
+                    return;
+                }
+                delete this.atStopSince[tripId];
+
+                const orderedClusters = this.lineTopology.map(s => s.cluster);
+                
+                const currentIndices = [];
+                orderedClusters.forEach((cluster, idx) => {
+                    if (cluster === currentStopCode) currentIndices.push(idx);
+                });
+                
+                if (currentIndices.length === 0) {
+                    el.innerHTML = '';
+                    return;
+                }
+
+                const destinationStop = this.lineTopology.find(s => 
+                    s.name.toLowerCase().includes(destination.toLowerCase().split(' ')[0])
+                );
+                
+                const destIndices = [];
+                if (destinationStop) {
+                    orderedClusters.forEach((cluster, idx) => {
+                        if (cluster === destinationStop.cluster) destIndices.push(idx);
+                    });
+                }
+
+                let selectedCurrentIndex = currentIndices[0];
+                let searchStep = -1;
+                
+                if (destIndices.length > 0 && currentIndices.length > 0) {
+                    let bestPair = null;
+                    let minDistance = Infinity;
+                    
+                    for (let currIdx of currentIndices) {
+                        for (let destIdx of destIndices) {
+                            const distance = Math.abs(destIdx - currIdx);
+                            if (distance > 0 && distance < minDistance) {
+                                minDistance = distance;
+                                bestPair = { currIdx, destIdx };
+                            }
+                        }
+                    }
+                    
+                    if (bestPair) {
+                        selectedCurrentIndex = bestPair.currIdx;
+                        searchStep = (bestPair.destIdx > bestPair.currIdx) ? -1 : 1;
+                    }
+                }
+
+                const MAX_DEPTH = 30;
+                let searchIndex = selectedCurrentIndex + searchStep;
+                let lastSeenWithTime = null;
+                let depth = 0;
+                let reachedTerminus = false;
+
+                while (depth < MAX_DEPTH) {
+                    if (searchIndex < 0 || searchIndex >= orderedClusters.length) {
+                        reachedTerminus = true;
+                        break;
+                    }
+                    
+                    const checkCluster = orderedClusters[searchIndex];
+                    
+                    if (checkCluster === currentStopCode) {
+                        searchIndex += searchStep;
+                        depth++;
+                        continue;
+                    }
+                    
+                    try {
+                        const res = await fetch(`${API_BASE}/clusters/${checkCluster}/stoptimes`);
+                        const checkData = await res.json();
+                        
+                        let foundTime = null;
+                        for (let pattern of checkData) {
+                            if (!this.matchesLine(pattern.pattern.id, this.currentLine)) continue;
+                            for (let time of pattern.times) {
+                                if (time.tripId === tripId) {
+                                    const now = new Date();
+                                    let currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                                    if (now.getHours() < 4) currentSec += 86400;
+                                    const passageSec = time.realtimeDeparture || time.scheduledDeparture;
+                                    const diffSec = passageSec - currentSec;
+                                    foundTime = diffSec;
+                                    break;
+                                }
+                            }
+                            if (foundTime !== null) break;
+                        }
+                        
+                        if (foundTime !== null) {
+                            const stopName = this.getStopName(checkCluster);
+                            const cfg = this.getStopConfig(this.currentLine, checkCluster, destination);
+
+                            if (foundTime < -cfg.departDelay) {
+                                delete this.atStopSince[tripId];
+                                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${stopName}</b></div>`;
+                                return;
+                            } else if (foundTime <= cfg.atStopThreshold) {
+                                if (!this.atStopSince[tripId]) this.atStopSince[tripId] = Date.now();
+                                const elapsedReal = (Date.now() - this.atStopSince[tripId]) / 1000;
+                                if (elapsedReal > cfg.atStopThreshold) {
+                                    delete this.atStopSince[tripId];
+                                    el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${stopName}</b></div>`;
+                                } else {
+                                    el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${stopName}</b></div>`;
+                                }
+                                return;
+                            } else if (foundTime <= 60) {
+                                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${stopName}</b></div>`;
+                                return;
+                            } else {
+                                const diffMin = Math.floor(foundTime / 60);
+                                lastSeenWithTime = { cluster: checkCluster, time: diffMin, index: searchIndex };
+                            }
+                        } else {
+                            if (lastSeenWithTime !== null) {
+                                const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+                                return;
+                            } else {
+                                const currentName = this.getStopName(currentStopCode);
+                                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
+                                return;
+                            }
+                        }
+                        
+                        searchIndex += searchStep;
+                        depth++;
+                        
+                    } catch (e) {
+                        break;
+                    }
+                }
+                
+                if (reachedTerminus) {
+                    if (lastSeenWithTime !== null) {
+                        const terminusName = this.getStopName(lastSeenWithTime.cluster);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-static"></div> En attente au terminus de <b>${terminusName}</b></div>`;
+                    } else {
+                        const currentName = this.getStopName(currentStopCode);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
+                    }
+                } else {
+                    if (lastSeenWithTime !== null) {
+                        const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+                    } else {
+                        el.innerHTML = '';
+                    }
+                }
+            },
+
+            getStopName(clusterCode) {
+                const domEl = document.getElementById(`stop-${clusterCode}`);
+                if (domEl) {
+                    const nameAttr = domEl.dataset.name;
+                    if (nameAttr) return nameAttr;
+                    const span = domEl.querySelector('span');
+                    if (span) return span.innerText;
+                }
+                
+                const topo = this.lineTopology.find(s => s.cluster === clusterCode);
+                return topo ? topo.name : "Arrêt inconnu";
+            },
+
+            saveFavorites() {
+                localStorage.setItem('tram_favorites', JSON.stringify(this.favorites));
+            },
+
+            isFavorite(clusterCode, lineId) {
+                return this.favorites.some(f => f.clusterCode === clusterCode && f.lineId === lineId);
+            },
+
+            updateFavButton() {
+                const btn = document.getElementById('fav-toggle-btn');
+                if (!btn) return;
+                const isFav = this.isFavorite(this.currentStop, this.currentLine);
+                btn.textContent = isFav ? '★' : '☆';
+                btn.title = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+                btn.classList.toggle('is-fav', isFav);
+            },
+
+            toggleFavorite() {
+                if (!this.currentStop || !this.currentLine) return;
+                const idx = this.favorites.findIndex(f => f.clusterCode === this.currentStop && f.lineId === this.currentLine);
+                if (idx >= 0) {
+                    this.favorites.splice(idx, 1);
+                } else {
+                    const line = LINES.find(l => l.id === this.currentLine);
+                    this.favorites.push({
+                        lineId: this.currentLine,
+                        lineName: line.name,
+                        lineColor: line.color,
+                        clusterCode: this.currentStop,
+                        stopName: this.currentStopName
+                    });
+                }
+                this.saveFavorites();
+                this.updateFavButton();
+                if (this.viewingFavorites) this.renderFavoritesList();
+            },
+
+            selectFavorites() {
+                this.viewingFavorites = true;
+                this.currentLine = null;
+                this.searchMode = false;
+                document.querySelectorAll('.line-badge').forEach(b => b.classList.remove('active'));
+                const favBadge = document.getElementById('fav-tab-badge');
+                if (favBadge) favBadge.classList.add('active');
+                document.getElementById('line-title').innerText = 'Mes favoris';
+                this.clearTimes();
+                this.showMobileStops();
+                this.renderFavoritesList();
+            },
+
+            renderFavoritesList() {
+                const list = document.getElementById('stops-list');
+                if (this.favorites.length === 0) {
+                    list.innerHTML = `<div class="empty">Aucun favori.<br><span style="font-size:0.9rem;">Ajoutez un arrêt avec ★ en consultant ses horaires.</span></div>`;
+                    return;
+                }
+                list.innerHTML = this.favorites.map((fav, i) => `
+                    <div class="fav-stop-item" onclick="app.selectFavoriteStop(${i})">
+                        <div class="fav-line-dot" style="background-color: ${fav.lineColor};">${fav.lineName}</div>
+                        <div class="fav-stop-info">
+                            <div class="fav-stop-name">${fav.stopName}</div>
+                            <div class="fav-stop-line">Ligne ${fav.lineName}</div>
+                        </div>
+                        <button class="fav-remove-btn" onclick="event.stopPropagation(); app.removeFavorite(${i})" title="Retirer">✕</button>
+                    </div>
+                `).join('');
+            },
+
+            async selectFavoriteStop(favIndex) {
+                const fav = this.favorites[favIndex];
+                if (!fav) return;
+                await this.selectLine(fav.lineId);
+                setTimeout(() => this.selectStop(fav.clusterCode, fav.stopName), 300);
+            },
+
+            removeFavorite(favIndex) {
+                this.favorites.splice(favIndex, 1);
+                this.saveFavorites();
+                if (this.currentStop && !this.isFavorite(this.currentStop, this.currentLine)) {
+                    this.updateFavButton();
+                }
+                if (this.viewingFavorites) this.renderFavoritesList();
+            },
+
+            clearTimes() {
+                this.currentStop = null;
+                this.currentStopName = null;
+                document.getElementById('stop-title').innerText = "...";
+                document.getElementById('refresh-status').innerText = "";
+                document.getElementById('times-content').innerHTML = `<div class="empty">Sélectionnez un arrêt</div>`;
+                const favBtn = document.getElementById('fav-toggle-btn');
+                if (favBtn) { favBtn.style.display = 'none'; favBtn.textContent = '☆'; favBtn.classList.remove('is-fav'); }
+                if (this.refreshInterval) clearInterval(this.refreshInterval);
+                if (this.searchRefreshInterval) clearInterval(this.searchRefreshInterval);
+            },
+
+            showMobileStops() {
+                document.body.classList.remove('view-times');
+                
+                if (this.searchMode) {
+                    this.searchMode = false;
+                    this.currentStop = null;
+                    
+                    if (this.searchRefreshInterval) {
+                        clearInterval(this.searchRefreshInterval);
+                        this.searchRefreshInterval = null;
+                    }
+                    
+                    this.showSearchBar();
+                }
+            },
+
+            async switchToClassicMode(lineId, stopId, stopName) {
+                if (this.searchRefreshInterval) {
+                    clearInterval(this.searchRefreshInterval);
+                    this.searchRefreshInterval = null;
+                }
+                
+                this.searchMode = false;
+                
+                await this.selectLine(lineId);
+                
+                setTimeout(() => {
+                    this.selectStop(stopId, stopName);
+                }, 400);
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => app.init());
+    </script>
+
+    <div id="bottom-nav">
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-link active">
+                <span class="nav-icon">🕐</span>
+                <span>Horaires</span>
+            </a>
+            <a href="suivi.html" class="nav-link">
+                <span class="nav-icon">🚋</span>
+                <span>Suivi</span>
+            </a>
+            <a href="infotrafic.html" class="nav-link">
+                <span class="nav-icon">⚠️</span>
+                <span>Infotrafic</span>
+            </a>
+        </div>
+    </div>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/ouestmontram/sw.js")
+    .then(() => console.log("Service Worker enregistré"));
+}
+</script>
+</body>
+</html>
