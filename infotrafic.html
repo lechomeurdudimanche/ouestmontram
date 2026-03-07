@@ -1112,7 +1112,7 @@
             ponctClusters: {},
             ponctLineLoading: new Set(),
             ponctualiteLoading: false,
-            PONCT_LINE_CACHE_MS: 30 * 1000,
+            PONCT_LINE_CACHE_MS: 2 * 60 * 1000,
 
             async loadPonctualite() {
                 if (this.ponctualiteLoading) return;
@@ -1421,4 +1421,5 @@
         }
     </script>
 </body>
+
 </html>
