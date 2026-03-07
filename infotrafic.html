@@ -693,6 +693,11 @@
             <button class="ponct-refresh-btn" id="ponct-refresh-btn" onclick="app.loadPonctualite()">↻ Actualiser</button>
         </div>
         <div class="ponct-cards" id="ponctualite-content"></div>
+        <div class="page-footer">
+            Données : <a href="https://data.mobilites-m.fr/" target="_blank">Mobilités M</a>
+            &nbsp;|&nbsp;
+            <a href="mentions.html" style="color:var(--text-muted);">Mentions légales & Licence</a>
+        </div>
     </div>
 
     <div id="bottom-nav">
@@ -1069,12 +1074,7 @@
                     future.forEach((d, i) => { html += renderCard(d, i); });
                 }
 
-                html += `</div>
-                <div class="page-footer">
-                    Données : <a href="https://data.mobilites-m.fr/" target="_blank">Mobilités M</a>
-                    &nbsp;|&nbsp;
-                    <a href="mentions.html" style="color:var(--text-muted);">Mentions légales & Licence</a>
-                </div>`;
+                html += `</div>`;
 
                 document.getElementById('disruptions-content').innerHTML = html;
             },
@@ -1100,11 +1100,6 @@
                         <div class="empty-state-icon">✅</div>
                         <div class="empty-state-title">${title}</div>
                         <div class="empty-state-sub">${sub}</div>
-                    </div>
-                    <div class="page-footer">
-                        Données : <a href="https://data.mobilites-m.fr/" target="_blank">Mobilités M</a>
-                        &nbsp;|&nbsp;
-                        <a href="mentions.html" style="color:var(--text-muted);">Mentions légales & Licence</a>
                     </div>`;
             },
 
@@ -1204,6 +1199,7 @@
                         const hasFuture = trip.schedule.some(s => s.scheduledSec > nowSec && s.scheduledSec <= nowSec + 7200);
                         if (!hasPast && !hasFuture) { tripMap.delete(tripId); continue; }
 
+
                         const firstFuture = trip.schedule.find(s => s.scheduledSec > nowSec);
                         trip.delay = firstFuture ? firstFuture.realtimeSec - firstFuture.scheduledSec : 0;
 
@@ -1224,6 +1220,16 @@
                             ? sample.schedule[sample.schedule.length - 1].clusterIdx < sample.schedule[0].clusterIdx
                             : false;
                         arr.sort((a, b) => isReverse ? b.positionIdx - a.positionIdx : a.positionIdx - b.positionIdx);
+
+                        if (arr.length > 1) {
+                            const firstPosIdx = arr[0].positionIdx;
+                            const atFirst = arr.filter(t => t.positionIdx === firstPosIdx);
+                            if (atFirst.length > 1) {
+                                atFirst.sort((a, b) => a.schedule[0].scheduledSec - b.schedule[0].scheduledSec);
+                                const toRemove = new Set(atFirst.slice(1).map(t => t.tripId));
+                                arr.splice(0, arr.length, ...arr.filter(t => !toRemove.has(t.tripId)));
+                            }
+                        }
                     }
 
                     this.ponctualiteData[lineId] = { line, directions, total: tripMap.size, loadedAt: Date.now() };
@@ -1421,5 +1427,4 @@
         }
     </script>
 </body>
-
 </html>
