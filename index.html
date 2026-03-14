@@ -657,12 +657,35 @@
             .col { width: 100% !important; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
             #col-lines { display: none; }
             .lines-separator { display: none; }
-            #col-stops { height: calc(var(--app-height, 100vh) - 60px); position: absolute; top: 0; left: 0; transform: translateX(0); transition: transform 0.3s; }
+            #col-stops { height: calc(var(--app-height, 100vh) - 60px); position: absolute; top: 0; left: 0; transform: translateX(0); transition: transform 0.3s; overflow: hidden; }
             #col-times { height: calc(var(--app-height, 100vh) - 60px); position: absolute; top: 0; left: 0; transform: translateX(0); transition: transform 0.3s; }
             body.view-times #col-stops { transform: translateX(-100%); }
             body.view-times #col-times { transform: translateX(0); }
             body:not(.view-times) #col-stops { transform: translateX(0); }
             body:not(.view-times) #col-times { transform: translateX(100%); }
+
+            #stops-list {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+            }
+            #tab-content-arrets {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                overflow: hidden;
+            }
+            #tab-content-arrets .search-container {
+                flex-shrink: 0;
+            }
+            #tab-content-arrets #filter-panel {
+                flex-shrink: 0;
+            }
+            #tab-content-arrets #search-results {
+                flex: 1;
+                overflow-y: auto;
+                max-height: none;
+            }
         }
 
         .pdf-btn {
