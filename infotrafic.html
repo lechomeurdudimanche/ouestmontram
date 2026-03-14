@@ -635,6 +635,21 @@
             display: flex; align-items: center; gap: 5px;
         }
 
+        .ponct-line-timestamp {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 4px;
+        }
+        .ponct-line-timestamp .ts-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
         .guide-card {
             background: var(--bg-panel);
             border: 1px solid rgba(0, 210, 255, 0.25);
@@ -695,11 +710,6 @@
 
         <div class="ponct-section-header">
             <div class="ponct-section-title">Retards</div>
-
-            <div class="ponct-last-upd" id="ponct-last-update" style="display:none;">
-                <span class="last-update-dot" id="ponct-update-dot"></span>
-                <span id="ponct-update-text"></span>
-            </div>
             <button class="ponct-refresh-btn" id="ponct-refresh-btn" onclick="app.loadPonctualite()">↻ Actualiser</button>
         </div>
             <div class="guide-card">
@@ -1127,15 +1137,12 @@
             ponctClusters: {},
             ponctLineLoading: new Set(),
             ponctualiteLoading: false,
-            PONCT_LINE_CACHE_MS: 2 * 60 * 1000,
 
             async loadPonctualite() {
                 if (this.ponctualiteLoading) return;
                 this.ponctualiteLoading = true;
                 const btn = document.getElementById('ponct-refresh-btn');
-                const dot = document.getElementById('ponct-update-dot');
                 if (btn) btn.classList.add('loading');
-                if (dot) dot.classList.add('refreshing');
                 this._renderPonctSkeleton();
                 this.ponctualiteData = {};
                 this.ponctClusters   = {};
@@ -1153,13 +1160,6 @@
 
                 this.ponctualiteLoading = false;
                 if (btn) btn.classList.remove('loading');
-                if (dot) { dot.classList.remove('refreshing'); dot.classList.add('fresh'); setTimeout(() => dot.classList.remove('fresh'), 3000); }
-
-                const now2 = new Date();
-                const textEl = document.getElementById('ponct-update-text');
-                const updEl  = document.getElementById('ponct-last-update');
-                if (textEl) textEl.textContent = now2.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-                if (updEl) updEl.style.display = 'flex';
 
                 this._renderPonct();
             },
@@ -1168,9 +1168,6 @@
                 if (this.ponctLineLoading.has(lineId)) return;
                 const clusters = this.ponctClusters[lineId];
                 if (!clusters || clusters.length === 0) return;
-
-                const cached = this.ponctualiteData[lineId];
-                if (cached && cached.loadedAt && (Date.now() - cached.loadedAt) < this.PONCT_LINE_CACHE_MS) return;
 
                 this.ponctLineLoading.add(lineId);
                 const line     = LINES_TRAM.find(l => l.id === lineId);
@@ -1332,9 +1329,7 @@
                 card.classList.toggle('expanded');
                 if (!wasExpanded) {
                     const lineId = safeId.replace('-', ':');
-                    const cached = this.ponctualiteData[lineId];
-                    const isStale = !cached || !cached.loadedAt || (Date.now() - cached.loadedAt) >= this.PONCT_LINE_CACHE_MS;
-                    if (isStale) this._loadLineDetail(lineId);
+                    if (!this.ponctualiteData[lineId]) this._loadLineDetail(lineId);
                 }
             },
 
@@ -1393,15 +1388,25 @@
 
                 const header = card.querySelector('.ponct-card-header');
                 const gs = trips.length ? this._ponctStats(trips) : null;
+
+                const loadedAt = data && data.loadedAt
+                    ? new Date(data.loadedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    : null;
+                const timestampHtml = loadedAt
+                    ? `<div class="ponct-line-timestamp"><span class="ts-dot"></span>Actualisé à ${loadedAt}</div>`
+                    : '';
+
                 if (header) {
                     header.querySelector('.ponct-card-info').innerHTML = trips.length === 0
                         ? `<div class="ponct-card-name">Ligne ${line.name}</div>
-                           <div style="font-size:0.73rem;color:var(--text-muted);">Pas de données temps réel</div>`
+                           <div style="font-size:0.73rem;color:var(--text-muted);">Pas de données temps réel</div>
+                           ${timestampHtml}`
                         : `<div class="ponct-card-name">Ligne ${line.name} &nbsp;·&nbsp; ${trips.length} tram${trips.length>1?'s':''}</div>
                            <div class="ponct-stats-mini">
                                ${gs ? `<span class="ponct-stat-chip">Moyenne : <b class="${this._delayCls(gs.mean)}">${this._fmtDelay(gs.mean)}</b></span>
                                <span class="ponct-stat-chip">Max : <b class="${this._delayCls(gs.worst)}">${this._fmtDelay(gs.worst)}</b></span>` : ''}
-                           </div>`;
+                           </div>
+                           ${timestampHtml}`;
                     const dot = header.querySelector('.ponct-score-dot');
                     if (dot) { dot.className = `ponct-score-dot ${gs ? this._dotCls(gs.mean) : 'dot-ok'}`; dot.style.background = ''; }
                 }
