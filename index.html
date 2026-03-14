@@ -1099,8 +1099,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                     lignes.style.display = '';
                     btnLignes && btnLignes.classList.add('active');
                     lignes.innerHTML = this.buildLinesListHtml();
-                    const colStops = document.getElementById('col-stops');
-                    if (colStops) colStops.scrollTop = 0;
+                    const stopsList = document.getElementById('stops-list');
+                    if (stopsList) stopsList.scrollTop = 0;
                 }
             },
 
@@ -2208,8 +2208,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
 
             showMobileStops() {
                 document.body.classList.remove('view-times');
-                const colStops = document.getElementById('col-stops');
-                if (colStops) colStops.scrollTop = 0;
+                const stopsList = document.getElementById('stops-list');
+                if (stopsList) stopsList.scrollTop = 0;
 
                 if (this.refreshInterval) {
                     clearInterval(this.refreshInterval);
@@ -2240,8 +2240,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 document.querySelectorAll('.line-badge').forEach(b => b.classList.remove('active'));
                 const favBadge = document.getElementById('fav-tab-badge');
                 if (favBadge) favBadge.classList.remove('active');
-                const colStops = document.getElementById('col-stops');
-                if (colStops) colStops.scrollTop = 0;
+                const stopsList = document.getElementById('stops-list');
+                if (stopsList) stopsList.scrollTop = 0;
                 this.clearTimes();
                 this.showSearchBar();
             },
@@ -2261,8 +2261,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 document.querySelectorAll('.line-badge').forEach(b => b.classList.remove('active'));
                 const favBadge = document.getElementById('fav-tab-badge');
                 if (favBadge) favBadge.classList.remove('active');
-                const colStops = document.getElementById('col-stops');
-                if (colStops) colStops.scrollTop = 0;
+                const stopsList = document.getElementById('stops-list');
+                if (stopsList) stopsList.scrollTop = 0;
 
                 document.getElementById('stop-title').innerText = '...';
                 document.getElementById('refresh-status').innerText = '';
