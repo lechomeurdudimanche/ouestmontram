@@ -237,7 +237,7 @@
 <body>
     <div id="page-content">
         <div class="input-card">
-            <label>Identifiant du tram</label>
+            <label>Identifiant du voyage</label>
             <div class="input-row">
                 <input type="text" class="trip-input" id="trip-input"
                        placeholder="ex: SEM:31764271"
@@ -453,8 +453,8 @@ const suivi = {
             try {
                 const found = await this._loadTopoAndScan();
                 if (!found) throw new Error(
-                    'Ce tripId est introuvable dans les horaires actuels.\n' +
-                    'Les tripIds changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
+                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
                 );
             } catch(e) {
                 this._showError(e.message || 'Erreur inconnue');
@@ -484,8 +484,8 @@ const suivi = {
             }
             if (!found) {
                 this._showError(
-                    'Ce tripId est introuvable sur aucune ligne.\n' +
-                    'Les tripIds changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
+                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
                 );
                 this._setSearching(false);
                 return;

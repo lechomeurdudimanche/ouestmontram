@@ -841,6 +841,105 @@
             }
         };
 
+const BUS_RADAR_STOPS = {
+    "SEM:C1": { directions: [
+           { keywords: ["jean"], stops: ["SEM:GENEAU", "SEM:GENPRM", "SEM:GENINR", "SEM:GENBOD", "SEM:GENBUS", "SEM:GENMO", "SEM:GENBEALIERE", "SEM:GENMALACHER", "SEM:GENMUS", "SEM:GENMEYLMAIR", "SEM:GENBUC1", "SEM:GENREV", "SEM:GENAIGUIHEX", "SEM:GENPLAINEFL", "SEM:GENCARONRIE", "SEM:GENSABLONS", "SEM:GENGREHOTEL", "SEM:GENCHAVANT", "SEM:GENDRMARTIN", "SEM:GENVICTHUGO", "SEM:GENDRMAZET", "SEM:GENFELIXVIA", "SEM:GENGARES", "SEM:GENARAGO", "SEM:GENCITEMACE"] },
+           { keywords: ["eau"], stops: ["SEM:GENCITEMACE", "SEM:GENARAGO", "SEM:GENGARES", "SEM:GENFELIXVIA", "SEM:GENDRMAZET", "SEM:GENVICTHUGO", "SEM:GENDRMARTIN", "SEM:GENCHAVANT", "SEM:GENGREHOTEL", "SEM:GENSABLONS", "SEM:GENCARONRIE", "SEM:GENPLAINEFL", "SEM:GENAIGUIHEX", "SEM:GENREV", "SEM:GENBUC1", "SEM:GENMEYLMAIR", "SEM:GENMUS", "SEM:GENMALACHER", "SEM:GENBEALIERE", "SEM:GENMO", "SEM:GENBUS", "SEM:GENBOD", "SEM:GENINR", "SEM:GENPRM", "SEM:GENEAU"] },
+    ]},
+
+    "SEM:C2": { directions: [
+           { keywords: ["rouge"], stops: ["SEM:GENLMICHEL", "SEM:GENSTADLESD", "SEM:GENRONDEAU", "SEM:GENNAVIS", "SEM:GENQUINZAIN", "SEM:GENBAYARD", "SEM:GENECUREUIL", "SEM:GENLETOILE", "SEM:GENCLOSDOMI", "SEM:GENILESMARS", "SEM:GENLAMPHI", "SEM:GENIRENEJOL", "SEM:GENMARCELLI", "SEM:GENPCM", "SEM:GENPTROUGE"] },
+           { keywords: ["louise"], stops: ["SEM:GENPTROUGE", "SEM:GENPCM", "SEM:GENMARCELLI", "SEM:GENIRENEJOL", "SEM:GENLAMPHI", "SEM:GENILESMARS", "SEM:GENCLOSDOMI", "SEM:GENLETOILE", "SEM:GENECUREUIL", "SEM:GENBAYARD", "SEM:GENQUINZAIN", "SEM:GENNAVIS", "SEM:GENRONDEAU", "SEM:GENSTADLESD", "SEM:GENLMICHEL"] },
+    ]},
+
+    "SEM:C3": { directions: [
+           { keywords: ["victor"], stops: ["SEM:GENGRAPH", "SEM:GENVILLAGE", "SEM:GENLANGEVIN", "SEM:GENGUYMOCQU", "SEM:GENCHATEAU", "SEM:GENECOLHOSP", "SEM:GENHOPITSUD", "SEM:GENFRQUESNA", "SEM:GENALPEXPO", "SEM:GENPOLESUD", "SEM:GENGP", "SEM:GENEDMOESMO", "SEM:GENMAISANCI", "SEM:GENGRAND", "SEM:GENVIGNY", "SEM:GENCLOSDOR", "SEM:GENEUGENESU", "SEM:GENCAPUCHE", "SEM:GENFOCHFERI", "SEM:GENMARCEAU", "SEM:GENCHAMPION", "SEM:GENVICTHUGO"] },
+           { keywords: ["graphisme"], stops: ["SEM:GENVICTHUGO", "SEM:GENCHAMPION", "SEM:GENMARCEAU", "SEM:GENFOCHFERI", "SEM:GENCAPUCHE", "SEM:GENEUGENESU", "SEM:GENCLOSDOR", "SEM:GENVIGNY", "SEM:GENVILLOLYM", "SEM:GENCHRISTUR", "SEM:GENEDMOESMO", "SEM:GENGP", "SEM:GENPOLESUD", "SEM:GENALPEXPO", "SEM:GENFRQUESNA", "SEM:GENHOPITSUD", "SEM:GENECOLHOSP", "SEM:GENCHATEAU", "SEM:GENGUYMOCQU", "SEM:GENLANGEVIN", "SEM:GENVILLAGE", "SEM:GENGRAPH"] },
+    ]},
+
+    "SEM:C4": { directions: [
+           { keywords: ["victor"], stops: ["SEM:GENVERDERET", "SEM:GENLEBOURG", "SEM:GENJAVAUX", "SEM:GENODYSSEE", "SEM:GENVALEYBEN", "SEM:GENDEGAULLE", "SEM:GENMAISNEUV", "SEM:GENJRACINE", "SEM:GENTEISSEIR", "SEM:GENPCLAUDEL", "SEM:GENPONSARD", "SEM:GENBAJATIER", "SEM:GENMALLIFAU", "SEM:GENDRIANT", "SEM:GENCHAVANT", "SEM:GENDRMARTIN", "SEM:GENVICTHUGO"] },
+           { keywords: ["verderet", "gaulle"], stops: ["SEM:GENVICTHUGO",  "SEM:GENDRMARTIN", "SEM:GENCHAVANT", "SEM:GENDRIANT", "SEM:GENMALLIFAU", "SEM:GENBAJATIER", "SEM:GENPONSARD", "SEM:GENPCLAUDEL", "SEM:GENTEISSEIR", "SEM:GENJRACINE", "SEM:GENMAISNEUV", "SEM:GENDEGAULLE", "SEM:GENVALEYBEN", "SEM:GENODYSSEE", "SEM:GENJAVAUX", "SEM:GENLEBOURG", "SEM:GENVERDERET"] },
+    ]},
+
+    "SEM:C5": { directions: [
+           { keywords: ["biologie"], stops: ["SEM:GENPALJUSTI", "SEM:GENESCLANGO", "SEM:GENBER", "SEM:GENCEMOI", "SEM:GENVALLCATA", "SEM:GENRHINDANU", "SEM:GENDRSCHWEI", "SEM:GENLYSROUGE", "SEM:GENALLIES", "SEM:GENMAINNATI", "SEM:GENSTALALLI", "SEM:GENFLAUCLOS", "SEM:GENMALHERBE", "SEM:GENLOUISJOU", "SEM:GENTEISSEIR", "SEM:GENPAULCOCA", "SEM:GENARGOUGES", "SEM:GENSTAUGUST", "SEM:GENBONPASTE", "SEM:GENEDVAILLA", "SEM:GENPIERSEMA", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPROMOSOC", "SEM:GENBIBLIUNI", "SEM:GENBIOLOGIE"] },
+           { keywords: ["justice"], stops: ["SEM:GENBIOLOGIE", "SEM:GENBIBLIUNI", "SEM:GENPROMOSOC", "SEM:GENCHAMPROM", "SEM:GENCLINBELD", "SEM:GENNEYRBELL", "SEM:GENPIERSEMA", "SEM:GENEDVAILLA", "SEM:GENBONPASTE", "SEM:GENSTAUGUST", "SEM:GENARGOUGES", "SEM:GENPAULCOCA", "SEM:GENTEISSEIR", "SEM:GENLOUISJOU", "SEM:GENMALHERBE", "SEM:GENFLAUCLOS", "SEM:GENSTALALLI", "SEM:GENMAINNATI", "SEM:GENALLIES", "SEM:GENHDUNANT", "SEM:GENDRSCHWEI", "SEM:GENRHINDANU", "SEM:GENVALLCATA", "SEM:GENCEMOI", "SEM:GENBER", "SEM:GENESCLANGO", "SEM:GENPALJUSTI"] },
+    ]},
+
+    "SEM:C6": { directions: [
+           { keywords: ["oxford"], stops: ["SEM:GENMAISNEUV", "SEM:GENSAULES", "SEM:GENPLGEANTS", "SEM:GENRAYCHANA", "SEM:GENGP", "SEM:GENEDMOESMO", "SEM:GENMAISANCI", "SEM:GENVERLAINE", "SEM:GENSTADLESD", "SEM:GENRONDEAU", "SEM:GENSEYRON", "SEM:GENSEYSROND", "SEM:GENPRISME", "SEM:GENTUILERIE", "SEM:GENCENTRESU", "SEM:GENLAPLAINE", "SEM:GENBEAUSITE", "SEM:GENCENTRSOC", "SEM:GENSEYHDV", "SEM:GENLESILES", "SEM:GENARBERGES", "SEM:GENMAISONNA", "SEM:GENCURIVERC", "SEM:GENRUEPASTE", "SEM:GENCHARMETT", "SEM:GENSTEYNARD", "SEM:GENLASURE", "SEM:GENCHAMECHA", "SEM:GENMARESIST", "SEM:GENOXF"] },
+           { keywords: ["maisons", "place"], stops: ["SEM:GENOXF", "SEM:GENMARESIST", "SEM:GENCHAMECHA", "SEM:GENLASURE", "SEM:GENSTEYNARD", "SEM:GENCHARMETT", "SEM:GENRUEPASTE", "SEM:GENCURIVERC", "SEM:GENMAISONNA", "SEM:GENARBERGES", "SEM:GENLESILES", "SEM:GENSEYHDV", "SEM:GENCENTRSOC", "SEM:GENBEAUSITE", "SEM:GENLAPLAINE", "SEM:GENCENTRESU", "SEM:GENTUILERIE", "SEM:GENPRISME", "SEM:GENSEYSROND", "SEM:GENSEYRON", "SEM:GENRONDEAU", "SEM:GENSTADLESD", "SEM:GENVERLAINE", "SEM:GENMAISANCI", "SEM:GENEDMOESMO", "SEM:GENGP", "SEM:GENRAYCHANA", "SEM:GENPLGEANTS", "SEM:GENSAULES", "SEM:GENMAISNEUV"] },
+    ]},
+
+    "SEM:C7": { directions: [
+           { keywords: ["wallon"], stops: ["SEM:GENCOM", "SEM:GENDRAC2", "SEM:GENMUSGEOCH", "SEM:GENCOLMANHE", "SEM:GENBAYARD", "SEM:GENQUINZAIN", "SEM:GENGRUGLIAS", "SEM:GENPELLOUTI", "SEM:GENRAMPE", "SEM:GENPOLOTTI", "SEM:GENCHATEAU", "SEM:GENECOLHOSP", "SEM:GENHOPITSUD", "SEM:GENFRQUESNA", "SEM:GENRUIRES", "SEM:GENODYSSEE", "SEM:GENCHAMPFIL", "SEM:GENCENSOCIO", "SEM:GENCARINA", "SEM:GENSMHVILLA", "SEM:GENCXPATRE", "SEM:GENPOTIE", "SEM:GENETIEGRAP", "SEM:GENNED", "SEM:GENHENRIWAL"] },
+           { keywords: ["comboire"], stops: ["SEM:GENHENRIWAL", "SEM:GENNED", "SEM:GENETIEGRAP", "SEM:GENPOTIE", "SEM:GENCXPATRE", "SEM:GENSMHVILLA", "SEM:GENCARINA", "SEM:GENCENSOCIO", "SEM:GENCHAMPFIL", "SEM:GENODYSSEE", "SEM:GENRUIRES", "SEM:GENFRQUESNA", "SEM:GENHOPITSUD", "SEM:GENECOLHOSP", "SEM:GENCHATEAU", "SEM:GENPOLOTTI", "SEM:GENRAMPE", "SEM:GENPELLOUTI", "SEM:GENGRUGLIAS", "SEM:GENQUINZAIN", "SEM:GENBAYARD", "SEM:GENCOLMANHE", "SEM:GENMUSGEOCH", "SEM:GENDRAC2", "SEM:GENCOM"] },
+    ]},
+
+    "SEM:C8": { directions: [
+           { keywords: ["victor"], stops: ["SEM:GENIUTUFRAP", "SEM:GENEPICEA", "SEM:GENBIOLOGIE", "SEM:GENBIBLIUNI", "SEM:GENPROMOSOC", "SEM:GENCHAMPROM", "SEM:GENCOLI", "SEM:GENROCHEPLA", "SEM:GENHENRIWAL", "SEM:GENNED", "SEM:GENETIEGRAP", "SEM:GENZELLAMEL", "SEM:GENCHOPIN", "SEM:GENLEMARAIS", "SEM:GENCHATELIE", "SEM:GENDEGAULLE", "SEM:GENCOLLSAUL", "SEM:GENRAYCHANA", "SEM:GENGP", "SEM:GENEDMOESMO", "SEM:GENMAISANCI", "SEM:GENVERLAINE", "SEM:GENSTADLESD", "SEM:GENBACHELAR", "SEM:GENCITEPMIS", "SEM:GENANATFRAN", "SEM:GENDRSCHWEI", "SEM:GENSALENGRO", "SEM:GENCHAMPSEL", "SEM:GENVACA", "SEM:GENABBEGREG", "SEM:GENSTBRUNNC", "SEM:GENCHORCOND", "SEM:GENCONDORCE", "SEM:GENCHAMPION", "SEM:GENDRMARTIN", "SEM:GENVICTHUGO", "SEM:GENBELGRADE"] },
+           { keywords: ["université"], stops: ["SEM:GENBELGRADE", "SEM:GENVICTHUGO", "SEM:GENDRMARTIN", "SEM:GENCHAMPION", "SEM:GENCONDORCE", "SEM:GENCHORCOND", "SEM:GENSTBRUNNC", "SEM:GENALEMBERT", "SEM:GENCLINMUT", "SEM:GENVACA", "SEM:GENCHAMPSEL", "SEM:GENSALENGRO", "SEM:GENHDUNANT", "SEM:GENDRSCHWEI", "SEM:GENANATFRAN", "SEM:GENCITEPMIS", "SEM:GENBACHELAR", "SEM:GENSTADLESD", "SEM:GENVERLAINE", "SEM:GENMAISANCI", "SEM:GENEDMOESMO", "SEM:GENGP", "SEM:GENRAYCHANA", "SEM:GENDEGAULLE", "SEM:GENCHATELIE", "SEM:GENLEMARAIS", "SEM:GENCHOPIN", "SEM:GENZELLAMEL", "SEM:GENETIEGRAP", "SEM:GENNED", "SEM:GENHENRIWAL", "SEM:GENROCHEPLA", "SEM:GENCOLI", "SEM:GENCHAMPROM", "SEM:GENPROMOSOC", "SEM:GENBIBLIUNI", "SEM:GENBIOLOGIE", "SEM:GENEPICEA", "SEM:GENIUTUFRAP"] },
+    ]},
+
+    "SEM:15": { directions: [
+           { keywords: ["verdun"], stops: ["SEM:GENARN", "SEM:GENRENECASS", "SEM:GENCHENEVIE", "SEM:GENVERNES", "SEM:GENPRIEURE", "SEM:GENDOMENEMA", "SEM:GENCOUBERTI", "SEM:GENORATOIRE", "SEM:GENMORTES", "SEM:GENRIVETS", "SEM:GENBRIOT", "SEM:GENBOURG", "SEM:GENPERRIERE", "SEM:GENLEJAPIN", "SEM:GENCHAMPRON", "SEM:GENPIEDGIER", "SEM:GENPLREPUBL", "SEM:GENEDELWEIS", "SEM:GENSONNANT", "SEM:GENPORTGRES", "SEM:GENCHAMPROM", "SEM:GENCLINBELD", "SEM:GENNEYRBELL", "SEM:GENPERIBROS", "SEM:GENVALMY", "SEM:GENBIRHAKEI", "SEM:GENVERDUN"] },
+           { keywords: ["chenevières"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENPERIBROS", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPORTGRES", "SEM:GENSONNANT", "SEM:GENEDELWEIS", "SEM:GENPLREPUBL", "SEM:GENPIEDGIER", "SEM:GENCHAMPRON", "SEM:GENLEJAPIN", "SEM:GENPERRIERE", "SEM:GENBOURG", "SEM:GENBRIOT", "SEM:GENRIVETS", "SEM:GENMORTES", "SEM:GENORATOIRE", "SEM:GENCOUBERTI", "SEM:GENDOMENEMA", "SEM:GENPRIEURE", "SEM:GENVERNES", "SEM:GENCHENEVIE"] },
+           { keywords: ["arnauds"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENPERIBROS", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPORTGRES", "SEM:GENSONNANT", "SEM:GENEDELWEIS", "SEM:GENPLREPUBL", "SEM:GENPIEDGIER", "SEM:GENCHAMPRON", "SEM:GENLEJAPIN", "SEM:GENPERRIERE", "SEM:GENBOURG", "SEM:GENBRIOT", "SEM:GENRIVETS", "SEM:GENMORTES", "SEM:GENORATOIRE", "SEM:GENCOUBERTI", "SEM:GENDOMENEMA", "SEM:GENRENECASS", "SEM:GENARN"] },
+    ]},
+
+    "SEM:16": { directions: [
+           { keywords: ["alloves"], stops: ["SEM:GENLALUIRE", "SEM:GENCASANOVA", "SEM:GENCOLMANHE", "SEM:GENBAYARD", "SEM:GENAUGUFERR", "SEM:GENADELAUNE", "SEM:GENMARIECUR", "SEM:GENPHEROULT", "SEM:GENGLIERES", "SEM:GENGRUGLIAS", "SEM:GENMONMOUSS", "SEM:GENLESESSAR", "SEM:GENVERLAINE", "SEM:GENBEAUVERT", "SEM:GENMASSENET", "SEM:GENCLOSDOR", "SEM:GENEUGENESU", "SEM:GENCAPUCHE", "SEM:GENDEPORTES", "SEM:GENGUSTRIVE", "SEM:GENCASBONNE", "SEM:GENDRMARTIN", "SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENJVA", "SEM:GENGDCHATEL", "SEM:GENBONPASTE", "SEM:GENEDROSTAN", "SEM:GENETIEGRAP", "SEM:GENPOTIE", "SEM:GENCXPATRE", "SEM:GENGLAIEULS", "SEM:GENALLOVES"] },
+           { keywords: ["gendarmerie"], stops: ["SEM:GENALLOVES", "SEM:GENGLAIEULS", "SEM:GENCXPATRE", "SEM:GENPOTIE", "SEM:GENETIEGRAP", "SEM:GENEDROSTAN", "SEM:GENHOUILLEB", "SEM:GENBONPASTE", "SEM:GENGDCHATEL", "SEM:GENJVA", "SEM:GENVALMY", "SEM:GENBIRHAKEI", "SEM:GENVERDUN", "SEM:GENDRMARTIN", "SEM:GENCASBONNE", "SEM:GENGUSTRIVE", "SEM:GENDEPORTES", "SEM:GENCAPUCHE", "SEM:GENEUGENESU", "SEM:GENCLOSDOR", "SEM:GENMASSENET", "SEM:GENBEAUVERT", "SEM:GENVERLAINE", "SEM:GENLESESSAR", "SEM:GENMONMOUSS", "SEM:GENGRUGLIAS", "SEM:GENGLIERES", "SEM:GENPHEROULT", "SEM:GENMARIECUR", "SEM:GENADELAUNE", "SEM:GENAUGUFERR", "SEM:GENBAYARD", "SEM:GENCOLMANHE", "SEM:GENCASANOVA", "SEM:GENVASSIEUX", "SEM:GENLALUIRE"] },
+    ]},
+
+    "SEM:17": { directions: [
+           { keywords: ["verdun"], stops: ["SEM:GENLYC", "SEM:GENMURIERS", "SEM:GENHTMEYLAN", "SEM:GENLAFOY", "SEM:GENBUCLOS", "SEM:GENOISEAUX", "SEM:GENEYGALA", "SEM:GENMONTFLEU", "SEM:GENCORENCMA", "SEM:GENCXMONTFL", "SEM:GENGDTRONCH", "SEM:GENJULESREY", "SEM:GENBASTILLE", "SEM:GENPTTRONCH", "SEM:GENSTLAUREN", "SEM:GENXAVJOUVI", "SEM:GENNOTREDAM", "SEM:GENHOPOLICE", "SEM:GENSTROCH", "SEM:GENMUTUALIT", "SEM:GENVERDUN"] },
+           { keywords: ["montfleury", "grésivaudan"], stops: ["SEM:GENVERDUN", "SEM:GENMUTUALIT", "SEM:GENSTROCH", "SEM:GENHOPOLICE", "SEM:GENNOTREDAM", "SEM:GENSTLAUREN", "SEM:GENPTTRONCH", "SEM:GENBASTILLE", "SEM:GENJULESREY", "SEM:GENGDTRONCH", "SEM:GENCXMONTFL", "SEM:GENCORENCMA", "SEM:GENMONTFLEU", "SEM:GENEYGALA", "SEM:GENOISEAUX", "SEM:GENBUCLOS", "SEM:GENLAFOY", "SEM:GENHTMEYLAN", "SEM:GENMURIERS", "SEM:GENLYC"] },
+    ]},
+
+    "SEM:18": { directions: [
+           { keywords: ["intercommunal"], stops: ["SEM:GENLYC", "SEM:GENLYCBACHA", "SEM:GENSTJBOSCO", "SEM:GENCHAUMETI", "SEM:GENRS", "SEM:GENGRESIVAU", "SEM:GENJFLANDRI", "SEM:GENCEDRE", "SEM:GENCENTHEOL", "SEM:GENMUSHEBER", "SEM:GENCOMMANAL", "SEM:GENTRONCHOP", "SEM:GENNEUR", "SEM:GENHOPMICHA", "SEM:GENCIMETIGS", "SEM:GENSTROCH", "SEM:GENMUTUALIT", "SEM:GENVERDUN", "SEM:GENDRMARTIN", "SEM:GENCHAVANT", "SEM:GENDRIANT", "SEM:GENAUGURAVI", "SEM:GENEDISON", "SEM:GENLESBAINS", "SEM:GENARGOUGES", "SEM:GENPAULCOCA", "SEM:GENLEONJOUH", "SEM:GENPIERRELO", "SEM:GENPAULELUA", "SEM:GENLEMARAIS", "SEM:GENBELAIR", "SEM:GENROBESPIE", "SEM:GENCENSOCIO", "SEM:GENPREMOL"] },
+           { keywords: ["grésivaudan"], stops: ["SEM:GENPREMOL", "SEM:GENCENSOCIO", "SEM:GENROBESPIE", "SEM:GENBELAIR", "SEM:GENLEMARAIS", "SEM:GENPAULELUA", "SEM:GENPIERRELO", "SEM:GENLEONJOUH", "SEM:GENPAULCOCA", "SEM:GENARGOUGES", "SEM:GENLESBAINS", "SEM:GENEDISON", "SEM:GENCLEMENCE", "SEM:GENAUGURAVI", "SEM:GENDRIANT", "SEM:GENCHAVANT", "SEM:GENDRMARTIN", "SEM:GENVERDUN", "SEM:GENMUTUALIT", "SEM:GENSTROCH", "SEM:GENCIMETIGS", "SEM:GENHOPMICHA", "SEM:GENNEUR", "SEM:GENTRONCHOP", "SEM:GENCOMMANAL", "SEM:GENMUSHEBER", "SEM:GENCENTHEOL", "SEM:GENCEDRE", "SEM:GENJFLANDRI", "SEM:GENGRESIVAU", "SEM:GENRS", "SEM:GENCHAUMETI", "SEM:GENSTJBOSCO", "SEM:GENLYCBACHA", "SEM:GENLYC"] },
+    ]},
+
+    "SEM:19": { directions: [
+           { keywords: ["garlettes"], stops: ["SEM:GENOVALIE", "SEM:GENLEGUA", "SEM:GENPLIBERAT", "SEM:GENTREFFORI", "SEM:GENPREFLEUR", "SEM:GENLESPIES", "SEM:GENLAPOYA", "SEM:GENGERARPHI", "SEM:GENRUEALPES", "SEM:GENMARAT", "SEM:GENECRINS", "SEM:GENJULESGUE", "SEM:GENPLACMARC", "SEM:GENRUEPASTE", "SEM:GENCURIVERC", "SEM:GENMAISONNA", "SEM:GENARBERGES", "SEM:GENBOUCHDV", "SEM:GENLAMURAIL", "SEM:GENBELVEDER", "SEM:GENSNETVILA", "SEM:GENLECOMB", "SEM:GENANCIGARE", "SEM:GENPLV", "SEM:GENARGOUD", "SEM:GENPRENOUVE", "SEM:GENHENRIREY", "SEM:GENCIG"] },
+           { keywords: ["ovalie"], stops: ["SEM:GENCIG", "SEM:GENHENRIREY", "SEM:GENPRENOUVE", "SEM:GENARGOUD", "SEM:GENPLV", "SEM:GENANCIGARE", "SEM:GENLECOMB", "SEM:GENSNETVILA", "SEM:GENBELVEDER", "SEM:GENLAMURAIL", "SEM:GENBOUCHDV", "SEM:GENARBERGES", "SEM:GENMAISONNA", "SEM:GENCURIVERC", "SEM:GENRUEPASTE", "SEM:GENPLACMARC", "SEM:GENJULESGUE", "SEM:GENECRINS", "SEM:GENMARAT", "SEM:GENRUEALPES", "SEM:GENGERARPHI", "SEM:GENLAPOYA", "SEM:GENLESPIES", "SEM:GENPREFLEUR", "SEM:GENTREFFORI", "SEM:GENPLIBERAT", "SEM:GENLEGUA", "SEM:GENOVALIE"] },
+    ]},
+
+    "SEM:20": { directions: [
+           { keywords: ["rive", "engenières"], stops: ["SEM:GENSEYHDV", "SEM:GENBERGVERC", "SEM:GENKARLMARX", "SEM:GENJEANPREV", "SEM:GENANCIEMAI", "SEM:GENLAPOYA", "SEM:GENLESPIES", "SEM:GENPREFLEUR", "SEM:GENTREFFORI", "SEM:GENPLIBERAT", "SEM:GENCHATSASS", "SEM:GENROLLANDI", "SEM:GENENGENIER", "SEM:GENPRAPARIS", "SEM:GENPRAPAROS", "SEM:GENCHAULNES", "SEM:GENNOYARSTJ", "SEM:GENNOYARBAS", "SEM:GENRUISSET", "SEM:GENLACUCHE", "SEM:GENILESCORD", "SEM:GENPERIERES", "SEM:GENECHALIER", "SEM:GENVEUREYRI"] },
+           { keywords: ["ville"], stops: ["SEM:GENVEUREYRI", "SEM:GENECHALIER", "SEM:GENPERIERES", "SEM:GENILESCORD", "SEM:GENLACUCHE", "SEM:GENRUISSET", "SEM:GENNOYARBAS", "SEM:GENNOYARSTJ", "SEM:GENCHAULNES", "SEM:GENPRAPAROS", "SEM:GENPRAPARIS", "SEM:GENENGENIER", "SEM:GENROLLANDI", "SEM:GENCHATSASS", "SEM:GENPLIBERAT", "SEM:GENTREFFORI", "SEM:GENPREFLEUR", "SEM:GENLESPIES", "SEM:GENLAPOYA", "SEM:GENANCIEMAI", "SEM:GENJEANPREV", "SEM:GENKARLMARX", "SEM:GENBERGVERC", "SEM:GENLESILES", "SEM:GENSEYHDV"] },
+    ]},
+
+    "SEM:21": { directions: [
+           { keywords: ["prisme"], stops: ["SEM:GENPTROUGE", "SEM:GENPOMPIDOU", "SEM:GENCHIEZE", "SEM:GENRONZY", "SEM:GENCLAIXMAI", "SEM:GENPOSTE", "SEM:GENFURONNIE", "SEM:GENCRXROLLA", "SEM:GENCOLCOMBO", "SEM:GENCIG", "SEM:GENHENRIREY", "SEM:GENPRENOUVE", "SEM:GENCHAUMIER", "SEM:GENBOURNET", "SEM:GENLABAUME", "SEM:GENMARCSANG", "SEM:GENPRISME"] },
+           { keywords: ["rouge"], stops: ["SEM:GENPRISME", "SEM:GENMARCSANG", "SEM:GENLABAUME", "SEM:GENBOURNET", "SEM:GENCHAUMIER", "SEM:GENPRENOUVE", "SEM:GENHENRIREY", "SEM:GENCIG", "SEM:GENCOLCOMBO", "SEM:GENCRXROLLA", "SEM:GENFURONNIE", "SEM:GENCLAIXMAI", "SEM:GENRONZY", "SEM:GENCHIEZE", "SEM:GENPOMPIDOU", "SEM:GENPTROUGE"] },
+    ]},
+
+    "SEM:22": { directions: [
+           { keywords: ["gare"], stops: ["SEM:GENOXF", "SEM:GENGAGNIERE", "SEM:GENCAPDESH", "SEM:GENGLAIRAUX", "SEM:GENBELLEDON", "SEM:GENPREDIEU", "SEM:GENMURET", "SEM:GENMOUTONNE", "SEM:GENPTVENCE", "SEM:GENVISANCOU", "SEM:GENCUVILLEU", "SEM:GENLAMONTA", "SEM:GENEGLISESE", "SEM:GENGAVANIER", "SEM:GENROCHERES", "SEM:GENROCHEPLE", "SEM:GENKARBEN", "SEM:GENCAP38", "SEM:GENBIOLLE", "SEM:GENEGR"] },
+           { keywords: ["oxford"], stops: ["SEM:GENEGR", "SEM:GENBIOLLE", "SEM:GENCAP38", "SEM:GENKARBEN", "SEM:GENROCHEPLE", "SEM:GENROCHERES", "SEM:GENGAVANIER", "SEM:GENEGLISESE", "SEM:GENLAMONTA", "SEM:GENCUVILLEU", "SEM:GENVISANCOU", "SEM:GENPTVENCE", "SEM:GENMOUTONNE", "SEM:GENMURET", "SEM:GENPREDIEU", "SEM:GENBELLEDON", "SEM:GENGLAIRAUX", "SEM:GENCAPDESH", "SEM:GENOXF"] },
+    ]},
+
+    "SEM:23": { directions: [
+           { keywords: ["péage"], stops: ["SEM:GENBIBLIUNI", "SEM:GENBIOLOGIE", "SEM:GENVIGNATE", "SEM:GENGIERGARE", "SEM:GENJRCHA", "SEM:GENEDELWEIS", "SEM:GENLACOMBE", "SEM:GENTERRATS", "SEM:GENLECHENIL", "SEM:GENMAUPA", "SEM:GENPEIFEND", "SEM:GENCROISEM", "SEM:GENUGA", "SEM:GENRSM", "SEM:GENLATUILE", "SEM:GENALBERGES", "SEM:GENGUICHARD", "SEM:GENJBRUANT", "SEM:GENVAULHAUT", "SEM:GENMARCHAND", "SEM:GENMAISON", "SEM:GENVAULBAS", "SEM:GENLEPLATRE", "SEM:GENTRAVERS", "SEM:GENPONTMAS", "SEM:GENCORNIERS", "SEM:GENLESALLAS", "SEM:GENCHAT", "SEM:GENLTE", "SEM:GENPEAGEDEV"] },
+           { keywords: ["bibliothèques"], stops: ["SEM:GENPEAGEDEV", "SEM:GENLTE", "SEM:GENCHAT", "SEM:GENLESALLAS", "SEM:GENCORNIERS", "SEM:GENPONTMAS", "SEM:GENTRAVERS", "SEM:GENLEPLATRE", "SEM:GENVAULBAS", "SEM:GENMAISON", "SEM:GENMARCHAND", "SEM:GENVAULHAUT", "SEM:GENJBRUANT", "SEM:GENGUICHARD", "SEM:GENALBERGES", "SEM:GENLATUILE", "SEM:GENRSM", "SEM:GENUGA", "SEM:GENCROISEM", "SEM:GENPEIFEND", "SEM:GENMAUPA", "SEM:GENLECHENIL", "SEM:GENTERRATS", "SEM:GENLACOMBE", "SEM:GENEDELWEIS", "SEM:GENJRCHA", "SEM:GENGIERGARE", "SEM:GENVIGNATE", "SEM:GENBIOLOGIE", "SEM:GENBIBLIUNI"] },
+    ]},
+
+    "SEM:24": { directions: [
+           { keywords: ["verdun"], stops: ["SEM:GENJRCHA", "SEM:GENEDELWEIS", "SEM:GENROSERAIE", "SEM:GENANGUISSE", "SEM:GENGALOCHER", "SEM:GENELSATRIO", "SEM:GENCOLI", "SEM:GENPORTAILR", "SEM:GENCITELABE", "SEM:GENMC", "SEM:GENGAY", "SEM:GENCROIXROU", "SEM:GENVALMY", "SEM:GENBIRHAKEI", "SEM:GENVERDUN"] },
+           { keywords: ["gare"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENCROIXROU", "SEM:GENGAY", "SEM:GENMC", "SEM:GENCITELABE", "SEM:GENPORTAILR", "SEM:GENCOLI", "SEM:GENELSATRIO", "SEM:GENGALOCHER", "SEM:GENANGUISSE", "SEM:GENROSERAIE", "SEM:GENEDELWEIS", "SEM:GENJRCHA"] },
+    ]},
+
+    "SEM:25": { directions: [
+           { keywords: ["saillants", "valonne"], stops: ["SEM:GENGARES", "SEM:GENALSACELO", "SEM:GENCONDORCE", "SEM:GENCAB", "SEM:GENVALLIBE", "SEM:GENALLIES", "SEM:GENLMICHEL", "SEM:GENSTADLESD", "SEM:GENRONDEAU", "SEM:GENQUINZAIN", "SEM:GENBAYARD", "SEM:GENLETOILE", "SEM:GENILESMARS", "SEM:GENPCM", "SEM:GENPTROUGE", "SEM:GENCARRIERE", "SEM:GENPREORME", "SEM:GENROCHEFOR", "SEM:GENSTEANGE", "SEM:GENRONDEURO", "SEM:GENORIEL", "SEM:GENVARCESRE", "SEM:GENPELISIER", "SEM:GENGARCINS", "SEM:GENURIOL", "SEM:GENVIFMAIRI", "SEM:GENVIFGEND", "SEM:GENMASSEGU", "SEM:GENLAVALONE", "SEM:GENCIMEBOUR", "SEM:GENCHALET", "SEM:GENGRANGE", "SEM:GENLERIF", "SEM:GENUSINENOR", "SEM:GENPONTGENE", "SEM:GENSAILLANT"] },
+           { keywords: ["dumont"], stops: ["SEM:GENSAILLANT", "SEM:GENPONTGENE", "SEM:GENUSINENOR", "SEM:GENLERIF", "SEM:GENGRANGE", "SEM:GENCHALET", "SEM:GENCIMEBOUR", "SEM:GENLAVALONE", "SEM:GENMASSEGU", "SEM:GENVIFGEND", "SEM:GENVIFMAIRI", "SEM:GENURIOL", "SEM:GENGARCINS", "SEM:GENPELISIER", "SEM:GENVARCESRE", "SEM:GENORIEL", "SEM:GENRONDEURO", "SEM:GENSTEANGE", "SEM:GENROCHEFOR", "SEM:GENPREORME", "SEM:GENCARRIERE", "SEM:GENPTROUGE", "SEM:GENPCM", "SEM:GENILESMARS", "SEM:GENLETOILE", "SEM:GENBAYARD", "SEM:GENQUINZAIN", "SEM:GENRONDEAU", "SEM:GENSTADLESD", "SEM:GENLMICHEL", "SEM:GENALLIES", "SEM:GENVALLIBE", "SEM:GENFOCHFERI", "SEM:GENCAB"] },
+           { keywords: ["gares"], stops: ["SEM:GENSAILLANT", "SEM:GENPONTGENE", "SEM:GENUSINENOR", "SEM:GENLERIF", "SEM:GENGRANGE", "SEM:GENCHALET", "SEM:GENCIMEBOUR", "SEM:GENLAVALONE", "SEM:GENMASSEGU", "SEM:GENVIFGEND", "SEM:GENVIFMAIRI", "SEM:GENURIOL", "SEM:GENGARCINS", "SEM:GENPELISIER", "SEM:GENVARCESRE", "SEM:GENORIEL", "SEM:GENRONDEURO", "SEM:GENSTEANGE", "SEM:GENROCHEFOR", "SEM:GENPREORME", "SEM:GENCARRIERE", "SEM:GENPTROUGE", "SEM:GENPCM", "SEM:GENILESMARS", "SEM:GENLETOILE", "SEM:GENBAYARD", "SEM:GENQUINZAIN", "SEM:GENRONDEAU", "SEM:GENSTADLESD", "SEM:GENLMICHEL", "SEM:GENALLIES", "SEM:GENVALLIBE", "SEM:GENCONDORCE", "SEM:GENALSACELO", "SEM:GENGARES"] },
+    ]},
+};
+
 function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
     const cfg = BRANCH_TOPOLOGIES[lineId];
     if (!cfg) return (topologyFull || []).map(s => s.cluster);
@@ -1548,10 +1647,16 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                             
                             html += this.formatPassage(timeData, uniqueId, isTram);
 
-                            if (isTram && isFirst && timeData.realtime) {
-                                setTimeout(() => {
-                                    this.locateTram(timeData.tripId, this.currentStop, dest, uniqueId, timeData);
-                                }, 100); 
+                            if (isFirst && timeData.realtime) {
+                                if (isTram) {
+                                    setTimeout(() => {
+                                        this.locateTram(timeData.tripId, this.currentStop, dest, uniqueId, timeData);
+                                    }, 100);
+                                } else if (BUS_RADAR_STOPS[this.currentLine]) {
+                                    setTimeout(() => {
+                                        this.locateBus(timeData.tripId, this.currentStop, dest, uniqueId, timeData, this.currentLine);
+                                    }, 100);
+                                }
                             }
                         }
                         html += `</div>`;
@@ -1607,10 +1712,11 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 const dotClass = isRealtime ? 'realtime' : 'theoretical';
                 const safeId = (timeData.tripId || '').replace(/'/g, "\\'");
 
+                const isBusWithRadar = !isTram && !!BUS_RADAR_STOPS[this.currentLine];
                 const copyBtn = (isTram && isRealtime)
                     ? `<button class="trip-copy-btn" onclick="event.stopPropagation();app.copyTripId('${safeId}',this)" title="Copier le tripId">⎘</button>`
                     : '';
-                const radarBox = isTram ? `<div id="${elementId}" class="radar-box"></div>` : '';
+                const radarBox = (isTram || isBusWithRadar) ? `<div id="${elementId}" class="radar-box"></div>` : '';
 
                 return `
                     <div class="passage">
@@ -1822,6 +1928,133 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         el.innerHTML = `<div class="radar-info"><div class="radar-static"></div> En attente au terminus de <b>${terminusName}</b></div>`;
                     } else {
                         const currentName = this.getStopName(currentStopCode);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
+                    }
+                } else {
+                    if (lastSeenWithTime !== null) {
+                        const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+                    } else {
+                        el.innerHTML = '';
+                    }
+                }
+            },
+
+            async locateBus(tripId, currentStopCode, destination, elementId, timeData, lineId) {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+
+                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Localisation...</div>`;
+
+                const now = new Date();
+                let currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                if (now.getHours() < 4) currentSec += 86400;
+                const passageSec = timeData.realtimeDeparture || timeData.scheduledDeparture;
+                const currentTimeSec = passageSec - currentSec;
+
+                const currentName = this.getStopName(currentStopCode);
+
+                if (currentTimeSec <= 15) {
+                    el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À l'arrêt <b>${currentName}</b></div>`;
+                    return;
+                }
+
+                const busCfg = BUS_RADAR_STOPS[lineId];
+                if (!busCfg) { el.innerHTML = ''; return; }
+
+                const dest = (destination || '').toLowerCase();
+                let orderedStops = null;
+
+                for (const dir of busCfg.directions) {
+                    if (dir.keywords.some(kw => dest.includes(kw))) {
+                        orderedStops = dir.stops;
+                        break;
+                    }
+                }
+                if (!orderedStops) {
+                    for (const dir of busCfg.directions) {
+                        if (dir.stops.includes(currentStopCode)) {
+                            orderedStops = dir.stops;
+                            break;
+                        }
+                    }
+                }
+                if (!orderedStops) { el.innerHTML = ''; return; }
+
+                const currentIdx = orderedStops.indexOf(currentStopCode);
+                if (currentIdx < 0) { el.innerHTML = ''; return; }
+
+                const MAX_DEPTH = 20;
+                let searchIndex = currentIdx - 1;
+                let lastSeenWithTime = null;
+                let reachedTerminus = false;
+                let depth = 0;
+
+                while (depth < MAX_DEPTH) {
+                    if (searchIndex < 0) {
+                        reachedTerminus = true;
+                        break;
+                    }
+
+                    const checkCluster = orderedStops[searchIndex];
+                    try {
+                        const res = await fetch(`${API_BASE}/clusters/${checkCluster}/stoptimes`);
+                        const checkData = await res.json();
+
+                        let foundTime = null;
+                        let stopServedSameDir = false;
+                        for (const pattern of checkData) {
+                            if (!this.matchesLine(pattern.pattern.id, lineId)) continue;
+                            const patternDest = (pattern.pattern.desc || '').split('>').pop().trim().toLowerCase();
+                            const sameDir = busCfg.directions.find(d =>
+                                d.keywords.some(kw => dest.includes(kw))
+                            );
+                            if (sameDir && sameDir.keywords.some(kw => patternDest.includes(kw))) {
+                                stopServedSameDir = true;
+                            }
+                            for (const t of pattern.times) {
+                                if (t.tripId === tripId) {
+                                    const n = new Date();
+                                    let sec = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+                                    if (n.getHours() < 4) sec += 86400;
+                                    foundTime = (t.realtimeDeparture || t.scheduledDeparture) - sec;
+                                    break;
+                                }
+                            }
+                            if (foundTime !== null) break;
+                        }
+
+                        if (foundTime !== null) {
+                            const stopName = this.getStopName(checkCluster);
+                            if (foundTime <= 15) {
+                                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À l'arrêt <b>${stopName}</b></div>`;
+                                return;
+                            } else if (foundTime <= 60) {
+                                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${stopName}</b></div>`;
+                                return;
+                            } else {
+                                lastSeenWithTime = { cluster: checkCluster, time: Math.floor(foundTime / 60) };
+                            }
+                        } else if (stopServedSameDir) {
+                            if (lastSeenWithTime !== null) {
+                                const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+                                return;
+                            }
+                        }
+
+                        searchIndex--;
+                        depth++;
+                    } catch (e) {
+                        break;
+                    }
+                }
+
+                if (reachedTerminus) {
+                    if (lastSeenWithTime !== null) {
+                        const terminusName = this.getStopName(lastSeenWithTime.cluster);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-static"></div> En attente au terminus de <b>${terminusName}</b></div>`;
+                    } else {
                         el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
                     }
                 } else {
