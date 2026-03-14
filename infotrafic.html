@@ -1208,7 +1208,8 @@
                                 if (!tripMap.has(t.tripId)) {
                                     tripMap.set(t.tripId, { tripId: t.tripId, direction, schedule: [] });
                                 }
-                                tripMap.get(t.tripId).schedule.push({ stopName, clusterIdx: ci, scheduledSec, realtimeSec });
+                                tripMap.get(t.tripId).schedule.push({ stopName, clusterIdx: ci, scheduledSec, realtimeSec,
+                                    delay: t.departureDelay ?? t.arrivalDelay ?? (realtimeSec - scheduledSec) });
                             }
                         }
                     }
@@ -1221,7 +1222,9 @@
 
 
                         const firstFuture = trip.schedule.find(s => s.scheduledSec > nowSec);
-                        trip.delay = firstFuture ? firstFuture.realtimeSec - firstFuture.scheduledSec : 0;
+                        const lastPassed  = [...trip.schedule].reverse().find(s => s.scheduledSec <= nowSec);
+                        const refStop     = firstFuture ?? lastPassed;
+                        trip.delay = refStop ? refStop.delay : 0;
 
                         const nextStop = trip.schedule.find(s => s.realtimeSec > nowSec);
                         trip.positionIdx = nextStop

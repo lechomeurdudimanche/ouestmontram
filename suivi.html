@@ -526,6 +526,7 @@ const suivi = {
                         const rt    = t.realtimeDeparture  ?? t.realtimeArrival ?? sched;
                         schedule.push({ cluster, name,
                             scheduledSec: sched, realtimeSec: rt,
+                            delay: t.departureDelay ?? t.arrivalDelay ?? (rt - sched),
                             isRealtime: t.realtimeState === 'UPDATED' });
                         if (!this.destination) {
                             const desc = pattern.pattern?.desc || '';
@@ -563,29 +564,71 @@ const suivi = {
 
         for (const entry of toFetch) {
             try {
-                const res  = await fetch(`${API_BASE}/clusters/${entry.cluster}/stoptimes`);
-                if (!res.ok) continue;
-                const data = await res.json();
                 const delay = this._getDelay();
-                for (const pattern of data) {
-                    for (const t of pattern.times) {
-                        if (t.tripId !== this.tripId) continue;
-                        const rt = t.realtimeDeparture ?? t.realtimeArrival ?? entry.scheduledSec;
-                        entry.realtimeSec = rt;
-                        entry.isRealtime  = t.realtimeState === 'UPDATED';
+                const found = await this._fetchAndUpdateEntry(entry);
+
+                if (!found && entry === nextStop) {
+                    const startIdx = this.schedule.indexOf(nextStop);
+                    const FALLBACK_MAX = 4;
+                    for (let i = 1; i <= FALLBACK_MAX; i++) {
+                        const candidate = this.schedule[startIdx + i];
+                        if (!candidate) break;
+                        if (candidate === selectedEntry) continue;
+                        const fbFound = await this._fetchAndUpdateEntry(candidate);
+                        if (fbFound) {
+                            const newDelay = candidate.delay;
+                            nextStop.delay = newDelay;
+                            nextStop.realtimeSec = nextStop.scheduledSec + newDelay;
+                            console.log(`[RETARD] fallback appliqué sur "${nextStop.name}" : ${newDelay >= 0 ? '+' : ''}${newDelay}s (source : "${candidate.name}")`);
+                            for (const s of this.schedule) {
+                                if (s === candidate || s === nextStop || s === selectedEntry) continue;
+                                if (s.scheduledSec > now) {
+                                    s.delay = newDelay;
+                                    s.realtimeSec = s.scheduledSec + newDelay;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
+
                 if (entry === nextStop) {
                     const newDelay = this._getDelay();
                     const delta = newDelay - delay;
                     if (delta !== 0) {
                         for (const s of this.schedule) {
                             if (s === nextStop || s === selectedEntry) continue;
-                            if (s.realtimeSec > now) s.realtimeSec += delta;
+                            if (s.scheduledSec > now) {
+                                s.realtimeSec += delta;
+                                s.delay = (s.delay ?? 0) + delta;
+                            }
                         }
                     }
                 }
             } catch(e) {}
+        }
+    },
+
+    async _fetchAndUpdateEntry(entry) {
+        try {
+            const res = await fetch(`${API_BASE}/clusters/${entry.cluster}/stoptimes`);
+            if (!res.ok) return false;
+            const data = await res.json();
+            for (const pattern of data) {
+                for (const t of pattern.times) {
+                    if (t.tripId !== this.tripId) continue;
+                    const rt = t.realtimeDeparture ?? t.realtimeArrival ?? entry.scheduledSec;
+                    entry.realtimeSec = rt;
+                    entry.delay       = t.departureDelay ?? t.arrivalDelay ?? (rt - entry.scheduledSec);
+                    entry.isRealtime  = t.realtimeState === 'UPDATED';
+                    console.log(`[RETARD] ${entry.delay >= 0 ? '+' : ''}${entry.delay}s — constaté à "${entry.name}" (${entry.cluster})`);
+                    return true;
+                }
+            }
+            console.log(`[RETARD] trip absent de stoptimes à "${entry.name}" (${entry.cluster}) — délai inchangé : ${entry.delay >= 0 ? '+' : ''}${entry.delay ?? '?'}s`);
+            return false;
+        } catch(e) {
+            return false;
         }
     },
 
@@ -598,9 +641,9 @@ const suivi = {
     _getDelay() {
         const now = this._getNow();
         for (const s of this.schedule)
-            if (s.scheduledSec > now) return s.realtimeSec - s.scheduledSec;
+            if (s.realtimeSec > now - 60) return s.delay ?? (s.realtimeSec - s.scheduledSec);
         const last = this.schedule[this.schedule.length - 1];
-        return last ? last.realtimeSec - last.scheduledSec : 0;
+        return last ? (last.delay ?? last.realtimeSec - last.scheduledSec) : 0;
     },
     _getPosition() {
         const now = this._getNow();
@@ -637,7 +680,7 @@ const suivi = {
     },
 
     _render() {
-        const dmin = Math.round(this._getDelay() / 60);
+        const dmin = Math.trunc(this._getDelay() / 60);
         const { t: dText, c: dClass, l: dLabel } = this._delayDisplay(dmin);
         const { lastPassed, nextStop } = this._getPosition();
         const upcoming = this._getUpcoming();
@@ -695,7 +738,7 @@ const suivi = {
     },
 
     _updateCards() {
-        const dmin = Math.round(this._getDelay() / 60);
+        const dmin = Math.trunc(this._getDelay() / 60);
         const { t, c, l } = this._delayDisplay(dmin);
         const hhmm = new Date().toLocaleTimeString('fr-FR');
 
