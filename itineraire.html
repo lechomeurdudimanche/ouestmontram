@@ -156,7 +156,7 @@
         /* ── OPTIONS BAR (scrollable chips) ── */
         #options-bar {
             display: flex; align-items: center; gap: 7px;
-            padding: 9px 14px;
+            padding: 9px 14px 9px 16px;
             border-bottom: 1px solid #1a1a1a;
             overflow-x: auto; flex-shrink: 0;
             -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
@@ -283,8 +283,9 @@
             width: 36px; height: 36px; border-radius: 10px;
             background: #2a2a2a; border: 1px solid #333;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; flex-shrink: 0;
+            color: var(--text-muted); flex-shrink: 0;
         }
+        .pop-opt.selected .pop-opt-icon { color: var(--accent); }
 
         /* Datetime section in time popup */
         #pop-time-input-wrap {
@@ -903,53 +904,48 @@
 
             const checkIcon = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round"><polyline points="2,6 5,9 10,3"/></svg>`;
 
+            const ICONS = {
+                transit: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 3H8l-1 4h10z"/><circle cx="8" cy="17" r="1.2"/><circle cx="16" cy="17" r="1.2"/></svg>`,
+                walk:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l3 2 2 4"/><path d="M8 20l3-6 2 3 3-5"/><path d="M6 14l2-4"/></svg>`,
+                now:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`,
+                depart:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/><line x1="12" y1="3" x2="12" y2="1"/></svg>`,
+                arrive:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+                fastest: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+                lessWalk:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-8 4 4 4-6 4 10"/></svg>`,
+            };
+
+            const optRow = (val, key, label, sub, sel, handler) =>
+                `<div class="pop-opt ${sel?'selected':''}" onclick="ITIN.${handler}('${val}')">
+                    <div class="pop-opt-icon">${ICONS[key]||''}</div>
+                    <div class="pop-opt-body">
+                        <div class="pop-opt-label">${label}</div>
+                        <div class="pop-opt-sub">${sub}</div>
+                    </div>
+                    <div class="pop-check">${checkIcon}</div>
+                </div>`;
+
             if(type==='mode'){
                 title.textContent = 'Mode de transport';
                 body.innerHTML = [
-                    { val:'transit', icon:'🚊', label:'Transports en commun', sub:'Tram, bus, correspondances' },
-                    { val:'walk',    icon:'🚶', label:'À pied',               sub:'Itinéraire pédestre uniquement' },
-                ].map(o=>`<div class="pop-opt ${this.travelMode===o.val?'selected':''}" onclick="ITIN._pickMode('${o.val}')">
-                    <div class="pop-opt-icon">${o.icon}</div>
-                    <div class="pop-opt-body">
-                        <div class="pop-opt-label">${o.label}</div>
-                        <div class="pop-opt-sub">${o.sub}</div>
-                    </div>
-                    <div class="pop-check">${checkIcon}</div>
-                </div>`).join('');
+                    ['transit','transit','Transports en commun','Tram, bus, correspondances'],
+                    ['walk',   'walk',   'À pied',              'Itinéraire pédestre uniquement'],
+                ].map(([val,key,l,s])=>optRow(val,key,l,s,this.travelMode===val,'_pickMode')).join('');
 
             } else if(type==='time'){
                 title.textContent = 'Heure du trajet';
-                const modes = [
-                    { val:'now',    icon:'⚡', label:'Maintenant',  sub:'Prochain départ disponible' },
-                    { val:'depart', icon:'🕐', label:'Départ à…',   sub:'Choisir l\'heure de départ' },
-                    { val:'arrive', icon:'🏁', label:'Arrivée à…',  sub:'Choisir l\'heure d\'arrivée' },
-                ];
-                body.innerHTML = modes.map(o=>`<div class="pop-opt ${this.timeMode===o.val?'selected':''}" onclick="ITIN._pickTimeMode('${o.val}')">
-                    <div class="pop-opt-icon">${o.icon}</div>
-                    <div class="pop-opt-body">
-                        <div class="pop-opt-label">${o.label}</div>
-                        <div class="pop-opt-sub">${o.sub}</div>
-                    </div>
-                    <div class="pop-check">${checkIcon}</div>
-                </div>`).join('');
-                if(this.timeMode!=='now'){
-                    this._showTimeInput();
-                }
+                body.innerHTML = [
+                    ['now',    'now',    'Maintenant', 'Prochain départ disponible'],
+                    ['depart', 'depart', 'Départ à…',  'Choisir l\'heure de départ'],
+                    ['arrive', 'arrive', 'Arrivée à…', 'Choisir l\'heure d\'arrivée'],
+                ].map(([val,key,l,s])=>optRow(val,key,l,s,this.timeMode===val,'_pickTimeMode')).join('');
+                if(this.timeMode!=='now') this._showTimeInput();
 
             } else if(type==='sort'){
                 title.textContent = 'Trier les résultats';
-                const sorts = [
-                    { val:'fastest',  icon:'⚡', label:'Le plus rapide',   sub:'Durée totale minimale' },
-                    { val:'lessWalk', icon:'👟', label:'Moins de marche',  sub:'Distance à pied minimale' },
-                ];
-                body.innerHTML = sorts.map(o=>`<div class="pop-opt ${this.sortMode===o.val?'selected':''}" onclick="ITIN._pickSort('${o.val}')">
-                    <div class="pop-opt-icon">${o.icon}</div>
-                    <div class="pop-opt-body">
-                        <div class="pop-opt-label">${o.label}</div>
-                        <div class="pop-opt-sub">${o.sub}</div>
-                    </div>
-                    <div class="pop-check">${checkIcon}</div>
-                </div>`).join('');
+                body.innerHTML = [
+                    ['fastest',  'fastest',  'Le plus rapide',  'Durée totale minimale'],
+                    ['lessWalk', 'lessWalk', 'Moins de marche', 'Distance à pied minimale'],
+                ].map(([val,key,l,s])=>optRow(val,key,l,s,this.sortMode===val,'_pickSort')).join('');
             }
 
             /* Show then position */
