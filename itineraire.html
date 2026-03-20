@@ -331,16 +331,13 @@
 
         /* Journey bar */
         .jbar { display: flex; align-items: center; gap: 4px; margin-bottom: 7px; flex-wrap: wrap; }
-        .jb-walk {
-            display: flex; align-items: center; gap: 2px;
-        }
-        .jb-dot { width: 4px; height: 4px; border-radius: 50%; background: #444; flex-shrink: 0; }
+        .jb-walk-icon { font-size: 0.82rem; line-height: 1; }
         .jb-badge {
             display: inline-flex; align-items: center; justify-content: center;
             min-width: 22px; height: 22px; border-radius: 11px; padding: 0 5px;
             font-size: 0.6rem; font-weight: 800; color: white; flex-shrink: 0;
         }
-        .jb-arrow { font-size: 0.65rem; color: #444; }
+        .jb-arrow { font-size: 0.75rem; color: #555; line-height: 1; }
 
         .rc-foot { display: flex; gap: 10px; padding-top: 6px; border-top: 1px solid #1e1e1e; flex-wrap: wrap; }
         .rc-foot span { font-size: 0.7rem; color: var(--text-muted); }
@@ -371,35 +368,79 @@
         #dv-steps::-webkit-scrollbar { display: none; }
 
         /* Steps */
-        .step { display: flex; gap: 12px; }
+        .step { display: flex; gap: 12px; margin-bottom: 2px; }
         .step-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 30px; }
-        .sdot {
-            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
-        }
+        .sdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
         .sdot-from { background: #888; border: 2px solid #888; }
         .sdot-walk { border: 2px solid #444; background: var(--bg-dark); }
-        .svline { width: 2px; flex: 1; min-height: 18px; background: #252525; margin: 3px 0; }
+        .svline { width: 3px; flex: 1; min-height: 18px; background: #252525; margin: 3px 0; border-radius: 2px; }
         .svline-walk { background: repeating-linear-gradient(to bottom, #444 0, #444 4px, transparent 4px, transparent 8px); }
-        .step-body { flex: 1; padding-bottom: 16px; }
+        .step-body { flex: 1; padding-bottom: 14px; min-width: 0; }
         .step-title { font-size: 0.84rem; font-weight: 600; color: var(--text-main); }
         .step-sub   { font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; }
+
+        /* Transit step layout */
+        .ts-depart-name {
+            font-size: 0.88rem; font-weight: 700; color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        .ts-line-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+        }
+        .ts-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 26px; height: 26px; border-radius: 13px; padding: 0 6px;
+            font-size: 0.66rem; font-weight: 800; color: white; flex-shrink: 0;
+        }
+        .ts-direction {
+            flex: 1; font-size: 0.8rem; color: var(--text-muted); min-width: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ts-time {
+            font-size: 1.55rem; font-weight: 700; color: var(--text-main);
+            flex-shrink: 0; letter-spacing: -0.5px; line-height: 1;
+        }
+        .ts-stops-toggle {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 10px; border-radius: 7px; background: #1a1a1a;
+            border: 1px solid #2a2a2a; cursor: pointer; margin-bottom: 6px;
+            transition: background 0.12s; user-select: none;
+        }
+        .ts-stops-toggle:active { background: #222; }
+        .ts-toggle-arrow {
+            font-size: 0.6rem; color: var(--text-muted);
+            transition: transform 0.2s; flex-shrink: 0;
+        }
+        .ts-stops-toggle.open .ts-toggle-arrow { transform: rotate(180deg); }
+        .ts-stops-label { font-size: 0.74rem; color: var(--text-muted); flex: 1; }
+        .ts-stops-list {
+            display: none; flex-direction: column; gap: 4px;
+            padding: 4px 0 6px 10px; border-left: 2px solid #2a2a2a; margin-bottom: 7px;
+        }
+        .ts-stops-list.open { display: flex; }
+        .ts-stop-item { display: flex; align-items: center; gap: 7px; }
+        .ts-stop-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid #444; }
+        .ts-stop-name { font-size: 0.73rem; color: #888; }
+        .ts-arrive-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .ts-arrive-name { font-size: 0.88rem; font-weight: 700; color: var(--text-main); }
+        .ts-arrive-time { font-size: 0.88rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
 
         .step-badge {
             display: inline-flex; align-items: center; justify-content: center;
             min-width: 26px; height: 26px; border-radius: 13px; padding: 0 6px;
             font-size: 0.65rem; font-weight: 800; color: white; margin-top: 2px;
         }
-        .inter-stops { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-        .istop { display: flex; align-items: center; gap: 8px; }
-        .idot-pass { width: 7px; height: 7px; border-radius: 50%; border: 2px solid #444; background: var(--bg-dark); flex-shrink: 0; }
-        .idot-last { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-        .istop-name { font-size: 0.75rem; color: #888; flex: 1; }
-        .istop.first .istop-name,
-        .istop.dest .istop-name { color: var(--text-main); font-weight: 600; font-size: 0.78rem; }
-        .istop-time { font-size: 0.71rem; color: #555; }
-        .istop.dest .istop-time { color: var(--accent); }
-
         .dest-step .sdot { background: #e53935; border: 2px solid #e53935; }
+
+        /* Hide search card in detail view */
+        body.detail-open #search-card {
+            opacity: 0; pointer-events: none;
+            transform: translateY(-8px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        #search-card { transition: opacity 0.2s, transform 0.2s; }
 
         /* Misc */
         .empty-msg { text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.9rem; line-height: 1.5; }
@@ -695,7 +736,6 @@
 
             this.initSheetDrag();
             this.loadStops();
-            this.loadTramLines();
         },
 
         /* ────────── DATA LOADING ────────── */
@@ -731,18 +771,23 @@
                 {id:'SEM:E',color:'#5c2a90'},
             ];
             TRAMS.forEach(t => {
-                fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${t.id}/patterns`)
-                    .then(r => r.ok ? r.json() : [])
-                    .then(patterns => {
-                        const drawn = new Set();
-                        (patterns||[]).forEach(p => {
-                            const pts = p.patternGeometry && p.patternGeometry.points;
-                            if(!pts || drawn.has(pts)) return;
-                            drawn.add(pts);
-                            const coords = decodePolyline(pts);
-                            L.polyline(coords, { color:t.color, weight:4, opacity:0.4, pane:'tramPane' }).addTo(this.map);
-                        });
-                    }).catch(()=>{});
+                fetch(`https://data.mobilites-m.fr/api/lines/json?types=ligne&reseaux=SEM`)
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(()=>null)
+                    .then(()=>{
+                        /* Use the shapes API for the line geometry */
+                        fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${t.id}/clusters`)
+                            .then(r => r.ok ? r.json() : [])
+                            .then(stops => {
+                                if(!stops||stops.length<2) return;
+                                /* Sort stops by approximate order along the line */
+                                const coords = stops
+                                    .filter(s=>s.lat&&s.lon)
+                                    .map(s=>[s.lat,s.lon]);
+                                if(coords.length<2) return;
+                                L.polyline(coords, { color:t.color, weight:4, opacity:0.35, pane:'tramPane' }).addTo(this.map);
+                            }).catch(()=>{});
+                    });
             });
         },
 
@@ -1129,16 +1174,16 @@
 
                 /* Journey bar — skip walk legs shorter than 250m */
                 let jbar='';
-                itin.legs.forEach((leg,li)=>{
+                itin.legs.forEach((leg)=>{
                     if(leg.mode==='WALK'){
                         if(leg.distance >= 250){
-                            jbar+=`<div class="jb-walk"><div class="jb-dot"></div><div class="jb-dot"></div><div class="jb-dot"></div></div>`;
+                            jbar+=`<span class="jb-walk-icon">🚶</span>`;
                         }
                     } else {
                         const n=legName(leg);
                         const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#777');
                         const tc=lineTextColor(n);
-                        if(jbar.length) jbar+=`<span class="jb-arrow">–</span>`;
+                        if(jbar.length) jbar+=`<span class="jb-arrow">›</span>`;
                         jbar+=`<div class="jb-badge" style="background:${c};color:${tc}">${n}</div>`;
                     }
                 });
@@ -1219,10 +1264,12 @@
             /* Spacing in meters adapts to zoom: closer zoom = more dots */
             const intervalForZoom = () => {
                 const z = this.map.getZoom();
-                if(z >= 17) return 8;
-                if(z >= 15) return 15;
-                if(z >= 13) return 30;
-                return 60;
+                if(z >= 17) return 15;
+                if(z >= 16) return 40;
+                if(z >= 15) return 100;
+                if(z >= 14) return 175;
+                if(z >= 13) return 250;
+                return 500;
             };
 
             const layer = L.layerGroup().addTo(this.map);
@@ -1368,103 +1415,137 @@
             document.getElementById('dvs-route').textContent = `${this.from.name} – ${this.to.name}`;
             document.getElementById('dv-steps').innerHTML = this.buildSteps(itin);
 
-            /* Swap panels */
+            /* Swap panels + hide search card */
             document.getElementById('sheet-results').classList.add('hidden');
             document.getElementById('sheet-detail').classList.add('active');
+            document.body.classList.add('detail-open');
             this.detailVisible = true;
 
-            /* Draw & fit */
+            /* Draw & fit with more space (search-card hidden) */
             this.drawRoute(itin);
             this.currentBounds = this._getBounds(itin);
             setTimeout(()=>{ if(this.currentBounds) this.fitBounds(this.currentBounds,{maxZoom:15}); }, 50);
         },
 
         closeDetail() {
+            document.body.classList.remove('detail-open');
             this.showResultsPanel();
             if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
             setTimeout(()=>{ if(this.overviewBounds) this.fitBounds(this.overviewBounds); }, 50);
         },
 
         /* ────────── STEP BUILDER ────────── */
+        _stepId: 0,
+
+        /* Strip city prefix from headsign — keep only stop name after last comma */
+        cleanHeadsign(h) {
+            if(!h) return '–';
+            const parts = h.split(',');
+            return parts[parts.length-1].trim();
+        },
+
+        toggleStops(id) {
+            const list   = document.getElementById('stops-list-'+id);
+            const toggle = document.getElementById('stops-toggle-'+id);
+            if(!list||!toggle) return;
+            list.classList.toggle('open');
+            toggle.classList.toggle('open');
+        },
+
         buildSteps(itin) {
             let html='';
             const legs=itin.legs;
+            this._stepId = (this._stepId||0);
 
             legs.forEach((leg,i)=>{
                 const isFirst = i===0;
                 const isLast  = i===legs.length-1;
 
                 if(leg.mode==='WALK'){
-                    const min=Math.round(leg.duration/60);
-                    const dist=fmtDist(leg.distance);
+                    const min  = Math.round(leg.duration/60);
+                    const dist = fmtDist(leg.distance);
+
                     if(isFirst){
+                        /* Departure origin */
                         html+=`<div class="step">
                             <div class="step-col">
                                 <div class="sdot sdot-from"></div>
                                 <div class="svline svline-walk"></div>
                             </div>
                             <div class="step-body">
-                                <div class="step-title">${cleanName(leg.from.name)||this.from.name}</div>
-                                <div class="step-sub">Marcher ${min} min (${dist})</div>
+                                <div class="step-title">${this.from.name}</div>
+                                <div class="step-sub">Marcher ${min} min · ${dist}</div>
                             </div>
                         </div>`;
                     } else if(!isLast){
+                        /* Correspondence walk */
                         html+=`<div class="step">
                             <div class="step-col">
                                 <div class="sdot sdot-walk"></div>
                                 <div class="svline svline-walk"></div>
                             </div>
                             <div class="step-body">
-                                <div class="step-title">Marcher vers ${cleanName(leg.to.name)}</div>
-                                <div class="step-sub">${min} min · ${dist}</div>
+                                <div class="step-title">Correspondance</div>
+                                <div class="step-sub">${min} min à pied · ${dist}</div>
                             </div>
                         </div>`;
                     }
-                    /* Last walk handled below in destination step */
+                    /* Last walk is shown via destination step */
                 } else {
-                    const n=legName(leg);
-                    const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
-                    const tc=lineTextColor(n);
-                    const inter=leg.intermediateStops||[];
-                    const totalStops=inter.length+1; /* +1 for destination */
+                    const sid  = ++this._stepId;
+                    const n    = legName(leg);
+                    const c    = lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
+                    const tc   = lineTextColor(n);
+                    const inter= leg.intermediateStops||[];
+                    const numStops = inter.length + 1;
+                    const durMin   = Math.round(leg.duration/60);
+                    const dir      = this.cleanHeadsign(leg.headsign);
+
+                    const interHTML = inter.map(s=>`
+                        <div class="ts-stop-item">
+                            <div class="ts-stop-dot" style="border-color:${c}"></div>
+                            <span class="ts-stop-name">${cleanName(s.name)}</span>
+                        </div>`).join('');
+
+                    /* If first leg is walk, depart name is already shown; otherwise add it */
+                    const departName = (i===0) ? this.from.name : cleanName(leg.from.name);
 
                     html+=`<div class="step">
                         <div class="step-col">
                             <div class="step-badge" style="background:${c};color:${tc}">${n}</div>
-                            <div class="svline" style="background:${c};opacity:0.3"></div>
+                            <div class="svline" style="background:${c};opacity:0.55"></div>
                         </div>
                         <div class="step-body">
-                            <div class="step-title">Ligne ${n} · direction ${leg.headsign||'–'}</div>
-                            <div class="step-sub">Départ ${fmtTime(leg.startTime)} · ${totalStops} arrêt${totalStops>1?'s':''}</div>
-                            <div class="inter-stops">
-                                <div class="istop first" style="color:${c}">
-                                    <div class="idot-last" style="background:${c}"></div>
-                                    <span class="istop-name">${cleanName(leg.from.name)}</span>
-                                    <span class="istop-time">${fmtTime(leg.startTime)}</span>
-                                </div>
-                                ${inter.map(s=>`<div class="istop">
-                                    <div class="idot-pass" style="border-color:${c}"></div>
-                                    <span class="istop-name">${cleanName(s.name)}</span>
-                                </div>`).join('')}
-                                <div class="istop dest" style="color:${c}">
-                                    <div class="idot-last" style="background:${c}"></div>
-                                    <span class="istop-name">${cleanName(leg.to.name)}</span>
-                                    <span class="istop-time">${fmtTime(leg.endTime)}</span>
-                                </div>
+                            <div class="ts-depart-name">${departName}</div>
+                            <div class="ts-line-row">
+                                <div class="ts-badge" style="background:${c};color:${tc}">${n}</div>
+                                <span class="ts-direction">Direction : ${dir}</span>
+                                <span class="ts-time">${fmtTime(leg.startTime)}</span>
+                            </div>
+                            ${inter.length>0 ? `
+                            <div class="ts-stops-toggle" id="stops-toggle-${sid}" onclick="ITIN.toggleStops(${sid})">
+                                <span class="ts-toggle-arrow">▼</span>
+                                <span class="ts-stops-label">${numStops} arrêt${numStops>1?'s':''} · ${durMin} min</span>
+                            </div>
+                            <div class="ts-stops-list" id="stops-list-${sid}">${interHTML}</div>
+                            ` : `<div class="ts-stops-label" style="font-size:0.74rem;color:var(--text-muted);margin-bottom:7px">${numStops} arrêt${numStops>1?'s':''} · ${durMin} min</div>`}
+                            <div class="ts-arrive-row">
+                                <span class="ts-arrive-name">${cleanName(leg.to.name)}</span>
+                                <span class="ts-arrive-time">${fmtTime(leg.endTime)}</span>
                             </div>
                         </div>
                     </div>`;
                 }
             });
 
-            /* Destination */
-            const last=legs[legs.length-1];
+            /* Final destination */
+            const last = legs[legs.length-1];
             const arrivalNote = last.mode==='WALK' && last.duration>60
                 ? ` · ${Math.round(last.duration/60)} min à pied` : '';
             html+=`<div class="step dest-step">
                 <div class="step-col"><div class="sdot"></div></div>
                 <div class="step-body">
-                    <div class="step-title">${cleanName(last.to.name)||this.to.name}</div>
+                    <div class="step-title">${this.to.name}</div>
                     <div class="step-sub">Arrivée ${fmtTime(itin.endTime)}${arrivalNote}</div>
                 </div>
             </div>`;
