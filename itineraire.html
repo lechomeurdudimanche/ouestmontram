@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <title>Itinéraire - Où est mon tram ?</title>
+    <title>Itinéraire – Où est mon tram ?</title>
     <style>
         :root {
             --bg-dark: #121212;
@@ -18,11 +18,6 @@
             --text-muted: #a0a0a0;
             --border: #333;
             --accent: #00d2ff;
-            --color-a: #006eb7;
-            --color-b: #00a459;
-            --color-c: #e2007a;
-            --color-d: #f29400;
-            --color-e: #5c2a90;
             --nav-h: 60px;
             --app-height: 100vh;
         }
@@ -35,19 +30,29 @@
             height: var(--app-height);
             width: 100vw;
             overflow: hidden;
-            position: relative;
             -webkit-font-smoothing: antialiased;
         }
 
+        /* ── MAP ── */
         #map {
             position: absolute;
             top: 0; left: 0; right: 0;
             bottom: var(--nav-h);
             z-index: 0;
         }
-        .leaflet-control-attribution { background: rgba(255,255,255,0.75) !important; font-size: 9px !important; }
+        .leaflet-control-attribution { background: rgba(255,255,255,0.7) !important; font-size: 9px !important; }
         .leaflet-control-zoom a { background: #fff !important; color: #333 !important; border-color: #ddd !important; }
+        .stop-tooltip {
+            background: rgba(255,255,255,0.9) !important;
+            border: none !important; box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
+            border-radius: 3px !important; padding: 1px 5px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-size: 10px !important; font-weight: 600 !important;
+            color: #222 !important; white-space: nowrap;
+        }
+        .stop-tooltip::before { display: none !important; }
 
+        /* ── SEARCH FLOAT ── */
         #search-float {
             position: absolute;
             top: 0; left: 0; right: 0;
@@ -68,8 +73,8 @@
             border-right: 1px solid var(--border);
         }
         .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-        .dot-from { background: var(--accent); }
-        .dot-to   { background: #e85d3a; }
+        .dot-from { background: #888; }
+        .dot-to   { background: #e53935; }
         .dot-mid  { width: 1px; height: 15px; background: var(--border); }
         .sf-inputs { flex: 1; min-width: 0; }
         .sf-row {
@@ -82,54 +87,29 @@
             color: var(--text-main); font-size: 0.87rem; font-family: inherit; min-width: 0;
         }
         .sf-row input::placeholder { color: var(--text-muted); }
-        .geo-btn {
+        .geo-btn, .swap-btn {
             width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
-            background: rgba(0,210,255,0.1); border: 1px solid rgba(0,210,255,0.28);
             display: flex; align-items: center; justify-content: center;
             transition: background 0.15s;
         }
-        .geo-btn:active { background: rgba(0,210,255,0.2); }
-        .swap-btn {
-            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
-            background: var(--bg-hover); border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-        }
+        .geo-btn { background: rgba(0,210,255,0.1); border: 1px solid rgba(0,210,255,0.28); }
+        .geo-btn:active { background: rgba(0,210,255,0.22); }
+        .swap-btn { background: var(--bg-hover); border: 1px solid var(--border); }
         .swap-btn:active { background: #333; }
-        .time-row {
-            display: flex; gap: 5px; padding: 8px 12px;
-            background: rgba(0,0,0,0.25); border-top: 1px solid var(--border);
-        }
-        .time-pill {
-            font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
-            border: 1px solid var(--border); color: var(--text-muted);
-            background: var(--bg-panel); cursor: pointer; white-space: nowrap;
-            transition: all 0.15s; user-select: none;
-        }
-        .time-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.4); color: var(--accent); font-weight: 600; }
-        #time-input-row {
-            display: none; padding: 6px 12px 10px; border-top: 1px solid var(--border);
-        }
-        #time-input-row.show { display: block; }
-        #time-input-row input {
-            width: 100%; background: #0d0d0d; border: 1px solid var(--border);
-            border-radius: 8px; color: var(--text-main); padding: 7px 10px;
-            font-size: 0.83rem; font-family: inherit; outline: none;
-        }
-        #time-input-row input:focus { border-color: var(--accent); }
 
+        /* Dropdown */
         #search-dropdown {
             background: var(--bg-panel);
             border: 1px solid var(--border); border-top: none;
             border-radius: 0 0 16px 16px;
-            max-height: 55vh; overflow-y: auto;
+            max-height: 52vh; overflow-y: auto;
             display: none;
             box-shadow: 0 10px 28px rgba(0,0,0,0.55);
         }
         #search-dropdown.open { display: block; }
         #search-dropdown::-webkit-scrollbar { display: none; }
         .drop-label {
-            font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+            font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
             letter-spacing: 0.5px; color: var(--text-muted); padding: 8px 14px 3px;
         }
         .drop-item {
@@ -147,12 +127,14 @@
         .drop-info { flex: 1; min-width: 0; }
         .drop-name { font-size: 0.83rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .drop-sub  { font-size: 0.71rem; color: var(--text-muted); margin-top: 1px; }
-        .line-pills { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+        .line-pills { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
         .lp {
-            font-size: 0.6rem; font-weight: 800; color: white;
-            padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; border-radius: 9px; padding: 0 4px;
+            font-size: 0.58rem; font-weight: 800; color: white; white-space: nowrap;
         }
 
+        /* ── BOTTOM SHEET (single) ── */
         #bottom-sheet {
             position: absolute;
             bottom: var(--nav-h); left: 0; right: 0;
@@ -162,73 +144,80 @@
             z-index: 110;
             display: flex; flex-direction: column;
             height: 0; overflow: hidden;
+            transition: none;
         }
-
         .sh-handle-area { padding: 8px 0 2px; cursor: grab; flex-shrink: 0; touch-action: none; }
         .sh-handle { width: 36px; height: 4px; background: #3a3a3a; border-radius: 2px; margin: 0 auto; }
 
+        /* Results panel */
+        #sheet-results { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        #sheet-results.hidden { display: none; }
+
         #mode-bar {
-            display: flex; gap: 6px; padding: 8px 12px;
+            display: flex; align-items: center; gap: 6px; padding: 7px 12px;
             border-bottom: 1px solid #1e1e1e; flex-shrink: 0;
         }
         .mode-pill {
-            font-size: 0.75rem; padding: 6px 16px; border-radius: 20px;
+            font-size: 0.75rem; padding: 5px 14px; border-radius: 20px;
             border: 1px solid var(--border); color: var(--text-muted);
             background: #1a1a1a; cursor: pointer; white-space: nowrap; flex-shrink: 0;
             transition: all 0.15s; user-select: none; font-weight: 500;
         }
         .mode-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.35); color: var(--accent); font-weight: 600; }
+        .time-toggle-btn {
+            margin-left: auto; display: flex; align-items: center; gap: 4px;
+            font-size: 0.72rem; color: var(--text-muted); cursor: pointer;
+            background: #1a1a1a; border: 1px solid var(--border);
+            border-radius: 20px; padding: 5px 10px; flex-shrink: 0; white-space: nowrap;
+            transition: all 0.15s; user-select: none;
+        }
+        .time-toggle-btn.active-time { border-color: rgba(0,210,255,0.35); color: var(--accent); }
+
+        #time-picker {
+            display: none; flex-direction: column;
+            background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--border);
+            padding: 7px 12px; gap: 6px; flex-shrink: 0;
+        }
+        #time-picker.open { display: flex; }
+        .tp-pills { display: flex; gap: 5px; }
+        .tp-pill {
+            font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
+            border: 1px solid var(--border); color: var(--text-muted);
+            background: var(--bg-panel); cursor: pointer; white-space: nowrap;
+            transition: all 0.15s; user-select: none;
+        }
+        .tp-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.4); color: var(--accent); font-weight: 600; }
+        #time-input-wrap { display: none; }
+        #time-input-wrap.show { display: block; }
+        #custom-time-input {
+            width: 100%; background: #0d0d0d; border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); padding: 7px 10px;
+            font-size: 0.83rem; font-family: inherit; outline: none;
+        }
+        #custom-time-input:focus { border-color: var(--accent); }
+
+        #filter-bar {
+            display: none; gap: 5px; padding: 7px 12px;
+            border-bottom: 1px solid #1e1e1e; flex-shrink: 0; flex-wrap: wrap;
+        }
+        #filter-bar.show { display: flex; }
+        .filter-pill {
+            font-size: 0.72rem; padding: 4px 11px; border-radius: 20px;
+            border: 1px solid var(--border); color: var(--text-muted);
+            background: #1a1a1a; cursor: pointer; white-space: nowrap;
+            transition: all 0.15s; user-select: none; font-weight: 500;
+        }
+        .filter-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.35); color: var(--accent); font-weight: 600; }
 
         #results-list { flex: 1; overflow-y: auto; padding: 6px 10px 10px; }
         #results-list::-webkit-scrollbar { display: none; }
 
+        /* Route cards */
         .rcard {
             background: #1a1a1a; border: 1px solid #2a2a2a;
             border-radius: 14px; padding: 11px 13px; margin-bottom: 7px;
             cursor: pointer; transition: border-color 0.15s, background 0.12s;
             user-select: none;
-        }
-        .rcard:active { background: #202020; }
-
-        .rc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-        .rc-time { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
-        .rc-dur  { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
-
-        .jbar { display: flex; align-items: center; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
-        .jb-walk { width: 18px; height: 3px; background: #2e2e2e; border-radius: 2px; flex-shrink: 0; }
-        .jb-join { width: 5px; height: 2px; background: #2a2a2a; flex-shrink: 0; }
-        .jb-line {
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.62rem; font-weight: 800; color: white;
-            padding: 3px 7px; border-radius: 5px; letter-spacing: 0.3px; flex-shrink: 0;
-        }
-        .rc-foot { display: flex; justify-content: space-between; padding-top: 7px; border-top: 1px solid #1e1e1e; }
-        .rc-foot span { font-size: 0.7rem; color: var(--text-muted); }
-
-        .empty-msg { text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.9rem; line-height: 1.5; }
-        .loading-msg {
-            text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.88rem;
-        }
-        .loading-msg::before {
-            content: ''; display: block; width: 22px; height: 22px;
-            border: 2px solid #333; border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.65s linear infinite; margin: 0 auto 12px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes sheetReveal {
-            from { transform: translateY(100%); }
-            to   { transform: translateY(0); }
-        }
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes mapFade {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-        }
-
-        .rcard {
             animation: fadeSlide 0.22s cubic-bezier(0.25,0.46,0.45,0.94) both;
         }
         .rcard:nth-child(1) { animation-delay: 0.00s; }
@@ -236,47 +225,31 @@
         .rcard:nth-child(3) { animation-delay: 0.10s; }
         .rcard:nth-child(4) { animation-delay: 0.15s; }
         .rcard:nth-child(5) { animation-delay: 0.20s; }
+        .rcard:active { background: #202020; }
 
-        .leaflet-div-icon {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-        .stop-tooltip {
-            background: rgba(255,255,255,0.88) !important;
-            border: none !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-            border-radius: 3px !important;
-            padding: 1px 5px !important;
-            font-family: 'DM Sans', sans-serif !important;
-            font-size: 10px !important;
-            font-weight: 600 !important;
-            color: #222 !important;
-            white-space: nowrap;
-        }
-        .stop-tooltip::before { display: none !important; }
+        .rc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+        .rc-times { font-size: 0.93rem; font-weight: 700; color: var(--text-main); }
+        .rc-dur  { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
 
-        #detail-view {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: var(--nav-h);
-            z-index: 200;
-            display: none;
-            pointer-events: none;
+        /* Journey bar */
+        .jbar { display: flex; align-items: center; gap: 4px; margin-bottom: 7px; flex-wrap: wrap; }
+        .jb-walk {
+            display: flex; align-items: center; gap: 2px;
         }
-        #detail-view.open { display: block; }
-        #detail-view.open #dv-sheet { pointer-events: all; }
-        body.detail-open #search-float { display: none; }
-        body.detail-open #bottom-sheet { pointer-events: none; }
-        #dv-sheet {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: var(--bg-dark);
-            border-radius: 20px 20px 0 0;
-            border-top: 1px solid var(--border);
-            z-index: 10;
-            display: flex; flex-direction: column;
-            overflow: hidden;
-            pointer-events: all;
+        .jb-dot { width: 4px; height: 4px; border-radius: 50%; background: #444; flex-shrink: 0; }
+        .jb-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 22px; height: 22px; border-radius: 11px; padding: 0 5px;
+            font-size: 0.6rem; font-weight: 800; color: white; flex-shrink: 0;
         }
+        .jb-arrow { font-size: 0.65rem; color: #444; }
+
+        .rc-foot { display: flex; gap: 10px; padding-top: 6px; border-top: 1px solid #1e1e1e; flex-wrap: wrap; }
+        .rc-foot span { font-size: 0.7rem; color: var(--text-muted); }
+
+        /* Detail panel */
+        #sheet-detail { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+        #sheet-detail.active { display: flex; }
 
         #dv-header {
             background: var(--bg-dark);
@@ -293,43 +266,61 @@
         }
         .back-btn:active { background: var(--bg-hover); }
         #dv-summary { flex: 1; }
-        #dv-summary .dvs-time { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
-        #dv-summary .dvs-route { font-size: 0.71rem; color: var(--text-muted); margin-top: 2px; }
+        .dvs-time { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+        .dvs-route { font-size: 0.71rem; color: var(--text-muted); margin-top: 2px; }
 
         #dv-steps { flex: 1; overflow-y: auto; padding: 12px 14px 20px; }
         #dv-steps::-webkit-scrollbar { display: none; }
 
+        /* Steps */
         .step { display: flex; gap: 12px; }
-        .step-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 28px; }
+        .step-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 30px; }
         .sdot {
-            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-            margin-top: 3px;
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
         }
+        .sdot-from { background: #888; border: 2px solid #888; }
         .sdot-walk { border: 2px solid #444; background: var(--bg-dark); }
-        .sdot-dest { background: #e85d3a; border: 2px solid #e85d3a; }
         .svline { width: 2px; flex: 1; min-height: 18px; background: #252525; margin: 3px 0; }
-        .svline-transit { opacity: 0.35; }
+        .svline-walk { background: repeating-linear-gradient(to bottom, #444 0, #444 4px, transparent 4px, transparent 8px); }
         .step-body { flex: 1; padding-bottom: 16px; }
         .step-title { font-size: 0.84rem; font-weight: 600; color: var(--text-main); }
         .step-sub   { font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; }
 
-        .transit-pill {
+        .step-badge {
             display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.68rem; font-weight: 800; color: white;
-            padding: 3px 8px; border-radius: 5px; flex-shrink: 0;
-            margin-top: 2px;
+            min-width: 26px; height: 26px; border-radius: 13px; padding: 0 6px;
+            font-size: 0.65rem; font-weight: 800; color: white; margin-top: 2px;
         }
-
         .inter-stops { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
         .istop { display: flex; align-items: center; gap: 8px; }
         .idot-pass { width: 7px; height: 7px; border-radius: 50%; border: 2px solid #444; background: var(--bg-dark); flex-shrink: 0; }
         .idot-last { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-        .istop-name { font-size: 0.75rem; color: #888; }
-        .istop.dest .idot-last { background: currentColor; }
+        .istop-name { font-size: 0.75rem; color: #888; flex: 1; }
+        .istop.first .istop-name,
         .istop.dest .istop-name { color: var(--text-main); font-weight: 600; font-size: 0.78rem; }
-        .istop-time { font-size: 0.71rem; color: #444; margin-left: auto; }
+        .istop-time { font-size: 0.71rem; color: #555; }
         .istop.dest .istop-time { color: var(--accent); }
 
+        .dest-step .sdot { background: #e53935; border: 2px solid #e53935; }
+
+        /* Misc */
+        .empty-msg { text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.9rem; line-height: 1.5; }
+        .loading-msg {
+            text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.88rem;
+        }
+        .loading-msg::before {
+            content: ''; display: block; width: 22px; height: 22px;
+            border: 2px solid #333; border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.65s linear infinite; margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .leaflet-div-icon { background: transparent !important; border: none !important; box-shadow: none !important; }
+
+        /* ── BOTTOM NAV ── */
         #bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             height: var(--nav-h); background: var(--bg-panel);
@@ -353,6 +344,7 @@
 <body>
     <div id="map"></div>
 
+    <!-- Search -->
     <div id="search-float">
         <div id="search-card">
             <div class="sf-fields">
@@ -363,20 +355,18 @@
                 </div>
                 <div class="sf-inputs">
                     <div class="sf-row">
-                        <input type="text" id="input-from" placeholder="Position actuelle" autocomplete="off" autocorrect="off" autocapitalize="off">
+                        <input type="text" id="input-from" placeholder="Départ" autocomplete="off" autocorrect="off" autocapitalize="off">
                         <button class="geo-btn" id="geo-btn" onclick="ITIN.geolocate()" title="Ma position">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2" stroke-linecap="round">
-                                <circle cx="12" cy="12" r="4"/>
-                                <line x1="12" y1="2" x2="12" y2="6"/>
-                                <line x1="12" y1="18" x2="12" y2="22"/>
-                                <line x1="2" y1="12" x2="6" y2="12"/>
+                                <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/>
+                                <line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/>
                                 <line x1="18" y1="12" x2="22" y2="12"/>
                             </svg>
                         </button>
                     </div>
                     <div class="sf-row">
-                        <input type="text" id="input-to" placeholder="Où allez-vous ?" autocomplete="off" autocorrect="off" autocapitalize="off">
-                        <button class="swap-btn" onclick="ITIN.swap()" title="Inverser départ/arrivée">
+                        <input type="text" id="input-to" placeholder="Destination" autocomplete="off" autocorrect="off" autocapitalize="off">
+                        <button class="swap-btn" onclick="ITIN.swap()" title="Inverser">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round">
                                 <line x1="12" y1="5" x2="12" y2="19"/>
                                 <polyline points="7 9 12 4 17 9"/>
@@ -386,34 +376,47 @@
                     </div>
                 </div>
             </div>
-            <div class="time-row">
-                <div class="time-pill active" data-mode="now" onclick="ITIN.setMode('now')">Maintenant</div>
-                <div class="time-pill" data-mode="depart" onclick="ITIN.setMode('depart')">Départ à…</div>
-                <div class="time-pill" data-mode="arrive" onclick="ITIN.setMode('arrive')">Arrivée à…</div>
-            </div>
-            <div id="time-input-row">
-                <input type="datetime-local" id="custom-time-input" onchange="ITIN.onTimeChange(this.value)">
-            </div>
         </div>
         <div id="search-dropdown"></div>
     </div>
 
+    <!-- Single bottom sheet -->
     <div id="bottom-sheet">
         <div class="sh-handle-area" id="sh-handle">
             <div class="sh-handle"></div>
         </div>
-        <div id="mode-bar">
-            <div class="mode-pill active" data-mode="transit" onclick="ITIN.setTravelMode('transit')">Transports</div>
-            <div class="mode-pill" data-mode="walk" onclick="ITIN.setTravelMode('walk')">À pied</div>
-        </div>
-        <div id="results-list"></div>
-    </div>
 
-    <div id="detail-view">
-        <div id="dv-sheet">
-            <div class="sh-handle-area" id="dvsh-handle">
-                <div class="sh-handle"></div>
+        <!-- Panel résultats -->
+        <div id="sheet-results">
+            <div id="mode-bar">
+                <div class="mode-pill active" data-mode="transit" onclick="ITIN.setTravelMode('transit')">🚊 Transports</div>
+                <div class="mode-pill" data-mode="walk" onclick="ITIN.setTravelMode('walk')">🚶 À pied</div>
+                <div class="time-toggle-btn" id="time-toggle-btn" onclick="ITIN.toggleTimePicker()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>
+                    </svg>
+                    <span id="time-btn-label">Maintenant</span>
+                </div>
             </div>
+            <div id="time-picker">
+                <div class="tp-pills">
+                    <div class="tp-pill active" data-mode="now" onclick="ITIN.setTimeMode('now')">Maintenant</div>
+                    <div class="tp-pill" data-mode="depart" onclick="ITIN.setTimeMode('depart')">Départ à…</div>
+                    <div class="tp-pill" data-mode="arrive" onclick="ITIN.setTimeMode('arrive')">Arrivée à…</div>
+                </div>
+                <div id="time-input-wrap">
+                    <input type="datetime-local" id="custom-time-input" onchange="ITIN.onTimeChange(this.value)">
+                </div>
+            </div>
+            <div id="filter-bar">
+                <div class="filter-pill active" data-sort="fastest" onclick="ITIN.setSort('fastest')">⚡ Rapide</div>
+                <div class="filter-pill" data-sort="lessWalk" onclick="ITIN.setSort('lessWalk')">👟 Moins de marche</div>
+            </div>
+            <div id="results-list"></div>
+        </div>
+
+        <!-- Panel détail -->
+        <div id="sheet-detail">
             <div id="dv-header">
                 <div class="back-btn" onclick="ITIN.closeDetail()">‹</div>
                 <div id="dv-summary">
@@ -425,677 +428,779 @@
         </div>
     </div>
 
+    <!-- Nav -->
     <div id="bottom-nav">
         <a href="index.html" class="nav-link">
-            <span class="nav-icon">🕐</span>
-            <span>Horaires</span>
+            <span class="nav-icon">🕐</span><span>Horaires</span>
         </a>
         <a href="suivi.html" class="nav-link">
-            <span class="nav-icon">🚋</span>
-            <span>Suivi</span>
+            <span class="nav-icon">🚋</span><span>Suivi</span>
         </a>
         <a href="itineraire.html" class="nav-link active">
-            <span class="nav-icon">🗺️</span>
-            <span>Itinéraire</span>
+            <span class="nav-icon">🗺️</span><span>Itinéraire</span>
         </a>
         <a href="infotrafic.html" class="nav-link">
-            <span class="nav-icon">⚠️</span>
-            <span>Infotrafic</span>
+            <span class="nav-icon">⚠️</span><span>Infotrafic</span>
         </a>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const LINE_COLORS = {
-            'A':'#006eb7','B':'#00a459','C':'#e2007a','D':'#f29400','E':'#5c2a90',
-            'C1':'#f5d24d','C2':'#f5d24d','C3':'#f5d24d','C4':'#f5d24d',
-            'C5':'#f5d24d','C6':'#f5d24d','C7':'#f5d24d','C8':'#f5d24d',
-            'C9':'#ef7c00','C10':'#ef7c00','C11':'#ef7c00','C12':'#ef7c00','C13':'#ef7c00','C14':'#ef7c00'
-        };
-        const CHRONO_LINES = ['C1','C2','C3','C4','C5','C6','C7','C8'];
+    /* ── Constants ── */
+    const LINE_COLORS = {
+        'A':'#006eb7','B':'#00a459','C':'#e2007a','D':'#f29400','E':'#5c2a90',
+        'C1':'#f5d24d','C2':'#f5d24d','C3':'#f5d24d','C4':'#f5d24d',
+        'C5':'#f5d24d','C6':'#f5d24d','C7':'#f5d24d','C8':'#f5d24d',
+        'C9':'#ef7c00','C10':'#ef7c00','C11':'#ef7c00','C12':'#ef7c00','C13':'#ef7c00','C14':'#ef7c00',
+        '15':'#1e71b8','16':'#33a457','17':'#33a457','18':'#33a457','19':'#33a457',
+        '20':'#1e71b8','21':'#1e71b8','22':'#33a457','23':'#1e71b8','24':'#33a457','25':'#1e71b8',
+        '59':'#d572a8'
+    };
+    const CHRONO_DARK = new Set(['C1','C2','C3','C4','C5','C6','C7','C8']);
 
-        function lineColor(name) {
-            if (!name) return '#888';
-            return LINE_COLORS[String(name).toUpperCase()] || LINE_COLORS[name] || '#888';
-        }
-        function lineTextColor(name) {
-            return CHRONO_LINES.includes(String(name).toUpperCase()) ? '#1a1000' : '#ffffff';
-        }
-        function legName(leg) {
-            return leg.routeShortName || leg.route || '';
-        }
+    const lineColor    = n => LINE_COLORS[String(n).toUpperCase()] || LINE_COLORS[n] || '#777';
+    const lineTextColor= n => CHRONO_DARK.has(String(n).toUpperCase()) ? '#1a1000' : '#ffffff';
+    const legName      = leg => leg.routeShortName || leg.route || '';
 
-        function decodePolyline(encoded) {
-            let i = 0, lat = 0, lng = 0, res = [];
-            while (i < encoded.length) {
-                let sh = 0, b, rb = 0;
-                do { b = encoded.charCodeAt(i++) - 63; rb |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20);
-                lat += (rb & 1) ? ~(rb >> 1) : (rb >> 1);
-                sh = rb = 0;
-                do { b = encoded.charCodeAt(i++) - 63; rb |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20);
-                lng += (rb & 1) ? ~(rb >> 1) : (rb >> 1);
-                res.push([lat / 1e5, lng / 1e5]);
+    /* ── Helpers ── */
+    function decodePolyline(enc) {
+        let i=0,lat=0,lng=0,res=[];
+        while(i<enc.length){
+            let sh=0,b,rb=0;
+            do{b=enc.charCodeAt(i++)-63;rb|=(b&0x1f)<<sh;sh+=5;}while(b>=0x20);
+            lat+=(rb&1)?~(rb>>1):(rb>>1);sh=rb=0;
+            do{b=enc.charCodeAt(i++)-63;rb|=(b&0x1f)<<sh;sh+=5;}while(b>=0x20);
+            lng+=(rb&1)?~(rb>>1):(rb>>1);
+            res.push([lat/1e5,lng/1e5]);
+        }
+        return res;
+    }
+
+    function fmtTime(ms) {
+        const d=new Date(ms);
+        return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    }
+    function fmtDur(s) {
+        const m=Math.round(s/60);
+        return m>=60 ? Math.floor(m/60)+'h'+String(m%60).padStart(2,'0') : m+' min';
+    }
+    function fmtDist(m) {
+        return m<100 ? Math.round(m)+' m' : (Math.round(m/100)/10)+' km';
+    }
+    function fmtWait(startMs,firstMs) {
+        const min=Math.round((firstMs-startMs)/60000);
+        return min>1 ? ` · attente ${min} min` : '';
+    }
+    const cleanName = raw => {
+        if(!raw) return '';
+        const idx=raw.indexOf(',');
+        return idx!==-1 ? raw.slice(idx+1).trim() : raw.trim();
+    };
+
+    /* Sample points along a polyline at regular interval (meters) */
+    function samplePolyline(coords, intervalM) {
+        if(!coords||coords.length<2) return coords||[];
+        const pts=[coords[0]];
+        let acc=0, nextAt=intervalM;
+        for(let i=1;i<coords.length;i++){
+            const segLen=L.latLng(coords[i-1]).distanceTo(L.latLng(coords[i]));
+            const segStart=acc;
+            acc+=segLen;
+            while(nextAt<=acc){
+                const t=(nextAt-segStart)/segLen;
+                pts.push([
+                    coords[i-1][0]+t*(coords[i][0]-coords[i-1][0]),
+                    coords[i-1][1]+t*(coords[i][1]-coords[i-1][1])
+                ]);
+                nextAt+=intervalM;
             }
-            return res;
         }
+        return pts;
+    }
 
-        function fmtTime(ms) {
-            const d = new Date(ms);
-            return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-        }
-        function fmtDur(s) {
-            const m = Math.round(s / 60);
-            return m >= 60 ? Math.floor(m/60) + 'h' + String(m % 60).padStart(2,'0') : m + ' min';
-        }
-        function fmtDist(m) {
-            return m < 100 ? Math.round(m) + ' m' : (Math.round(m / 100) / 10) + ' km';
-        }
-        function fmtWait(startMs, firstTransitMs) {
-            const min = Math.round((firstTransitMs - startMs) / 60000);
-            return min > 1 ? ` · attente ${min} min` : '';
-        }
+    const _pool = [];
 
-        const cleanName = raw => {
-            if (!raw) return '';
-            const idx = raw.indexOf(',');
-            return idx !== -1 ? raw.slice(idx + 1).trim() : raw.trim();
-        };
+    /* ── Main object ── */
+    const ITIN = {
+        map: null,
+        from: null, to: null,
+        timeMode: 'now', customTime: null,
+        activeField: null,
+        rawItins: [], walkItins: [], sortedItins: [],
+        travelMode: 'transit',
+        sortMode: 'fastest',
+        mapLayers: [], mapZoomHandlers: [],
+        stops: [],
+        searchTimer: null,
+        overviewBounds: null,
+        currentBounds: null,
+        detailVisible: false,
 
-        const _pool = [];
+        /* ────────── INIT ────────── */
+        init() {
+            const setH = () => document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+            setH(); window.addEventListener('resize', setH);
 
-        const ITIN = {
-            map: null,
-            dvSheetReady: false,
-            from: null,
-            to: null,
-            timeMode: 'now',
-            customTime: null,
-            activeField: null,
-            rawItins: [],
-            walkItins: [],
-            sortedItins: [],
-            travelMode: 'transit',
-            mapLayers: [],
-            mapZoomHandlers: [],
-            stops: [],
-            searchTimer: null,
+            this.map = L.map('map', { center:[45.1885,5.7245], zoom:13, zoomControl:false });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution:'© <a href="https://www.openstreetmap.org/">OSM</a> © <a href="https://carto.com/">CARTO</a>',
+                subdomains:'abcd', maxZoom:19
+            }).addTo(this.map);
+            L.control.zoom({ position:'bottomright' }).addTo(this.map);
 
-            init() {
-                const setH = () => document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-                setH();
-                window.addEventListener('resize', setH);
+            /* Pane for tram background (below route overlays) */
+            this.map.createPane('tramPane');
+            this.map.getPane('tramPane').style.zIndex = '350';
+            this.map.getPane('tramPane').style.pointerEvents = 'none';
 
-                this.map = L.map('map', { center: [45.1885, 5.7245], zoom: 13, zoomControl: false });
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/">OSM</a> © <a href="https://carto.com/">CARTO</a>',
-                    subdomains: 'abcd', maxZoom: 19
-                }).addTo(this.map);
-                L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+            const iFrom = document.getElementById('input-from');
+            const iTo   = document.getElementById('input-to');
+            iFrom.addEventListener('focus', () => { this.activeField='from'; this.openDrop(); });
+            iTo.addEventListener('focus',   () => { this.activeField='to';   this.openDrop(); });
+            iFrom.addEventListener('input', e => this.onInput(e.target.value));
+            iTo.addEventListener('input',   e => this.onInput(e.target.value));
+            document.addEventListener('click', e => {
+                if(!e.target.closest('#search-float')){ this.activeField=null; this.closeDrop(); }
+            });
 
-                const iFrom = document.getElementById('input-from');
-                const iTo = document.getElementById('input-to');
+            this.initSheetDrag();
+            this.loadStops();
+            this.loadTramLines();
+        },
 
-                iFrom.addEventListener('focus', () => { this.activeField = 'from'; this.openDrop(); });
-                iTo.addEventListener('focus', () => { this.activeField = 'to'; this.openDrop(); });
-                iFrom.addEventListener('input', e => this.onInput(e.target.value));
-                iTo.addEventListener('input', e => this.onInput(e.target.value));
+        /* ────────── DATA LOADING ────────── */
+        loadStops() {
+            const routes = [
+                'SEM:A','SEM:B','SEM:C','SEM:D','SEM:E',
+                'SEM:C1','SEM:C2','SEM:C3','SEM:C4','SEM:C5','SEM:C6','SEM:C7','SEM:C8',
+                'SEM:C10','SEM:C14',
+                'SEM:15','SEM:16','SEM:17','SEM:18','SEM:19',
+                'SEM:20','SEM:21','SEM:22','SEM:23','SEM:24','SEM:25',
+                'SEM:59'
+            ];
+            const m = new Map();
+            Promise.all(routes.map(id =>
+                fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${id}/clusters`)
+                    .then(r => r.ok ? r.json() : [])
+                    .then(data => {
+                        const name = id.split(':')[1];
+                        for(const s of data){
+                            if(m.has(s.code)) m.get(s.code).lines.push(name);
+                            else m.set(s.code, { name:s.name, lat:s.lat, lon:s.lon, lines:[name], type:'stop' });
+                        }
+                    }).catch(()=>{})
+            )).then(()=>{ this.stops = Array.from(m.values()); });
+        },
 
-                document.addEventListener('click', e => {
-                    if (!e.target.closest('#search-float')) {
-                        this.activeField = null;
-                        this.closeDrop();
-                    }
-                });
+        loadTramLines() {
+            const TRAMS = [
+                {id:'SEM:A',color:'#006eb7'},
+                {id:'SEM:B',color:'#00a459'},
+                {id:'SEM:C',color:'#e2007a'},
+                {id:'SEM:D',color:'#f29400'},
+                {id:'SEM:E',color:'#5c2a90'},
+            ];
+            TRAMS.forEach(t => {
+                fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${t.id}/patterns`)
+                    .then(r => r.ok ? r.json() : [])
+                    .then(patterns => {
+                        const drawn = new Set();
+                        (patterns||[]).forEach(p => {
+                            const pts = p.patternGeometry && p.patternGeometry.points;
+                            if(!pts || drawn.has(pts)) return;
+                            drawn.add(pts);
+                            const coords = decodePolyline(pts);
+                            L.polyline(coords, { color:t.color, weight:4, opacity:0.4, pane:'tramPane' }).addTo(this.map);
+                        });
+                    }).catch(()=>{});
+            });
+        },
 
-                this.initSheetDrag('sh-handle', 'bottom-sheet', false);
-                this.loadStops();
-            },
+        /* ────────── SEARCH DROPDOWN ────────── */
+        openDrop() {
+            const hist = this.getHistory();
+            const favs = this.getFavs();
+            let html = '';
+            if(favs.length){ html += '<div class="drop-label">Favoris</div>'; html += favs.map((p,i)=>this.dropItem(p,'fav',i)).join(''); }
+            if(hist.length){ html += '<div class="drop-label">Récents</div>'; html += hist.map((p,i)=>this.dropItem(p,'hist',i+100)).join(''); }
+            const drop = document.getElementById('search-dropdown');
+            if(html){ drop.innerHTML=html; drop.classList.add('open'); }
+            else drop.classList.remove('open');
+        },
 
-            loadStops() {
-                const trams = ['SEM:A','SEM:B','SEM:C','SEM:D','SEM:E'];
-                const m = new Map();
-                Promise.all(trams.map(id =>
-                    fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${id}/clusters`)
-                        .then(r => r.ok ? r.json() : [])
-                        .then(data => {
-                            const name = id.split(':')[1];
-                            for (const s of data) {
-                                if (m.has(s.code)) m.get(s.code).lines.push(name);
-                                else m.set(s.code, { name: s.name, lat: s.lat, lon: s.lon, lines: [name], type: 'stop' });
-                            }
-                        })
-                        .catch(() => {})
-                )).then(() => { this.stops = Array.from(m.values()); });
-            },
+        dropItem(place, src, idx) {
+            _pool[idx] = place;
+            const icon = src==='fav'
+                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="#f5c518"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+            const pills = place.lines
+                ? place.lines.map(l=>`<span class="lp" style="background:${lineColor(l)};color:${lineTextColor(l)}">${l}</span>`).join('')
+                : '';
+            return `<div class="drop-item" onclick="ITIN.pick(${idx})">
+                <div class="drop-icon">${icon}</div>
+                <div class="drop-info">
+                    <div class="drop-name">${place.name}</div>
+                    ${pills ? `<div class="drop-sub"><div class="line-pills">${pills}</div></div>` : (place.sub?`<div class="drop-sub">${place.sub}</div>`:'')}
+                </div>
+            </div>`;
+        },
 
-            openDrop() {
-                const hist = this.getHistory();
-                const favs = this.getFavs();
-                let html = '';
-                if (favs.length) {
-                    html += '<div class="drop-label">Favoris</div>';
-                    html += favs.map((p, i) => this.dropItem(p, 'fav', i)).join('');
-                }
-                if (hist.length) {
-                    html += '<div class="drop-label">Récents</div>';
-                    html += hist.map((p, i) => this.dropItem(p, 'hist', i + 100)).join('');
-                }
-                const drop = document.getElementById('search-dropdown');
-                if (html) { drop.innerHTML = html; drop.classList.add('open'); }
-                else drop.classList.remove('open');
-            },
+        onInput(val) {
+            clearTimeout(this.searchTimer);
+            const drop = document.getElementById('search-dropdown');
+            if(!val.trim()){ this.openDrop(); return; }
+            drop.innerHTML = '<div class="loading-msg">Recherche…</div>';
+            drop.classList.add('open');
+            this.searchTimer = setTimeout(()=>this.search(val), 280);
+        },
 
-            dropItem(place, src, idx) {
-                _pool[idx] = place;
-                const iconSvg = src === 'fav'
-                    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="#f5c518"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
-                    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
-                const pills = place.lines
-                    ? place.lines.map(l => `<span class="lp" style="background:${lineColor(l)};color:${lineTextColor(l)}">${l}</span>`).join('')
-                    : '';
-                return `<div class="drop-item" onclick="ITIN.pick(${idx})">
-                    <div class="drop-icon">${iconSvg}</div>
-                    <div class="drop-info">
-                        <div class="drop-name">${place.name}</div>
-                        ${pills ? `<div class="drop-sub"><div class="line-pills">${pills}</div></div>` : (place.sub ? `<div class="drop-sub">${place.sub}</div>` : '')}
-                    </div>
-                </div>`;
-            },
-
-            onInput(val) {
-                clearTimeout(this.searchTimer);
-                const drop = document.getElementById('search-dropdown');
-                if (!val.trim()) { this.openDrop(); return; }
-                drop.innerHTML = '<div class="loading-msg">Recherche…</div>';
-                drop.classList.add('open');
-                this.searchTimer = setTimeout(() => this.search(val), 280);
-            },
-
-            async search(val) {
-                const lv = val.toLowerCase();
-                const stopHits = this.stops
-                    .filter(s => s.name.toLowerCase().includes(lv))
-                    .slice(0, 5)
-                    .map((s, i) => { _pool[200 + i] = s; return this.dropItem(s, 'stop', 200 + i); });
-
-                let geoHtml = '';
-                try {
-                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=4&viewbox=5.55,45.28,5.84,45.09&bounded=1&addressdetails=1`;
-                    const data = await fetch(url, { headers: {'Accept-Language':'fr'} }).then(r => r.json());
-                    geoHtml = data.map((item, i) => {
-                        const p = {
-                            name: item.display_name.split(',').slice(0,2).join(', '),
-                            lat: parseFloat(item.lat),
-                            lon: parseFloat(item.lon),
-                            sub: item.display_name.split(',').slice(2,4).join(', ').trim(),
-                            type: 'address'
-                        };
-                        _pool[300 + i] = p;
-                        return this.dropItem(p, 'geo', 300 + i);
-                    }).join('');
-                } catch(e) {}
-
-                const drop = document.getElementById('search-dropdown');
-                const all = stopHits.join('') + geoHtml;
-                drop.innerHTML = all || '<div class="empty-msg">Aucun résultat</div>';
-                drop.classList.add('open');
-            },
-
-            pick(idx) {
-                const place = _pool[idx];
-                if (!place) return;
-                const field = this.activeField || (this.from ? 'to' : 'from');
-                this.closeDrop();
-                if (field === 'from') {
-                    this.from = place;
-                    document.getElementById('input-from').value = place.name;
-                    if (!this.to) setTimeout(() => document.getElementById('input-to').focus(), 80);
-                } else {
-                    this.to = place;
-                    document.getElementById('input-to').value = place.name;
-                }
-                document.getElementById('input-from').blur();
-                document.getElementById('input-to').blur();
-                this.saveHist(place);
-                if (this.from && this.to) this.plan();
-            },
-
-            closeDrop() {
-                const drop = document.getElementById('search-dropdown');
-                drop.classList.remove('open');
-            },
-
-            swap() {
-                [this.from, this.to] = [this.to, this.from];
-                document.getElementById('input-from').value = this.from ? this.from.name : '';
-                document.getElementById('input-to').value = this.to ? this.to.name : '';
-                if (this.from && this.to) this.plan();
-            },
-
-            setMode(mode) {
-                this.timeMode = mode;
-                document.querySelectorAll('.time-pill').forEach(p => p.classList.toggle('active', p.dataset.mode === mode));
-                const row = document.getElementById('time-input-row');
-                if (mode !== 'now') {
-                    const now = new Date();
-                    now.setMinutes(now.getMinutes() + 5);
-                    const iso = new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-                    document.getElementById('custom-time-input').value = iso;
-                    this.customTime = iso;
-                    row.classList.add('show');
-                } else {
-                    this.customTime = null;
-                    row.classList.remove('show');
-                }
-                if (this.from && this.to) this.plan();
-            },
-
-            onTimeChange(val) {
-                this.customTime = val;
-                if (this.from && this.to) this.plan();
-            },
-
-            setTravelMode(mode) {
-                this.travelMode = mode;
-                document.querySelectorAll('.mode-pill').forEach(p => p.classList.toggle('active', p.dataset.mode === mode));
-                this.sortedItins = mode === 'walk' ? this.walkItins : this.rawItins;
-                if (!this.sortedItins.length && this.from && this.to) {
-                    this.plan();
-                } else {
-                    this.renderResults();
-                    if (this.sortedItins.length > 0) this.drawRoute(this.sortedItins[0]);
-                }
-            },
-
-            geolocate() {
-                if (!navigator.geolocation) return;
-                const btn = document.getElementById('geo-btn');
-                btn.style.opacity = '0.4';
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        btn.style.opacity = '';
-                        this.from = { name: 'Ma position', lat: pos.coords.latitude, lon: pos.coords.longitude, type: 'geo' };
-                        document.getElementById('input-from').value = 'Ma position';
-                        this.map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-                        if (this.to) this.plan();
-                    },
-                    () => { btn.style.opacity = ''; }
-                );
-            },
-
-            initSheetDrag(handleId, sheetId, isDvSheet) {
-                const handle = document.getElementById(handleId);
-                const sheet  = document.getElementById(sheetId);
-                if (!handle || !sheet) return;
-                let sy, sh0;
-
-                const getAvail = () => isDvSheet
-                    ? (document.getElementById('detail-view').offsetHeight || window.innerHeight - 60)
-                    : (window.innerHeight - 60);
-
-                const snapH = () => {
-                    const a = getAvail();
-                    return [Math.round(a * 0.15), Math.round(a * 0.40), Math.round(a * 0.95)];
-                };
-
-                const nearestSnap = h => {
-                    return snapH().reduce((prev, cur) => Math.abs(cur - h) < Math.abs(prev - h) ? cur : prev);
-                };
-
-                const applySnap = h => {
-                    sheet.style.transition = 'height 0.3s cubic-bezier(0.25,0.46,0.45,0.94)';
-                    sheet.style.height = nearestSnap(h) + 'px';
-                };
-
-                const start = cy => {
-                    sy = cy;
-                    sh0 = sheet.offsetHeight;
-                    sheet.style.transition = 'none';
-                };
-                const move = cy => {
-                    const pts = snapH();
-                    const h = Math.max(pts[0], Math.min(pts[2], sh0 + (sy - cy)));
-                    sheet.style.height = h + 'px';
-                };
-                const end = () => applySnap(sheet.offsetHeight);
-
-                handle._snapTo = ratio => {
-                    sheet.style.transition = 'height 0.3s cubic-bezier(0.25,0.46,0.45,0.94)';
-                    sheet.style.height = Math.round(getAvail() * ratio) + 'px';
-                };
-
-                handle.addEventListener('mousedown', e => {
-                    start(e.clientY);
-                    const mm = e => move(e.clientY);
-                    const mu = () => { end(); window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
-                    window.addEventListener('mousemove', mm);
-                    window.addEventListener('mouseup', mu);
-                });
-                handle.addEventListener('touchstart', e => start(e.touches[0].clientY), { passive: true });
-                handle.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
-                handle.addEventListener('touchend', end);
-            },
-
-            buildUrl(mode) {
-                let url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${this.from.lat},${this.from.lon}&toPlace=${this.to.lat},${this.to.lon}&numItineraries=5&mode=${mode}&showIntermediateStops=true`;
-                if (this.customTime) {
-                    const dt = new Date(this.customTime);
-                    const pad = n => String(n).padStart(2,'0');
-                    url += `&date=${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}&time=${pad(dt.getHours())}:${pad(dt.getMinutes())}&arriveBy=${this.timeMode === 'arrive'}`;
-                }
-                return url;
-            },
-
-            async plan() {
-                if (!this.from || !this.to) return;
-                const sheet = document.getElementById('bottom-sheet');
-                const list = document.getElementById('results-list');
-                list.innerHTML = '<div class="loading-msg">Calcul de l\'itinéraire…</div>';
-                const handle = document.getElementById('sh-handle');
-                if (handle && handle._snapTo) handle._snapTo(0.15);
-                this.clearMap();
-
-                try {
-                    const [transitRes, walkRes] = await Promise.all([
-                        fetch(this.buildUrl('TRANSIT,WALK'), { headers: { origin: 'ouestmontram' } }),
-                        fetch(this.buildUrl('WALK'), { headers: { origin: 'ouestmontram' } })
-                    ]);
-                    const transitData = transitRes.ok ? await transitRes.json() : null;
-                    const walkData    = walkRes.ok    ? await walkRes.json()    : null;
-
-                    this.rawItins  = (transitData && transitData.plan && transitData.plan.itineraries)
-                        ? transitData.plan.itineraries.filter(itin => itin.legs.some(l => l.mode !== 'WALK'))
-                        : [];
-                    this.walkItins = (walkData    && walkData.plan    && walkData.plan.itineraries)    ? walkData.plan.itineraries    : [];
-
-                    if (!this.rawItins.length && this.travelMode === 'transit') {
-                        this.travelMode = 'walk';
-                        document.querySelectorAll('.mode-pill').forEach(p => p.classList.toggle('active', p.dataset.mode === 'walk'));
-                    }
-                    this.sortedItins = this.travelMode === 'walk' ? this.walkItins : this.rawItins;
-                    this.renderResults();
-                    const handle = document.getElementById('sh-handle');
-                    if (handle && handle._snapTo) handle._snapTo(0.40);
-                    if (this.sortedItins.length > 0) this.drawRoute(this.sortedItins[0]);
-                } catch(e) {
-                    list.innerHTML = `<div class="empty-msg">Erreur lors du calcul.<br><small style="color:#555;">${e.message}</small></div>`;
-                }
-            },
-
-            renderResults() {
-                const list = document.getElementById('results-list');
-                if (!this.sortedItins.length) {
-                    list.innerHTML = '<div class="empty-msg">Aucun itinéraire trouvé.<br>Essayez l\'autre mode de transport.</div>';
-                    return;
-                }
-                list.innerHTML = this.sortedItins.map((itin, i) => {
-                    const transLegs = itin.legs.filter(l => l.mode !== 'WALK');
-                    const firstTrans = transLegs[0];
-                    const journeyBar = itin.legs.map(leg => {
-                        if (leg.mode === 'WALK') return '<div class="jb-walk"></div>';
-                        const n = legName(leg);
-                        const c = lineColor(n) || (leg.routeColor ? '#' + leg.routeColor : '#888');
-                        const tc = lineTextColor(n);
-                        return `<div class="jb-join"></div><div class="jb-line" style="background:${c};color:${tc}">${n}</div><div class="jb-join"></div>`;
-                    }).join('');
-                    const waitStr = firstTrans ? fmtWait(itin.startTime, firstTrans.startTime) : '';
-                    return `<div class="rcard" onclick="ITIN.showDetail(${i})">
-                        <div class="rc-top">
-                            <div>
-                                <div class="rc-time">${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)}</div>
-                                <div class="rc-dur">${fmtDur(itin.duration)}${waitStr}</div>
-                            </div>
-                        </div>
-                        <div class="jbar">${journeyBar}</div>
-                        <div class="rc-foot">
-                            <span>${itin.transfers} correspondance${itin.transfers !== 1 ? 's' : ''}</span>
-                            <span>${fmtDist(itin.walkDistance)} à pied</span>
-                        </div>
-                    </div>`;
+        async search(val) {
+            const lv = val.toLowerCase();
+            const stopHits = this.stops
+                .filter(s=>s.name.toLowerCase().includes(lv)).slice(0,5)
+                .map((s,i)=>{ _pool[200+i]=s; return this.dropItem(s,'stop',200+i); });
+            let geoHtml = '';
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=4&viewbox=5.55,45.28,5.84,45.09&bounded=1&addressdetails=1`;
+                const data = await fetch(url,{headers:{'Accept-Language':'fr'}}).then(r=>r.json());
+                geoHtml = data.map((item,i)=>{
+                    const p = {
+                        name: item.display_name.split(',').slice(0,2).join(', '),
+                        lat: parseFloat(item.lat), lon: parseFloat(item.lon),
+                        sub: item.display_name.split(',').slice(2,4).join(', ').trim(),
+                        type: 'address'
+                    };
+                    _pool[300+i]=p; return this.dropItem(p,'geo',300+i);
                 }).join('');
-            },
+            } catch(e){}
+            const drop = document.getElementById('search-dropdown');
+            const all = stopHits.join('')+geoHtml;
+            drop.innerHTML = all || '<div class="empty-msg">Aucun résultat</div>';
+            drop.classList.add('open');
+        },
 
-            buildSteps(itin) {
-                let html = '';
-                const legs = itin.legs;
+        pick(idx) {
+            const place = _pool[idx];
+            if(!place) return;
+            const field = this.activeField || (this.from ? 'to' : 'from');
+            this.closeDrop();
+            if(field==='from'){
+                this.from = place;
+                document.getElementById('input-from').value = place.name;
+                if(!this.to) setTimeout(()=>document.getElementById('input-to').focus(), 80);
+            } else {
+                this.to = place;
+                document.getElementById('input-to').value = place.name;
+            }
+            document.getElementById('input-from').blur();
+            document.getElementById('input-to').blur();
+            this.saveHist(place);
+            if(this.from && this.to) this.plan();
+        },
 
-                legs.forEach((leg, i) => {
-                    const isLast = i === legs.length - 1;
+        closeDrop() { document.getElementById('search-dropdown').classList.remove('open'); },
 
-                    if (leg.mode === 'WALK') {
-                        const min = Math.round(leg.duration / 60);
-                        if (i === 0) {
-                            html += `<div class="step">
-                                <div class="step-col">
-                                    <div class="sdot sdot-walk"></div>
-                                    <div class="svline"></div>
-                                </div>
-                                <div class="step-body">
-                                    <div class="step-title">${cleanName(leg.from.name) || this.from.name}</div>
-                                    <div class="step-sub">Marcher ${min} min (${fmtDist(leg.distance)}) vers l'arrêt</div>
-                                </div>
-                            </div>`;
-                        } else if (!isLast) {
-                            html += `<div class="step">
-                                <div class="step-col">
-                                    <div class="sdot sdot-walk"></div>
-                                    <div class="svline"></div>
-                                </div>
-                                <div class="step-body">
-                                    <div class="step-title">Correspondance — ${cleanName(leg.from.name)}</div>
-                                    <div class="step-sub">Marcher ${min} min</div>
-                                </div>
-                            </div>`;
+        swap() {
+            [this.from,this.to]=[this.to,this.from];
+            document.getElementById('input-from').value = this.from ? this.from.name : '';
+            document.getElementById('input-to').value   = this.to   ? this.to.name   : '';
+            if(this.from && this.to) this.plan();
+        },
+
+        geolocate() {
+            if(!navigator.geolocation) return;
+            const btn = document.getElementById('geo-btn');
+            btn.style.opacity='0.4';
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    btn.style.opacity='';
+                    this.from = { name:'Ma position', lat:pos.coords.latitude, lon:pos.coords.longitude, type:'geo' };
+                    document.getElementById('input-from').value = 'Ma position';
+                    this.map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+                    if(this.to) this.plan();
+                },
+                () => { btn.style.opacity=''; }
+            );
+        },
+
+        /* ────────── MODES & FILTERS ────────── */
+        setTravelMode(mode) {
+            this.travelMode = mode;
+            document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
+            const fb = document.getElementById('filter-bar');
+            if(mode==='transit') fb.classList.add('show'); else fb.classList.remove('show');
+            this.applySort();
+            if(!this.sortedItins.length && this.from && this.to) this.plan();
+            else { this.renderResults(); if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]); }
+        },
+
+        setSort(mode) {
+            this.sortMode = mode;
+            document.querySelectorAll('.filter-pill').forEach(p=>p.classList.toggle('active',p.dataset.sort===mode));
+            this.applySort();
+            this.renderResults();
+            if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
+        },
+
+        applySort() {
+            const src = this.travelMode==='walk' ? this.walkItins : this.rawItins;
+            const arr = [...src];
+            if(this.sortMode==='lessWalk') arr.sort((a,b)=>a.walkDistance-b.walkDistance);
+            else arr.sort((a,b)=>a.duration-b.duration);
+            this.sortedItins = arr;
+        },
+
+        toggleTimePicker() {
+            const tp = document.getElementById('time-picker');
+            tp.classList.toggle('open');
+        },
+
+        setTimeMode(mode) {
+            this.timeMode = mode;
+            document.querySelectorAll('.tp-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
+            const wrap = document.getElementById('time-input-wrap');
+            const btn  = document.getElementById('time-btn-label');
+            const toggleBtn = document.getElementById('time-toggle-btn');
+            if(mode!=='now'){
+                const now = new Date();
+                now.setMinutes(now.getMinutes()+5);
+                const iso = new Date(now - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+                document.getElementById('custom-time-input').value = iso;
+                this.customTime = iso;
+                wrap.classList.add('show');
+                btn.textContent = mode==='depart' ? 'Départ' : 'Arrivée';
+                toggleBtn.classList.add('active-time');
+            } else {
+                this.customTime = null;
+                wrap.classList.remove('show');
+                btn.textContent = 'Maintenant';
+                toggleBtn.classList.remove('active-time');
+            }
+            if(this.from && this.to) this.plan();
+        },
+
+        onTimeChange(val) {
+            this.customTime = val;
+            const btn = document.getElementById('time-btn-label');
+            if(val){
+                const dt = new Date(val);
+                btn.textContent = fmtTime(dt.getTime());
+            }
+            if(this.from && this.to) this.plan();
+        },
+
+        /* ────────── PLANNING ────────── */
+        buildUrl(mode) {
+            let url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${this.from.lat},${this.from.lon}&toPlace=${this.to.lat},${this.to.lon}&numItineraries=5&mode=${mode}&showIntermediateStops=true`;
+            if(this.customTime){
+                const dt=new Date(this.customTime);
+                const pad=n=>String(n).padStart(2,'0');
+                url+=`&date=${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}&time=${pad(dt.getHours())}:${pad(dt.getMinutes())}&arriveBy=${this.timeMode==='arrive'}`;
+            }
+            return url;
+        },
+
+        async plan() {
+            if(!this.from||!this.to) return;
+            this.showResultsPanel();
+            const list = document.getElementById('results-list');
+            list.innerHTML = '<div class="loading-msg">Calcul en cours…</div>';
+            this.snapSheet(0.40);
+            this.clearRoute();
+
+            try {
+                const [tRes, wRes] = await Promise.all([
+                    fetch(this.buildUrl('TRANSIT,WALK'),{headers:{origin:'ouestmontram'}}),
+                    fetch(this.buildUrl('WALK'),{headers:{origin:'ouestmontram'}})
+                ]);
+                const tData = tRes.ok ? await tRes.json() : null;
+                const wData = wRes.ok ? await wRes.json() : null;
+
+                this.rawItins  = (tData&&tData.plan&&tData.plan.itineraries)
+                    ? tData.plan.itineraries.filter(it=>it.legs.some(l=>l.mode!=='WALK'))
+                    : [];
+                this.walkItins = (wData&&wData.plan&&wData.plan.itineraries) ? wData.plan.itineraries : [];
+
+                if(!this.rawItins.length && this.travelMode==='transit'){
+                    this.travelMode='walk';
+                    document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode==='walk'));
+                }
+
+                this.applySort();
+
+                /* Show filter bar for transit */
+                const fb = document.getElementById('filter-bar');
+                if(this.travelMode==='transit' && this.sortedItins.length>1) fb.classList.add('show');
+                else fb.classList.remove('show');
+
+                this.renderResults();
+                if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
+            } catch(e) {
+                list.innerHTML = `<div class="empty-msg">Erreur lors du calcul.<br><small style="color:#555">${e.message}</small></div>`;
+            }
+        },
+
+        renderResults() {
+            const list = document.getElementById('results-list');
+            if(!this.sortedItins.length){
+                list.innerHTML='<div class="empty-msg">Aucun itinéraire trouvé.<br>Essayez l\'autre mode.</div>';
+                return;
+            }
+            list.innerHTML = this.sortedItins.map((itin,i)=>{
+                const transLegs = itin.legs.filter(l=>l.mode!=='WALK');
+                const firstTrans = transLegs[0];
+
+                /* Journey bar */
+                let jbar='';
+                itin.legs.forEach((leg,li)=>{
+                    if(leg.mode==='WALK'){
+                        if(li===0||li===itin.legs.length-1){
+                            jbar+=`<div class="jb-walk"><div class="jb-dot"></div><div class="jb-dot"></div><div class="jb-dot"></div></div>`;
+                        } else {
+                            jbar+=`<div class="jb-walk"><div class="jb-dot"></div><div class="jb-dot"></div></div>`;
                         }
                     } else {
-                        const n = legName(leg);
-                        const c = lineColor(n) || (leg.routeColor ? '#' + leg.routeColor : '#888');
-                        const tc = lineTextColor(n);
-                        const inter = leg.intermediateStops || [];
-                        const totalStops = inter.length + 2;
+                        const n=legName(leg);
+                        const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#777');
+                        const tc=lineTextColor(n);
+                        if(li>0) jbar+=`<span class="jb-arrow">›</span>`;
+                        jbar+=`<div class="jb-badge" style="background:${c};color:${tc}">${n}</div>`;
+                    }
+                });
 
-                        html += `<div class="step">
+                const waitStr = firstTrans ? fmtWait(itin.startTime, firstTrans.startTime) : '';
+
+                /* Footer info — skip 0 correspondances */
+                const footItems=[];
+                if(itin.transfers>0) footItems.push(`${itin.transfers} correspondance${itin.transfers>1?'s':''}`);
+                if(itin.walkDistance>50) footItems.push(`${fmtDist(itin.walkDistance)} à pied`);
+
+                return `<div class="rcard" onclick="ITIN.showDetail(${i})">
+                    <div class="rc-top">
+                        <div>
+                            <div class="rc-times">${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)}</div>
+                            <div class="rc-dur">${fmtDur(itin.duration)}${waitStr}</div>
+                        </div>
+                    </div>
+                    <div class="jbar">${jbar}</div>
+                    ${footItems.length ? `<div class="rc-foot">${footItems.map(s=>`<span>${s}</span>`).join('')}</div>` : ''}
+                </div>`;
+            }).join('');
+        },
+
+        /* ────────── MAP ────────── */
+        getVisiblePadding() {
+            const sf = document.getElementById('search-float');
+            const sh = document.getElementById('bottom-sheet');
+            return {
+                top:    (sf ? sf.offsetHeight : 0) + 16,
+                bottom: (sh ? sh.offsetHeight : 0) + 16
+            };
+        },
+
+        fitBounds(bounds, opts={}) {
+            if(!bounds||!this.map) return;
+            const p = this.getVisiblePadding();
+            this.map.fitBounds(bounds, {
+                paddingTopLeft:     [16, p.top],
+                paddingBottomRight: [16, p.bottom],
+                maxZoom: opts.maxZoom || 16,
+                animate: true, duration: 0.5
+            });
+        },
+
+        clearRoute() {
+            this.mapZoomHandlers.forEach(h=>this.map.off('zoomend',h));
+            this.mapZoomHandlers=[];
+            this.mapLayers.forEach(l=>{ if(this.map.hasLayer(l)) this.map.removeLayer(l); });
+            this.mapLayers=[];
+        },
+
+        addStopMarkers(leg) {
+            const n=legName(leg);
+            const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
+            const stops=[];
+            if(leg.from&&leg.from.lat!=null) stops.push({name:leg.from.name,lat:leg.from.lat,lon:leg.from.lon});
+            (leg.intermediateStops||[]).forEach(s=>{ if(s.lat!=null) stops.push({name:s.name,lat:s.lat,lon:s.lon}); });
+            if(leg.to&&leg.to.lat!=null) stops.push({name:leg.to.name,lat:leg.to.lat,lon:leg.to.lon});
+
+            const dotGroup   = L.layerGroup().addTo(this.map);
+            const labelGroup = L.layerGroup();
+            stops.forEach(s=>{
+                L.circleMarker([s.lat,s.lon],{
+                    radius:3.5, color:c, fillColor:'#fff', fillOpacity:1, weight:2, pane:'markerPane'
+                }).addTo(dotGroup);
+                L.tooltip({ permanent:true, direction:'right', offset:[6,0], opacity:1, className:'stop-tooltip' })
+                    .setContent(cleanName(s.name)).setLatLng([s.lat,s.lon]).addTo(labelGroup);
+            });
+            const updateLabels = () => {
+                if(this.map.getZoom()>=14) labelGroup.addTo(this.map);
+                else if(this.map.hasLayer(labelGroup)) this.map.removeLayer(labelGroup);
+            };
+            this.map.on('zoomend', updateLabels); updateLabels();
+            this.mapLayers.push(dotGroup,labelGroup);
+            this.mapZoomHandlers.push(updateLabels);
+        },
+
+        drawWalkDots(coords) {
+            const pts = samplePolyline(coords, 20);
+            const layer = L.layerGroup().addTo(this.map);
+            pts.forEach(pt=>{
+                L.circleMarker(pt,{
+                    radius:2.5, color:'#4285F4', fillColor:'#4285F4', fillOpacity:1, weight:0, pane:'markerPane'
+                }).addTo(layer);
+            });
+            this.mapLayers.push(layer);
+        },
+
+        drawRoute(itin) {
+            this.clearRoute();
+            const bounds=[];
+
+            itin.legs.forEach(leg=>{
+                if(!leg.legGeometry||!leg.legGeometry.points) return;
+                const coords = decodePolyline(leg.legGeometry.points);
+                bounds.push(...coords);
+
+                if(leg.mode==='WALK'){
+                    /* Thin translucent line + blue dots */
+                    const pl = L.polyline(coords,{ color:'#4285F4', weight:2, opacity:0.25 }).addTo(this.map);
+                    this.mapLayers.push(pl);
+                    this.drawWalkDots(coords);
+                } else {
+                    const n=legName(leg);
+                    const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
+                    const pl = L.polyline(coords,{ color:c, weight:5, opacity:0.92 }).addTo(this.map);
+                    this.mapLayers.push(pl);
+                    this.addStopMarkers(leg);
+                }
+            });
+
+            /* Endpoint markers */
+            const start = itin.legs[0];
+            const end   = itin.legs[itin.legs.length-1];
+
+            /* Departure: gray filled circle */
+            const mkFrom = L.circleMarker([start.from.lat, start.from.lon],{
+                radius:7, color:'#555', fillColor:'#888', fillOpacity:1, weight:2, pane:'markerPane'
+            }).addTo(this.map);
+
+            /* Arrival: red teardrop pin */
+            const pinIcon = L.divIcon({
+                className: '',
+                html: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 22 32"><path d="M11 0C4.9 0 0 4.9 0 11c0 8.2 11 21 11 21s11-12.8 11-21C22 4.9 17.1 0 11 0z" fill="#e53935"/><circle cx="11" cy="11" r="4" fill="white"/></svg>`,
+                iconSize:[22,32], iconAnchor:[11,32]
+            });
+            const mkTo = L.marker([end.to.lat, end.to.lon],{ icon:pinIcon, pane:'markerPane' }).addTo(this.map);
+            this.mapLayers.push(mkFrom, mkTo);
+
+            if(bounds.length>0){
+                this.overviewBounds = L.latLngBounds(bounds);
+                if(!this.detailVisible) this.fitBounds(this.overviewBounds);
+            }
+        },
+
+        _getBounds(itin) {
+            const pts=[];
+            itin.legs.forEach(leg=>{
+                if(leg.legGeometry&&leg.legGeometry.points) pts.push(...decodePolyline(leg.legGeometry.points));
+            });
+            return pts.length ? L.latLngBounds(pts) : null;
+        },
+
+        refitMap() {
+            if(this.detailVisible && this.currentBounds) this.fitBounds(this.currentBounds,{maxZoom:15});
+            else if(!this.detailVisible && this.overviewBounds) this.fitBounds(this.overviewBounds);
+        },
+
+        /* ────────── SHEET MANAGEMENT ────────── */
+        initSheetDrag() {
+            const handle = document.getElementById('sh-handle');
+            const sheet  = document.getElementById('bottom-sheet');
+            if(!handle||!sheet) return;
+            let startY, startH;
+
+            const avail  = () => window.innerHeight - 60;
+            const snaps  = () => { const a=avail(); return [a*0.15,a*0.40,a*0.90].map(Math.round); };
+            const nearest= h => snaps().reduce((p,c)=>Math.abs(c-h)<Math.abs(p-h)?c:p);
+
+            const applySnap = h => {
+                sheet.style.transition = 'height 0.3s cubic-bezier(0.25,0.46,0.45,0.94)';
+                sheet.style.height = nearest(h)+'px';
+                setTimeout(()=>this.refitMap(), 320);
+            };
+
+            handle._snapTo = ratio => {
+                sheet.style.transition = 'height 0.3s cubic-bezier(0.25,0.46,0.45,0.94)';
+                sheet.style.height = Math.round(avail()*ratio)+'px';
+                setTimeout(()=>this.refitMap(), 320);
+            };
+
+            handle.addEventListener('mousedown', e => {
+                startY=e.clientY; startH=sheet.offsetHeight;
+                sheet.style.transition='none';
+                const mm = e => {
+                    const h=Math.max(snaps()[0],Math.min(snaps()[2],startH+(startY-e.clientY)));
+                    sheet.style.height=h+'px';
+                };
+                const mu = () => { applySnap(sheet.offsetHeight); window.removeEventListener('mousemove',mm); window.removeEventListener('mouseup',mu); };
+                window.addEventListener('mousemove',mm);
+                window.addEventListener('mouseup',mu);
+            });
+            handle.addEventListener('touchstart', e=>{
+                startY=e.touches[0].clientY; startH=sheet.offsetHeight;
+                sheet.style.transition='none';
+            },{passive:true});
+            handle.addEventListener('touchmove', e=>{
+                e.preventDefault();
+                const h=Math.max(snaps()[0],Math.min(snaps()[2],startH+(startY-e.touches[0].clientY)));
+                sheet.style.height=h+'px';
+            },{passive:false});
+            handle.addEventListener('touchend', ()=>applySnap(sheet.offsetHeight));
+        },
+
+        snapSheet(ratio) {
+            const handle = document.getElementById('sh-handle');
+            if(handle&&handle._snapTo) handle._snapTo(ratio);
+        },
+
+        showResultsPanel() {
+            document.getElementById('sheet-results').classList.remove('hidden');
+            document.getElementById('sheet-detail').classList.remove('active');
+            this.detailVisible = false;
+        },
+
+        showDetail(idx) {
+            const itin = this.sortedItins[idx];
+            if(!itin) return;
+
+            /* Fill detail */
+            document.getElementById('dvs-time').textContent  = `${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)} · ${fmtDur(itin.duration)}`;
+            document.getElementById('dvs-route').textContent = `${this.from.name} → ${this.to.name}`;
+            document.getElementById('dv-steps').innerHTML = this.buildSteps(itin);
+
+            /* Swap panels */
+            document.getElementById('sheet-results').classList.add('hidden');
+            document.getElementById('sheet-detail').classList.add('active');
+            this.detailVisible = true;
+
+            /* Draw & fit */
+            this.drawRoute(itin);
+            this.currentBounds = this._getBounds(itin);
+            setTimeout(()=>{ if(this.currentBounds) this.fitBounds(this.currentBounds,{maxZoom:15}); }, 50);
+        },
+
+        closeDetail() {
+            this.showResultsPanel();
+            if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
+            setTimeout(()=>{ if(this.overviewBounds) this.fitBounds(this.overviewBounds); }, 50);
+        },
+
+        /* ────────── STEP BUILDER ────────── */
+        buildSteps(itin) {
+            let html='';
+            const legs=itin.legs;
+
+            legs.forEach((leg,i)=>{
+                const isFirst = i===0;
+                const isLast  = i===legs.length-1;
+
+                if(leg.mode==='WALK'){
+                    const min=Math.round(leg.duration/60);
+                    const dist=fmtDist(leg.distance);
+                    if(isFirst){
+                        html+=`<div class="step">
                             <div class="step-col">
-                                <div class="transit-pill" style="background:${c};color:${tc};width:26px;height:18px;font-size:0.68rem;border-radius:5px;">${n}</div>
-                                <div class="svline svline-transit" style="color:${c}"></div>
+                                <div class="sdot sdot-from"></div>
+                                <div class="svline svline-walk"></div>
                             </div>
                             <div class="step-body">
-                                <div class="step-title">Ligne ${n} · direction ${leg.headsign || '–'}</div>
-                                <div class="step-sub">Départ ${fmtTime(leg.startTime)} · ${totalStops} arrêt${totalStops > 1 ? 's' : ''}</div>
-                                <div class="inter-stops">
-                                    <div class="istop" style="color:${c}">
-                                        <div class="idot-last"></div>
-                                        <span class="istop-name" style="color:var(--text-main);font-weight:600;">${cleanName(leg.from.name)}</span>
-                                        <span class="istop-time">${fmtTime(leg.startTime)}</span>
-                                    </div>
-                                    ${inter.map(s => `<div class="istop">
-                                        <div class="idot-pass" style="border-color:${c}"></div>
-                                        <span class="istop-name">${cleanName(s.name)}</span>
-                                    </div>`).join('')}
-                                    <div class="istop dest" style="color:${c}">
-                                        <div class="idot-last"></div>
-                                        <span class="istop-name">${cleanName(leg.to.name)}</span>
-                                        <span class="istop-time">${fmtTime(leg.endTime)}</span>
-                                    </div>
-                                </div>
+                                <div class="step-title">${cleanName(leg.from.name)||this.from.name}</div>
+                                <div class="step-sub">Marcher ${min} min (${dist})</div>
+                            </div>
+                        </div>`;
+                    } else if(!isLast){
+                        html+=`<div class="step">
+                            <div class="step-col">
+                                <div class="sdot sdot-walk"></div>
+                                <div class="svline svline-walk"></div>
+                            </div>
+                            <div class="step-body">
+                                <div class="step-title">Marcher vers ${cleanName(leg.to.name)}</div>
+                                <div class="step-sub">${min} min · ${dist}</div>
                             </div>
                         </div>`;
                     }
-                });
+                    /* Last walk handled below in destination step */
+                } else {
+                    const n=legName(leg);
+                    const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
+                    const tc=lineTextColor(n);
+                    const inter=leg.intermediateStops||[];
+                    const totalStops=inter.length+1; /* +1 for destination */
 
-                const last = legs[legs.length - 1];
-                const lastIsWalk = last.mode === 'WALK';
-                html += `<div class="step">
-                    <div class="step-col">
-                        <div class="sdot sdot-dest"></div>
-                    </div>
-                    <div class="step-body">
-                        <div class="step-title">${cleanName(last.to.name) || this.to.name}</div>
-                        <div class="step-sub">Arrivée ${fmtTime(itin.endTime)}${lastIsWalk ? ' · ' + Math.round(last.duration/60) + ' min à pied' : ''}</div>
-                    </div>
-                </div>`;
-
-                return html;
-            },
-
-            clearMap() {
-                this.mapZoomHandlers.forEach(h => this.map.off('zoomend', h));
-                this.mapZoomHandlers = [];
-                this.mapLayers.forEach(l => { if (this.map.hasLayer(l)) this.map.removeLayer(l); });
-                this.mapLayers = [];
-            },
-
-            addStopMarkers(map, leg, layers, zoomHandlers) {
-                const n = legName(leg);
-                const c = lineColor(n) || (leg.routeColor ? '#' + leg.routeColor : '#888');
-                const stops = [];
-                if (leg.from && leg.from.lat != null) stops.push({ name: leg.from.name, lat: leg.from.lat, lon: leg.from.lon });
-                (leg.intermediateStops || []).forEach(s => { if (s.lat != null) stops.push({ name: s.name, lat: s.lat, lon: s.lon }); });
-                if (leg.to && leg.to.lat != null) stops.push({ name: leg.to.name, lat: leg.to.lat, lon: leg.to.lon });
-
-                const dotGroup   = L.layerGroup().addTo(map);
-                const labelGroup = L.layerGroup();
-
-                stops.forEach(s => {
-                    L.circleMarker([s.lat, s.lon], {
-                        radius: 3.5, color: c, fillColor: '#fff', fillOpacity: 1, weight: 2, pane: 'markerPane'
-                    }).addTo(dotGroup);
-                    L.tooltip({
-                        permanent: true,
-                        direction: 'right',
-                        offset: [6, 0],
-                        opacity: 1,
-                        className: 'stop-tooltip'
-                    })
-                    .setContent(cleanName(s.name))
-                    .setLatLng([s.lat, s.lon])
-                    .addTo(labelGroup);
-                });
-
-                const updateLabels = () => {
-                    if (map.getZoom() >= 14) labelGroup.addTo(map);
-                    else if (map.hasLayer(labelGroup)) map.removeLayer(labelGroup);
-                };
-                map.on('zoomend', updateLabels);
-                updateLabels();
-
-                if (layers) { layers.push(dotGroup, labelGroup); }
-                if (zoomHandlers) { zoomHandlers.push(updateLabels); }
-            },
-
-            drawRoute(itin) {
-                this.clearMap();
-                const bounds = [];
-                itin.legs.forEach(leg => {
-                    if (!leg.legGeometry || !leg.legGeometry.points) return;
-                    const coords = decodePolyline(leg.legGeometry.points);
-                    bounds.push(...coords);
-                    const n = legName(leg);
-                    const isWalk = leg.mode === 'WALK';
-                    const c = isWalk ? '#aaa' : (lineColor(n) || (leg.routeColor ? '#' + leg.routeColor : '#888'));
-                    const pl = L.polyline(coords, { color: c, weight: isWalk ? 3 : 5, opacity: isWalk ? 0.55 : 0.92, dashArray: isWalk ? '6 8' : null }).addTo(this.map);
-                    this.mapLayers.push(pl);
-                    if (!isWalk) this.addStopMarkers(this.map, leg, this.mapLayers, this.mapZoomHandlers);
-                });
-                if (bounds.length > 0) {
-                    this.overviewBounds = L.latLngBounds(bounds);
-                    if (!document.body.classList.contains('detail-open')) {
-                        this.map.fitBounds(this.overviewBounds, { padding: [70, 24], maxZoom: 16, animate: true, duration: 0.5 });
-                    }
+                    html+=`<div class="step">
+                        <div class="step-col">
+                            <div class="step-badge" style="background:${c};color:${tc}">${n}</div>
+                            <div class="svline" style="background:${c};opacity:0.3"></div>
+                        </div>
+                        <div class="step-body">
+                            <div class="step-title">Ligne ${n} · direction ${leg.headsign||'–'}</div>
+                            <div class="step-sub">Départ ${fmtTime(leg.startTime)} · ${totalStops} arrêt${totalStops>1?'s':''}</div>
+                            <div class="inter-stops">
+                                <div class="istop first" style="color:${c}">
+                                    <div class="idot-last" style="background:${c}"></div>
+                                    <span class="istop-name">${cleanName(leg.from.name)}</span>
+                                    <span class="istop-time">${fmtTime(leg.startTime)}</span>
+                                </div>
+                                ${inter.map(s=>`<div class="istop">
+                                    <div class="idot-pass" style="border-color:${c}"></div>
+                                    <span class="istop-name">${cleanName(s.name)}</span>
+                                </div>`).join('')}
+                                <div class="istop dest" style="color:${c}">
+                                    <div class="idot-last" style="background:${c}"></div>
+                                    <span class="istop-name">${cleanName(leg.to.name)}</span>
+                                    <span class="istop-time">${fmtTime(leg.endTime)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
                 }
-                const start = itin.legs[0], end = itin.legs[itin.legs.length - 1];
-                const mkFrom = L.circleMarker([start.from.lat, start.from.lon], { radius: 8, color: '#00d2ff', fillColor: '#fff', fillOpacity: 1, weight: 2.5 }).addTo(this.map);
-                const mkTo   = L.circleMarker([end.to.lat, end.to.lon], { radius: 8, color: '#e85d3a', fillColor: '#fff', fillOpacity: 1, weight: 2.5 }).addTo(this.map);
-                this.mapLayers.push(mkFrom, mkTo);
-            },
+            });
 
-            _getBounds(itin) {
-                const pts = [];
-                itin.legs.forEach(leg => {
-                    if (leg.legGeometry && leg.legGeometry.points) pts.push(...decodePolyline(leg.legGeometry.points));
-                });
-                return pts.length ? L.latLngBounds(pts) : null;
-            },
+            /* Destination */
+            const last=legs[legs.length-1];
+            const arrivalNote = last.mode==='WALK' && last.duration>60
+                ? ` · ${Math.round(last.duration/60)} min à pied` : '';
+            html+=`<div class="step dest-step">
+                <div class="step-col"><div class="sdot"></div></div>
+                <div class="step-body">
+                    <div class="step-title">${cleanName(last.to.name)||this.to.name}</div>
+                    <div class="step-sub">Arrivée ${fmtTime(itin.endTime)}${arrivalNote}</div>
+                </div>
+            </div>`;
 
-            showDetail(idx) {
-                const itin = this.sortedItins[idx];
-                if (!itin) return;
+            return html;
+        },
 
-                const shH = document.getElementById('bottom-sheet').offsetHeight;
-                const avail = window.innerHeight - 60;
-                const syncRatio = shH > 0 ? shH / avail : 0.40;
-                const dvSheetH = Math.round(avail * syncRatio);
+        /* ────────── STORAGE ────────── */
+        getHistory(){ try{ return JSON.parse(localStorage.getItem('itin_hist')||'[]'); }catch{ return []; } },
+        getFavs()   { try{ return JSON.parse(localStorage.getItem('itin_favs')||'[]'); }catch{ return []; } },
+        saveHist(p) {
+            try {
+                const h=this.getHistory().filter(x=>x.name!==p.name);
+                h.unshift({name:p.name,lat:p.lat,lon:p.lon,sub:p.sub||'',lines:p.lines||null,type:p.type});
+                localStorage.setItem('itin_hist',JSON.stringify(h.slice(0,8)));
+            } catch {}
+        }
+    };
 
-                this.drawRoute(itin);
-
-                document.getElementById('dvs-time').textContent = `${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)} · ${fmtDur(itin.duration)}`;
-                document.getElementById('dvs-route').textContent = `${this.from.name} → ${this.to.name}`;
-                document.getElementById('dv-steps').innerHTML = this.buildSteps(itin);
-                document.getElementById('detail-view').classList.add('open');
-                document.body.classList.add('detail-open');
-
-                if (!this.dvSheetReady) {
-                    this.initSheetDrag('dvsh-handle', 'dv-sheet', true);
-                    this.dvSheetReady = true;
-                }
-                const dvHandle = document.getElementById('dvsh-handle');
-                if (dvHandle && dvHandle._snapTo) dvHandle._snapTo(syncRatio);
-
-                const detailBounds = this._getBounds(itin);
-                if (detailBounds && this.map) {
-                    this.map.fitBounds(detailBounds, {
-                        paddingTopLeft: [16, 50],
-                        paddingBottomRight: [16, dvSheetH + 16],
-                        maxZoom: 15,
-                        animate: true,
-                        duration: 0.5
-                    });
-                }
-            },
-
-            closeDetail() {
-                const dvH = document.getElementById('dv-sheet').offsetHeight;
-                const avail = window.innerHeight - 60;
-                const syncRatio = dvH > 0 ? dvH / avail : 0.40;
-                const shHandle = document.getElementById('sh-handle');
-                if (shHandle && shHandle._snapTo) shHandle._snapTo(syncRatio);
-
-                document.getElementById('detail-view').classList.remove('open');
-                document.body.classList.remove('detail-open');
-
-                if (this.overviewBounds && this.map) {
-                    const sheetH = Math.round(avail * syncRatio);
-                    this.map.fitBounds(this.overviewBounds, {
-                        paddingTopLeft: [16, 90],
-                        paddingBottomRight: [16, sheetH + 16],
-                        maxZoom: 16,
-                        animate: true,
-                        duration: 0.5
-                    });
-                }
-            },
-
-            getHistory() {
-                try { return JSON.parse(localStorage.getItem('itin_hist') || '[]'); } catch { return []; }
-            },
-            getFavs() {
-                try { return JSON.parse(localStorage.getItem('itin_favs') || '[]'); } catch { return []; }
-            },
-            saveHist(p) {
-                try {
-                    const h = this.getHistory().filter(x => x.name !== p.name);
-                    h.unshift({ name: p.name, lat: p.lat, lon: p.lon, sub: p.sub || '', lines: p.lines || null, type: p.type });
-                    localStorage.setItem('itin_hist', JSON.stringify(h.slice(0, 8)));
-                } catch {}
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => ITIN.init());
+    document.addEventListener('DOMContentLoaded', ()=>ITIN.init());
     </script>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/ouestmontram/sw.js').catch(() => {});
+        if('serviceWorker' in navigator){
+            navigator.serviceWorker.register('/ouestmontram/sw.js').catch(()=>{});
         }
     </script>
 </body>
