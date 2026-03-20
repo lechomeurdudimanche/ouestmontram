@@ -213,21 +213,21 @@
 
         #opt-popup {
             position: fixed;
-            left: 12px; right: 12px;
-            width: auto;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            width: min(400px, calc(100vw - 32px));
             background: #202020;
             border: 1px solid #383838;
             border-radius: 20px;
             z-index: 410;
             box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.4);
             opacity: 0; pointer-events: none;
-            transform: translateY(12px);
             transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1);
             overflow: hidden;
         }
         #opt-popup.open {
             opacity: 1; pointer-events: all;
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
         }
 
         .popup-header {
@@ -861,14 +861,14 @@
             const sheet  = document.getElementById('bottom-sheet');
             const navH   = 60;
             const sheetTop = sheet.getBoundingClientRect().top;
-            const popH   = popup.offsetHeight;
             const gap    = 10;
             let bottom   = window.innerHeight - sheetTop + gap;
-            /* Clamp so popup doesn't go above the search float */
-            const sf   = document.getElementById('search-float');
+            /* Clamp so popup doesn't go above search float */
+            const sf     = document.getElementById('search-float');
             const sfBottom = sf ? sf.getBoundingClientRect().bottom : 0;
+            const popH   = popup.offsetHeight;
             const maxBottom = window.innerHeight - sfBottom - popH - 8;
-            bottom = Math.min(bottom, window.innerHeight - sfBottom - 8);
+            bottom = Math.min(bottom, maxBottom);
             popup.style.bottom = Math.max(navH + 8, bottom) + 'px';
         },
 
@@ -1127,27 +1127,23 @@
                 const transLegs = itin.legs.filter(l=>l.mode!=='WALK');
                 const firstTrans = transLegs[0];
 
-                /* Journey bar */
+                /* Journey bar — skip walk legs shorter than 250m */
                 let jbar='';
                 itin.legs.forEach((leg,li)=>{
                     if(leg.mode==='WALK'){
-                        if(li===0||li===itin.legs.length-1){
+                        if(leg.distance >= 250){
                             jbar+=`<div class="jb-walk"><div class="jb-dot"></div><div class="jb-dot"></div><div class="jb-dot"></div></div>`;
-                        } else {
-                            jbar+=`<div class="jb-walk"><div class="jb-dot"></div><div class="jb-dot"></div></div>`;
                         }
                     } else {
                         const n=legName(leg);
                         const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#777');
                         const tc=lineTextColor(n);
-                        if(li>0) jbar+=`<span class="jb-arrow">›</span>`;
+                        if(jbar.length) jbar+=`<span class="jb-arrow">–</span>`;
                         jbar+=`<div class="jb-badge" style="background:${c};color:${tc}">${n}</div>`;
                     }
                 });
 
-                const waitStr = firstTrans ? fmtWait(itin.startTime, firstTrans.startTime) : '';
-
-                /* Footer info — skip 0 correspondances */
+                /* Footer info */
                 const footItems=[];
                 if(itin.transfers>0) footItems.push(`${itin.transfers} correspondance${itin.transfers>1?'s':''}`);
                 if(itin.walkDistance>50) footItems.push(`${fmtDist(itin.walkDistance)} à pied`);
@@ -1155,8 +1151,8 @@
                 return `<div class="rcard" onclick="ITIN.showDetail(${i})">
                     <div class="rc-top">
                         <div>
-                            <div class="rc-times">${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)}</div>
-                            <div class="rc-dur">${fmtDur(itin.duration)}${waitStr}</div>
+                            <div class="rc-times">${fmtTime(itin.startTime)} – ${fmtTime(itin.endTime)}</div>
+                            <div class="rc-dur">${fmtDur(itin.duration)}</div>
                         </div>
                     </div>
                     <div class="jbar">${jbar}</div>
@@ -1220,13 +1216,28 @@
         },
 
         drawWalkDots(coords) {
-            const pts = samplePolyline(coords, 20);
+            /* Spacing in meters adapts to zoom: closer zoom = more dots */
+            const intervalForZoom = () => {
+                const z = this.map.getZoom();
+                if(z >= 17) return 8;
+                if(z >= 15) return 15;
+                if(z >= 13) return 30;
+                return 60;
+            };
+
             const layer = L.layerGroup().addTo(this.map);
-            pts.forEach(pt=>{
-                L.circleMarker(pt,{
-                    radius:2.5, color:'#4285F4', fillColor:'#4285F4', fillOpacity:1, weight:0, pane:'markerPane'
-                }).addTo(layer);
-            });
+            const redraw = () => {
+                layer.clearLayers();
+                samplePolyline(coords, intervalForZoom()).forEach(pt=>{
+                    L.circleMarker(pt,{
+                        radius:2.5, color:'#4285F4', fillColor:'#4285F4',
+                        fillOpacity:1, weight:0, pane:'markerPane'
+                    }).addTo(layer);
+                });
+            };
+            redraw();
+            this.map.on('zoomend', redraw);
+            this.mapZoomHandlers.push(redraw);
             this.mapLayers.push(layer);
         },
 
@@ -1353,8 +1364,8 @@
             if(!itin) return;
 
             /* Fill detail */
-            document.getElementById('dvs-time').textContent  = `${fmtTime(itin.startTime)} → ${fmtTime(itin.endTime)} · ${fmtDur(itin.duration)}`;
-            document.getElementById('dvs-route').textContent = `${this.from.name} → ${this.to.name}`;
+            document.getElementById('dvs-time').textContent  = `${fmtTime(itin.startTime)} – ${fmtTime(itin.endTime)} · ${fmtDur(itin.duration)}`;
+            document.getElementById('dvs-route').textContent = `${this.from.name} – ${this.to.name}`;
             document.getElementById('dv-steps').innerHTML = this.buildSteps(itin);
 
             /* Swap panels */
