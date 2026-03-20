@@ -150,64 +150,123 @@
         .sh-handle { width: 36px; height: 4px; background: #3a3a3a; border-radius: 2px; margin: 0 auto; }
 
         /* Results panel */
-        #sheet-results { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        #sheet-results { display: flex; flex-direction: column; flex: 1; overflow: hidden; position: relative; }
         #sheet-results.hidden { display: none; }
 
-        #mode-bar {
-            display: flex; align-items: center; gap: 6px; padding: 7px 12px;
-            border-bottom: 1px solid #1e1e1e; flex-shrink: 0;
+        /* ── OPTIONS BAR (scrollable chips) ── */
+        #options-bar {
+            display: flex; align-items: center; gap: 7px;
+            padding: 9px 12px;
+            border-bottom: 1px solid #1a1a1a;
+            overflow-x: auto; flex-shrink: 0;
+            -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
         }
-        .mode-pill {
-            font-size: 0.75rem; padding: 5px 14px; border-radius: 20px;
-            border: 1px solid var(--border); color: var(--text-muted);
-            background: #1a1a1a; cursor: pointer; white-space: nowrap; flex-shrink: 0;
-            transition: all 0.15s; user-select: none; font-weight: 500;
-        }
-        .mode-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.35); color: var(--accent); font-weight: 600; }
-        .time-toggle-btn {
-            margin-left: auto; display: flex; align-items: center; gap: 4px;
-            font-size: 0.72rem; color: var(--text-muted); cursor: pointer;
-            background: #1a1a1a; border: 1px solid var(--border);
-            border-radius: 20px; padding: 5px 10px; flex-shrink: 0; white-space: nowrap;
-            transition: all 0.15s; user-select: none;
-        }
-        .time-toggle-btn.active-time { border-color: rgba(0,210,255,0.35); color: var(--accent); }
+        #options-bar::-webkit-scrollbar { display: none; }
 
-        #time-picker {
-            display: none; flex-direction: column;
-            background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--border);
-            padding: 7px 12px; gap: 6px; flex-shrink: 0;
+        .opt-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 20px; flex-shrink: 0;
+            font-size: 0.75rem; font-weight: 500; cursor: pointer;
+            user-select: none; white-space: nowrap; scroll-snap-align: start;
+            border: 1.5px solid var(--border); background: #1c1c1c;
+            color: var(--text-muted); transition: border-color 0.15s, background 0.15s, color 0.15s;
         }
-        #time-picker.open { display: flex; }
-        .tp-pills { display: flex; gap: 5px; }
-        .tp-pill {
-            font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
-            border: 1px solid var(--border); color: var(--text-muted);
-            background: var(--bg-panel); cursor: pointer; white-space: nowrap;
-            transition: all 0.15s; user-select: none;
+        .opt-chip svg { flex-shrink: 0; opacity: 0.7; }
+        .opt-chip:active { background: #252525; }
+        .opt-chip.active {
+            background: rgba(0,210,255,0.08);
+            border-color: rgba(0,210,255,0.45);
+            color: var(--accent); font-weight: 600;
         }
-        .tp-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.4); color: var(--accent); font-weight: 600; }
-        #time-input-wrap { display: none; }
-        #time-input-wrap.show { display: block; }
+        .opt-chip.active svg { opacity: 1; }
+
+        /* chevron down on chips that open popups */
+        .opt-chip .chip-caret {
+            width: 10px; height: 10px; opacity: 0.45; flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .opt-chip.popup-open .chip-caret { transform: rotate(180deg); opacity: 0.8; }
+
+        /* divider between chip groups */
+        .opt-sep {
+            width: 1px; height: 18px; background: #2e2e2e; flex-shrink: 0; border-radius: 1px;
+        }
+
+        /* ── OPTION POPUP ── */
+        #opt-backdrop {
+            position: absolute; inset: 0;
+            z-index: 300; display: none;
+        }
+        #opt-backdrop.open { display: block; }
+
+        #opt-popup {
+            position: absolute; left: 10px; right: 10px; bottom: 0;
+            background: #1c1c1c; border: 1px solid var(--border);
+            border-radius: 18px; padding: 0 0 6px;
+            z-index: 310; box-shadow: 0 -6px 32px rgba(0,0,0,0.6);
+            transform: translateY(110%);
+            transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+            overflow: hidden;
+        }
+        #opt-popup.open { transform: translateY(0); }
+
+        .popup-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid #272727;
+        }
+        .popup-title {
+            font-size: 0.78rem; font-weight: 700; color: var(--text-main);
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .popup-close {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #2a2a2a; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+            font-size: 1rem; line-height: 1; flex-shrink: 0; transition: background 0.15s;
+        }
+        .popup-close:active { background: #333; }
+
+        .popup-options { padding: 6px 0; }
+
+        .pop-opt {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 16px; cursor: pointer; transition: background 0.12s;
+        }
+        .pop-opt:active { background: #252525; }
+
+        .pop-radio {
+            width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+            border: 2px solid #444; background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.15s;
+        }
+        .pop-radio::after {
+            content: ''; width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); opacity: 0; transition: opacity 0.15s;
+        }
+        .pop-opt.selected .pop-radio { border-color: var(--accent); }
+        .pop-opt.selected .pop-radio::after { opacity: 1; }
+
+        .pop-opt-text { flex: 1; }
+        .pop-opt-label { font-size: 0.87rem; font-weight: 500; color: var(--text-main); }
+        .pop-opt-sub   { font-size: 0.73rem; color: var(--text-muted); margin-top: 1px; }
+
+        .pop-opt-icon {
+            width: 34px; height: 34px; border-radius: 10px; background: #252525;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem; flex-shrink: 0;
+        }
+
+        /* datetime inside time popup */
+        #pop-time-input-wrap { padding: 4px 16px 8px; display: none; }
+        #pop-time-input-wrap.show { display: block; }
         #custom-time-input {
-            width: 100%; background: #0d0d0d; border: 1px solid var(--border);
-            border-radius: 8px; color: var(--text-main); padding: 7px 10px;
-            font-size: 0.83rem; font-family: inherit; outline: none;
+            width: 100%; background: #111; border: 1.5px solid var(--border);
+            border-radius: 10px; color: var(--text-main); padding: 9px 12px;
+            font-size: 0.85rem; font-family: inherit; outline: none;
         }
         #custom-time-input:focus { border-color: var(--accent); }
-
-        #filter-bar {
-            display: none; gap: 5px; padding: 7px 12px;
-            border-bottom: 1px solid #1e1e1e; flex-shrink: 0; flex-wrap: wrap;
-        }
-        #filter-bar.show { display: flex; }
-        .filter-pill {
-            font-size: 0.72rem; padding: 4px 11px; border-radius: 20px;
-            border: 1px solid var(--border); color: var(--text-muted);
-            background: #1a1a1a; cursor: pointer; white-space: nowrap;
-            transition: all 0.15s; user-select: none; font-weight: 500;
-        }
-        .filter-pill.active { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.35); color: var(--accent); font-weight: 600; }
 
         #results-list { flex: 1; overflow-y: auto; padding: 6px 10px 10px; }
         #results-list::-webkit-scrollbar { display: none; }
@@ -388,30 +447,51 @@
 
         <!-- Panel résultats -->
         <div id="sheet-results">
-            <div id="mode-bar">
-                <div class="mode-pill active" data-mode="transit" onclick="ITIN.setTravelMode('transit')">🚊 Transports</div>
-                <div class="mode-pill" data-mode="walk" onclick="ITIN.setTravelMode('walk')">🚶 À pied</div>
-                <div class="time-toggle-btn" id="time-toggle-btn" onclick="ITIN.toggleTimePicker()">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>
-                    </svg>
-                    <span id="time-btn-label">Maintenant</span>
+
+            <!-- Scrollable chips bar -->
+            <div id="options-bar">
+                <!-- Mode transport -->
+                <div class="opt-chip active" id="chip-mode" onclick="ITIN.openPopup('mode')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8l-1 4h10z"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/></svg>
+                    <span id="chip-mode-label">Transports</span>
+                    <svg class="chip-caret" viewBox="0 0 10 10" fill="currentColor"><path d="M2 3.5l3 3 3-3"/></svg>
+                </div>
+
+                <div class="opt-sep"></div>
+
+                <!-- Heure -->
+                <div class="opt-chip" id="chip-time" onclick="ITIN.openPopup('time')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                    <span id="chip-time-label">Maintenant</span>
+                    <svg class="chip-caret" viewBox="0 0 10 10" fill="currentColor"><path d="M2 3.5l3 3 3-3"/></svg>
+                </div>
+
+                <div class="opt-sep"></div>
+
+                <!-- Tri / filtre (visible seulement après résultats transit) -->
+                <div class="opt-chip" id="chip-sort" onclick="ITIN.openPopup('sort')" style="display:none">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                    <span id="chip-sort-label">Rapide</span>
+                    <svg class="chip-caret" viewBox="0 0 10 10" fill="currentColor"><path d="M2 3.5l3 3 3-3"/></svg>
                 </div>
             </div>
-            <div id="time-picker">
-                <div class="tp-pills">
-                    <div class="tp-pill active" data-mode="now" onclick="ITIN.setTimeMode('now')">Maintenant</div>
-                    <div class="tp-pill" data-mode="depart" onclick="ITIN.setTimeMode('depart')">Départ à…</div>
-                    <div class="tp-pill" data-mode="arrive" onclick="ITIN.setTimeMode('arrive')">Arrivée à…</div>
+
+            <!-- Popup backdrop (inside sheet) -->
+            <div id="opt-backdrop" onclick="ITIN.closePopup()"></div>
+
+            <!-- Popup card -->
+            <div id="opt-popup">
+                <div class="popup-header">
+                    <span class="popup-title" id="popup-title">Options</span>
+                    <button class="popup-close" onclick="ITIN.closePopup()">×</button>
                 </div>
-                <div id="time-input-wrap">
+                <div class="popup-options" id="popup-body"></div>
+                <!-- Time input (only for time popup) -->
+                <div id="pop-time-input-wrap">
                     <input type="datetime-local" id="custom-time-input" onchange="ITIN.onTimeChange(this.value)">
                 </div>
             </div>
-            <div id="filter-bar">
-                <div class="filter-pill active" data-sort="fastest" onclick="ITIN.setSort('fastest')">⚡ Rapide</div>
-                <div class="filter-pill" data-sort="lessWalk" onclick="ITIN.setSort('lessWalk')">👟 Moins de marche</div>
-            </div>
+
             <div id="results-list"></div>
         </div>
 
@@ -723,12 +803,111 @@
             );
         },
 
+        /* ────────── POPUP SYSTEM ────────── */
+        _currentPopup: null,
+
+        openPopup(type) {
+            /* If same popup already open → close */
+            if(this._currentPopup === type){
+                this.closePopup(); return;
+            }
+            this._currentPopup = type;
+            const popup   = document.getElementById('opt-popup');
+            const backdrop= document.getElementById('opt-backdrop');
+            const body    = document.getElementById('popup-body');
+            const title   = document.getElementById('popup-title');
+            const timeWrap= document.getElementById('pop-time-input-wrap');
+            timeWrap.classList.remove('show');
+
+            /* Mark active chip */
+            document.querySelectorAll('.opt-chip').forEach(c=>c.classList.remove('popup-open'));
+            const activeChip = document.getElementById('chip-'+type);
+            if(activeChip) activeChip.classList.add('popup-open');
+
+            if(type==='mode'){
+                title.textContent = 'Mode de transport';
+                body.innerHTML = [
+                    { val:'transit', icon:'🚊', label:'Transports en commun', sub:'Tram, bus, correspondances' },
+                    { val:'walk',    icon:'🚶', label:'À pied',               sub:'Itinéraire pédestre uniquement' },
+                ].map(o=>`
+                    <div class="pop-opt ${this.travelMode===o.val?'selected':''}" onclick="ITIN._pickMode('${o.val}')">
+                        <div class="pop-opt-icon">${o.icon}</div>
+                        <div class="pop-opt-text">
+                            <div class="pop-opt-label">${o.label}</div>
+                            <div class="pop-opt-sub">${o.sub}</div>
+                        </div>
+                        <div class="pop-radio"></div>
+                    </div>`).join('');
+
+            } else if(type==='time'){
+                title.textContent = 'Heure du trajet';
+                const modes = [
+                    { val:'now',    icon:'⚡', label:'Maintenant',   sub:'Prochain départ disponible' },
+                    { val:'depart', icon:'🕐', label:'Départ à…',    sub:'Choisir l\'heure de départ' },
+                    { val:'arrive', icon:'🏁', label:'Arrivée à…',   sub:'Choisir l\'heure d\'arrivée' },
+                ];
+                body.innerHTML = modes.map(o=>`
+                    <div class="pop-opt ${this.timeMode===o.val?'selected':''}" onclick="ITIN._pickTimeMode('${o.val}')">
+                        <div class="pop-opt-icon">${o.icon}</div>
+                        <div class="pop-opt-text">
+                            <div class="pop-opt-label">${o.label}</div>
+                            <div class="pop-opt-sub">${o.sub}</div>
+                        </div>
+                        <div class="pop-radio"></div>
+                    </div>`).join('');
+                if(this.timeMode!=='now') timeWrap.classList.add('show');
+
+            } else if(type==='sort'){
+                title.textContent = 'Trier les trajets';
+                const sorts = [
+                    { val:'fastest',  icon:'⚡', label:'Le plus rapide',        sub:'Durée totale minimale' },
+                    { val:'lessWalk', icon:'👟', label:'Moins de marche',       sub:'Distance à pied minimale' },
+                ];
+                body.innerHTML = sorts.map(o=>`
+                    <div class="pop-opt ${this.sortMode===o.val?'selected':''}" onclick="ITIN._pickSort('${o.val}')">
+                        <div class="pop-opt-icon">${o.icon}</div>
+                        <div class="pop-opt-text">
+                            <div class="pop-opt-label">${o.label}</div>
+                            <div class="pop-opt-sub">${o.sub}</div>
+                        </div>
+                        <div class="pop-radio"></div>
+                    </div>`).join('');
+            }
+
+            backdrop.classList.add('open');
+            requestAnimationFrame(()=>popup.classList.add('open'));
+        },
+
+        closePopup() {
+            const popup   = document.getElementById('opt-popup');
+            const backdrop= document.getElementById('opt-backdrop');
+            popup.classList.remove('open');
+            backdrop.classList.remove('open');
+            document.querySelectorAll('.opt-chip').forEach(c=>c.classList.remove('popup-open'));
+            this._currentPopup = null;
+        },
+
+        _pickMode(mode) {
+            this.closePopup();
+            this.setTravelMode(mode);
+        },
+        _pickTimeMode(mode) {
+            this.setTimeMode(mode);
+            /* Keep popup open if need datetime input, otherwise close */
+            if(mode==='now') this.closePopup();
+        },
+        _pickSort(mode) {
+            this.closePopup();
+            this.setSort(mode);
+        },
+
         /* ────────── MODES & FILTERS ────────── */
         setTravelMode(mode) {
             this.travelMode = mode;
-            document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
-            const fb = document.getElementById('filter-bar');
-            if(mode==='transit') fb.classList.add('show'); else fb.classList.remove('show');
+            /* Update mode chip label */
+            const labels = { transit:'Transports', walk:'À pied' };
+            document.getElementById('chip-mode-label').textContent = labels[mode]||mode;
+            document.getElementById('chip-mode').classList.toggle('active', true);
             this.applySort();
             if(!this.sortedItins.length && this.from && this.to) this.plan();
             else { this.renderResults(); if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]); }
@@ -736,7 +915,8 @@
 
         setSort(mode) {
             this.sortMode = mode;
-            document.querySelectorAll('.filter-pill').forEach(p=>p.classList.toggle('active',p.dataset.sort===mode));
+            const labels = { fastest:'Rapide', lessWalk:'Moins de marche' };
+            document.getElementById('chip-sort-label').textContent = labels[mode]||mode;
             this.applySort();
             this.renderResults();
             if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
@@ -750,43 +930,43 @@
             this.sortedItins = arr;
         },
 
-        toggleTimePicker() {
-            const tp = document.getElementById('time-picker');
-            tp.classList.toggle('open');
-        },
-
         setTimeMode(mode) {
             this.timeMode = mode;
-            document.querySelectorAll('.tp-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
-            const wrap = document.getElementById('time-input-wrap');
-            const btn  = document.getElementById('time-btn-label');
-            const toggleBtn = document.getElementById('time-toggle-btn');
+            const timeWrap = document.getElementById('pop-time-input-wrap');
+            const chip = document.getElementById('chip-time');
+            /* Update radio in popup */
+            document.querySelectorAll('#popup-body .pop-opt').forEach(o=>{
+                o.classList.toggle('selected', o.getAttribute('onclick').includes(`'${mode}'`));
+            });
             if(mode!=='now'){
                 const now = new Date();
                 now.setMinutes(now.getMinutes()+5);
                 const iso = new Date(now - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
-                document.getElementById('custom-time-input').value = iso;
-                this.customTime = iso;
-                wrap.classList.add('show');
-                btn.textContent = mode==='depart' ? 'Départ' : 'Arrivée';
-                toggleBtn.classList.add('active-time');
+                const inp = document.getElementById('custom-time-input');
+                if(!this.customTime) inp.value = iso;
+                this.customTime = this.customTime || iso;
+                timeWrap.classList.add('show');
+                const label = mode==='depart' ? 'Départ' : 'Arrivée';
+                document.getElementById('chip-time-label').textContent = label;
+                chip.classList.add('active');
             } else {
                 this.customTime = null;
-                wrap.classList.remove('show');
-                btn.textContent = 'Maintenant';
-                toggleBtn.classList.remove('active-time');
+                timeWrap.classList.remove('show');
+                document.getElementById('chip-time-label').textContent = 'Maintenant';
+                chip.classList.remove('active');
             }
             if(this.from && this.to) this.plan();
         },
 
         onTimeChange(val) {
             this.customTime = val;
-            const btn = document.getElementById('time-btn-label');
             if(val){
                 const dt = new Date(val);
-                btn.textContent = fmtTime(dt.getTime());
+                const label = this.timeMode==='arrive' ? 'Arrivée' : 'Départ';
+                document.getElementById('chip-time-label').textContent = `${label} ${fmtTime(dt.getTime())}`;
+                document.getElementById('chip-time').classList.add('active');
             }
-            if(this.from && this.to) this.plan();
+            if(this.from && this.to){ this.closePopup(); this.plan(); }
         },
 
         /* ────────── PLANNING ────────── */
@@ -823,15 +1003,14 @@
 
                 if(!this.rawItins.length && this.travelMode==='transit'){
                     this.travelMode='walk';
-                    document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode==='walk'));
+                    document.getElementById('chip-mode-label').textContent = 'À pied';
                 }
 
                 this.applySort();
 
-                /* Show filter bar for transit */
-                const fb = document.getElementById('filter-bar');
-                if(this.travelMode==='transit' && this.sortedItins.length>1) fb.classList.add('show');
-                else fb.classList.remove('show');
+                /* Show/hide sort chip */
+                const sortChip = document.getElementById('chip-sort');
+                sortChip.style.display = (this.travelMode==='transit' && this.sortedItins.length>1) ? 'inline-flex' : 'none';
 
                 this.renderResults();
                 if(this.sortedItins.length>0) this.drawRoute(this.sortedItins[0]);
@@ -1065,6 +1244,7 @@
         },
 
         showResultsPanel() {
+            this.closePopup();
             document.getElementById('sheet-results').classList.remove('hidden');
             document.getElementById('sheet-detail').classList.remove('active');
             this.detailVisible = false;
