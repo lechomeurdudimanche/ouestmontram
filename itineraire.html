@@ -337,7 +337,7 @@
             min-width: 22px; height: 22px; border-radius: 11px; padding: 0 5px;
             font-size: 0.6rem; font-weight: 800; color: white; flex-shrink: 0;
         }
-        .jb-arrow { font-size: 0.75rem; color: #555; line-height: 1; }
+        .jb-arrow { font-size: 1rem; color: #555; line-height: 1; }
 
         .rc-foot { display: flex; gap: 10px; padding-top: 6px; border-top: 1px solid #1e1e1e; flex-wrap: wrap; }
         .rc-foot span { font-size: 0.7rem; color: var(--text-muted); }
@@ -617,20 +617,25 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-    /* ── Constants ── */
-    const LINE_COLORS = {
-        'A':'#006eb7','B':'#00a459','C':'#e2007a','D':'#f29400','E':'#5c2a90',
-        'C1':'#f5d24d','C2':'#f5d24d','C3':'#f5d24d','C4':'#f5d24d',
-        'C5':'#f5d24d','C6':'#f5d24d','C7':'#f5d24d','C8':'#f5d24d',
-        'C9':'#ef7c00','C10':'#ef7c00','C11':'#ef7c00','C12':'#ef7c00','C13':'#ef7c00','C14':'#ef7c00',
-        '15':'#1e71b8','16':'#33a457','17':'#33a457','18':'#33a457','19':'#33a457',
-        '20':'#1e71b8','21':'#1e71b8','22':'#33a457','23':'#1e71b8','24':'#33a457','25':'#1e71b8',
-        '59':'#d572a8'
-    };
-    const CHRONO_DARK = new Set(['C1','C2','C3','C4','C5','C6','C7','C8']);
+    /* ── Route colours — populated dynamically from the network API ── */
+    const _lineColors     = new Map(); /* shortName → '#rrggbb' */
+    const _lineTextColors = new Map(); /* shortName → '#rrggbb' */
 
-    const lineColor    = n => LINE_COLORS[String(n).toUpperCase()] || LINE_COLORS[n] || '#777';
-    const lineTextColor= n => CHRONO_DARK.has(String(n).toUpperCase()) ? '#1a1000' : '#ffffff';
+    const lineColor     = n => _lineColors.get(String(n))     || '#777777';
+    const lineTextColor = n => _lineTextColors.get(String(n)) || '#ffffff';
+
+    function loadRouteColors() {
+        return fetch('https://data.mobilites-m.fr/api/routers/default/index/routes')
+            .then(r => r.ok ? r.json() : [])
+            .then(routes => {
+                for (const route of routes) {
+                    if (!route.shortName || !route.color) continue;
+                    _lineColors.set(route.shortName,     '#' + route.color);
+                    _lineTextColors.set(route.shortName, route.textColor ? '#' + route.textColor : '#ffffff');
+                }
+            })
+            .catch(() => {});
+    }
     const legName      = leg => leg.routeShortName || leg.route || '';
 
     /* ── Helpers ── */
@@ -735,6 +740,7 @@
             });
 
             this.initSheetDrag();
+            loadRouteColors();   /* fetch colours for every line from the network API */
             this.loadStops();
         },
 
@@ -763,31 +769,18 @@
         },
 
         loadTramLines() {
-            const TRAMS = [
-                {id:'SEM:A',color:'#006eb7'},
-                {id:'SEM:B',color:'#00a459'},
-                {id:'SEM:C',color:'#e2007a'},
-                {id:'SEM:D',color:'#f29400'},
-                {id:'SEM:E',color:'#5c2a90'},
-            ];
-            TRAMS.forEach(t => {
-                fetch(`https://data.mobilites-m.fr/api/lines/json?types=ligne&reseaux=SEM`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(()=>null)
-                    .then(()=>{
-                        /* Use the shapes API for the line geometry */
-                        fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${t.id}/clusters`)
-                            .then(r => r.ok ? r.json() : [])
-                            .then(stops => {
-                                if(!stops||stops.length<2) return;
-                                /* Sort stops by approximate order along the line */
-                                const coords = stops
-                                    .filter(s=>s.lat&&s.lon)
-                                    .map(s=>[s.lat,s.lon]);
-                                if(coords.length<2) return;
-                                L.polyline(coords, { color:t.color, weight:4, opacity:0.35, pane:'tramPane' }).addTo(this.map);
-                            }).catch(()=>{});
-                    });
+            const TRAM_IDS = ['SEM:A','SEM:B','SEM:C','SEM:D','SEM:E'];
+            TRAM_IDS.forEach(id => {
+                const shortName = id.split(':')[1];
+                fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${id}/clusters`)
+                    .then(r => r.ok ? r.json() : [])
+                    .then(stops => {
+                        if(!stops||stops.length<2) return;
+                        const coords = stops.filter(s=>s.lat&&s.lon).map(s=>[s.lat,s.lon]);
+                        if(coords.length<2) return;
+                        const c = lineColor(shortName);
+                        L.polyline(coords, { color:c, weight:4, opacity:0.35, pane:'tramPane' }).addTo(this.map);
+                    }).catch(()=>{});
             });
         },
 
@@ -964,8 +957,9 @@
             } else if(type==='sort'){
                 title.textContent = 'Trier les résultats';
                 body.innerHTML = [
-                    ['fastest',  'Le plus rapide',  'Durée totale minimale'],
-                    ['lessWalk', 'Moins de marche', 'Distance à pied minimale'],
+                    ['fastest',  'Le plus rapide',          'Durée totale minimale'],
+                    ['earliest', 'Arrivée le plus tôt',     'Heure d\'arrivée la plus proche'],
+                    ['lessWalk', 'Moins de marche',         'Distance à pied minimale'],
                 ].map(([val,l,s])=>optRow(val,l,s,this.sortMode===val,'_pickSort')).join('');
             }
 
@@ -1048,7 +1042,7 @@
 
         setSort(mode) {
             this.sortMode = mode;
-            const labels = { fastest:'Rapide', lessWalk:'Moins de marche' };
+            const labels = { fastest:'Rapide', earliest:'Arrivée tôt', lessWalk:'Moins de marche' };
             document.getElementById('chip-sort-label').textContent = labels[mode]||mode;
             this.applySort();
             this.renderResults();
@@ -1059,6 +1053,7 @@
             const src = this.travelMode==='walk' ? this.walkItins : this.rawItins;
             const arr = [...src];
             if(this.sortMode==='lessWalk') arr.sort((a,b)=>a.walkDistance-b.walkDistance);
+            else if(this.sortMode==='earliest') arr.sort((a,b)=>a.endTime-b.endTime);
             else arr.sort((a,b)=>a.duration-b.duration);
             this.sortedItins = arr;
         },
@@ -1177,7 +1172,7 @@
                 itin.legs.forEach((leg)=>{
                     if(leg.mode==='WALK'){
                         if(leg.distance >= 250){
-                            jbar+=`<span class="jb-walk-icon">🚶</span>`;
+                            jbar+=`<span class="jb-walk-icon">🚶‍➡️</span>`;
                         }
                     } else {
                         const n=legName(leg);
@@ -1237,26 +1232,38 @@
         addStopMarkers(leg) {
             const n=legName(leg);
             const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#888');
-            const stops=[];
-            if(leg.from&&leg.from.lat!=null) stops.push({name:leg.from.name,lat:leg.from.lat,lon:leg.from.lon});
-            (leg.intermediateStops||[]).forEach(s=>{ if(s.lat!=null) stops.push({name:s.name,lat:s.lat,lon:s.lon}); });
-            if(leg.to&&leg.to.lat!=null) stops.push({name:leg.to.name,lat:leg.to.lat,lon:leg.to.lon});
+            const allStops=[];
+            if(leg.from&&leg.from.lat!=null) allStops.push({name:leg.from.name,lat:leg.from.lat,lon:leg.from.lon,key:true});
+            (leg.intermediateStops||[]).forEach(s=>{ if(s.lat!=null) allStops.push({name:s.name,lat:s.lat,lon:s.lon,key:false}); });
+            if(leg.to&&leg.to.lat!=null) allStops.push({name:leg.to.name,lat:leg.to.lat,lon:leg.to.lon,key:true});
 
-            const dotGroup   = L.layerGroup().addTo(this.map);
-            const labelGroup = L.layerGroup();
-            stops.forEach(s=>{
+            const dotGroup      = L.layerGroup().addTo(this.map);
+            const keyLabelGroup = L.layerGroup();   /* arrêts clés : départ + arrivée du leg */
+            const allLabelGroup = L.layerGroup();   /* arrêts intermédiaires */
+
+            allStops.forEach(s=>{
                 L.circleMarker([s.lat,s.lon],{
                     radius:3.5, color:c, fillColor:'#fff', fillOpacity:1, weight:2, pane:'markerPane'
                 }).addTo(dotGroup);
-                L.tooltip({ permanent:true, direction:'right', offset:[6,0], opacity:1, className:'stop-tooltip' })
-                    .setContent(cleanName(s.name)).setLatLng([s.lat,s.lon]).addTo(labelGroup);
+
+                const tooltip = L.tooltip({ permanent:true, direction:'right', offset:[6,0], opacity:1, className:'stop-tooltip' })
+                    .setContent(cleanName(s.name)).setLatLng([s.lat,s.lon]);
+
+                if(s.key) tooltip.addTo(keyLabelGroup);
+                else      tooltip.addTo(allLabelGroup);
             });
+
             const updateLabels = () => {
-                if(this.map.getZoom()>=14) labelGroup.addTo(this.map);
-                else if(this.map.hasLayer(labelGroup)) this.map.removeLayer(labelGroup);
+                const z = this.map.getZoom();
+                /* Zoom ≥ 14 : labels des arrêts clés */
+                if(z >= 14) keyLabelGroup.addTo(this.map);
+                else if(this.map.hasLayer(keyLabelGroup)) this.map.removeLayer(keyLabelGroup);
+                /* Zoom ≥ 15 : labels des arrêts intermédiaires */
+                if(z >= 15) allLabelGroup.addTo(this.map);
+                else if(this.map.hasLayer(allLabelGroup)) this.map.removeLayer(allLabelGroup);
             };
             this.map.on('zoomend', updateLabels); updateLabels();
-            this.mapLayers.push(dotGroup,labelGroup);
+            this.mapLayers.push(dotGroup, keyLabelGroup, allLabelGroup);
             this.mapZoomHandlers.push(updateLabels);
         },
 
@@ -1264,8 +1271,11 @@
             /* Spacing in meters adapts to zoom: closer zoom = more dots */
             const intervalForZoom = () => {
                 const z = this.map.getZoom();
+                if(z >= 17.5) return 5;
                 if(z >= 17) return 15;
+                if(z >= 16.5) return 30;
                 if(z >= 16) return 40;
+                if(z >= 15.5) return 70;
                 if(z >= 15) return 100;
                 if(z >= 14) return 175;
                 if(z >= 13) return 250;
@@ -1356,7 +1366,7 @@
             let startY, startH;
 
             const avail  = () => window.innerHeight - 60;
-            const snaps  = () => { const a=avail(); return [a*0.15,a*0.40,a*0.90].map(Math.round); };
+            const snaps  = () => { const a=avail(); return [a*0.12,a*0.45,a*0.95].map(Math.round); };
             const nearest= h => snaps().reduce((p,c)=>Math.abs(c-h)<Math.abs(p-h)?c:p);
 
             const applySnap = h => {
