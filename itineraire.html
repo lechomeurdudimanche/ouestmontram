@@ -732,7 +732,7 @@
             setH(); window.addEventListener('resize', setH);
 
             this.map = L.map('map', { center:[45.1885,5.7245], zoom:13, zoomControl:false });
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution:'© <a href="https://www.openstreetmap.org/">OSM</a> © <a href="https://carto.com/">CARTO</a>',
                 subdomains:'abcd', maxZoom:19
             }).addTo(this.map);
