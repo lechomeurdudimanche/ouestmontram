@@ -1376,12 +1376,16 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
             },
 
             _initBackButton() {
-                // Empile un état initial pour pouvoir intercepter le premier "retour"
+                // Empile 3 états pour avoir un coussin robuste contre les retours rapides
                 history.replaceState({ tramApp: 'base' }, '');
+                history.pushState({ tramApp: 'app' }, '');
+                history.pushState({ tramApp: 'app' }, '');
                 history.pushState({ tramApp: 'app' }, '');
 
                 window.addEventListener('popstate', () => {
-                    // Toujours rempiler immédiatement : on ne quitte jamais l'app
+                    // Reconstituer immédiatement le coussin de 3 entrées
+                    history.pushState({ tramApp: 'app' }, '');
+                    history.pushState({ tramApp: 'app' }, '');
                     history.pushState({ tramApp: 'app' }, '');
 
                     // 1. Fermer l'overlay d'installation s'il est ouvert

@@ -1467,9 +1467,12 @@
             // Empêcher le bouton retour Android de quitter la page
             history.replaceState({ infoApp: 'base' }, '');
             history.pushState({ infoApp: 'app' }, '');
+            history.pushState({ infoApp: 'app' }, '');
+            history.pushState({ infoApp: 'app' }, '');
             window.addEventListener('popstate', () => {
                 history.pushState({ infoApp: 'app' }, '');
-                // Pas d'état interne à fermer sur cette page
+                history.pushState({ infoApp: 'app' }, '');
+                history.pushState({ infoApp: 'app' }, '');
             });
         });
     </script>

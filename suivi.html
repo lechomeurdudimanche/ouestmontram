@@ -1123,9 +1123,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Empêcher le bouton retour Android de quitter la page
     history.replaceState({ suiviApp: 'base' }, '');
     history.pushState({ suiviApp: 'app' }, '');
+    history.pushState({ suiviApp: 'app' }, '');
+    history.pushState({ suiviApp: 'app' }, '');
     window.addEventListener('popstate', () => {
         history.pushState({ suiviApp: 'app' }, '');
-        // Pas d'état interne à fermer sur cette page
+        history.pushState({ suiviApp: 'app' }, '');
+        history.pushState({ suiviApp: 'app' }, '');
     });
 });
 </script>

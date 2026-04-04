@@ -1106,8 +1106,11 @@
         _initBackButton() {
             history.replaceState({ itinApp: 'base' }, '');
             history.pushState({ itinApp: 'app' }, '');
+            history.pushState({ itinApp: 'app' }, '');
+            history.pushState({ itinApp: 'app' }, '');
             window.addEventListener('popstate', () => {
-                // Toujours rempiler : on ne quitte jamais l'app
+                history.pushState({ itinApp: 'app' }, '');
+                history.pushState({ itinApp: 'app' }, '');
                 history.pushState({ itinApp: 'app' }, '');
                 // 1. Fermer le modal édition favori
                 const lpEdit = document.getElementById('lp-edit-modal');
