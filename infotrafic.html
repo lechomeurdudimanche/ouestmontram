@@ -1464,15 +1464,13 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             app.init();
-            // Empêcher le bouton retour Android de quitter la page
-            history.replaceState({ infoApp: 'base' }, '');
             history.pushState({ infoApp: 'app' }, '');
-            history.pushState({ infoApp: 'app' }, '');
-            history.pushState({ infoApp: 'app' }, '');
+            let handling = false;
             window.addEventListener('popstate', () => {
-                history.pushState({ infoApp: 'app' }, '');
-                history.pushState({ infoApp: 'app' }, '');
-                history.pushState({ infoApp: 'app' }, '');
+                if (handling) return;
+                handling = true;
+                history.go(1);
+                setTimeout(() => { handling = false; }, 50);
             });
         });
     </script>
