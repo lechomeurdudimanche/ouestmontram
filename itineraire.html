@@ -1107,6 +1107,7 @@
             history.replaceState({ itinApp: 'base' }, '');
             history.pushState({ itinApp: 'app' }, '');
             window.addEventListener('popstate', () => {
+                // Toujours rempiler : on ne quitte jamais l'app
                 history.pushState({ itinApp: 'app' }, '');
                 // 1. Fermer le modal édition favori
                 const lpEdit = document.getElementById('lp-edit-modal');
@@ -1117,7 +1118,9 @@
                 // 3. Fermer le popup d'options
                 const popup = document.getElementById('opt-popup');
                 if (popup && popup.classList.contains('open')) { ITIN.closePopup(); return; }
-                // Sinon rien : on reste sur la page carte
+                // 4. Revenir du détail d'un itinéraire vers la liste des résultats
+                if (ITIN.detailVisible) { ITIN.closeDetail(); return; }
+                // Sinon rien : on reste sur la carte/liste de résultats
             });
         },
 

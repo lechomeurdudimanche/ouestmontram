@@ -1380,8 +1380,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 history.replaceState({ tramApp: 'base' }, '');
                 history.pushState({ tramApp: 'app' }, '');
 
-                window.addEventListener('popstate', (e) => {
-                    // Toujours rempiler pour rester dans l'app
+                window.addEventListener('popstate', () => {
+                    // Toujours rempiler immédiatement : on ne quitte jamais l'app
                     history.pushState({ tramApp: 'app' }, '');
 
                     // 1. Fermer l'overlay d'installation s'il est ouvert
@@ -1391,19 +1391,31 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         return;
                     }
 
-                    // 2. Sur mobile : si on voit les horaires, revenir à la liste des arrêts
+                    // 2. Sur mobile : si on voit les horaires d'un arrêt, revenir à la liste
                     if (window.innerWidth <= 768 && document.body.classList.contains('view-times')) {
                         this.showMobileStops();
                         return;
                     }
 
-                    // 3. Si une ligne est sélectionnée, revenir à la recherche
-                    if (this.currentLine) {
+                    // 3. Si on est sur un arrêt (mode recherche globale) sans vue horaires visible
+                    if (this.searchMode && this.currentStop) {
+                        this.currentStop = null;
+                        this.currentStopName = null;
+                        if (this.searchRefreshInterval) {
+                            clearInterval(this.searchRefreshInterval);
+                            this.searchRefreshInterval = null;
+                        }
+                        this.showSearchBar().then(() => this.showTab('arrets'));
+                        return;
+                    }
+
+                    // 4. Si une ligne est sélectionnée, revenir à la recherche/accueil
+                    if (this.currentLine || this.searchMode || this.viewingFavorites) {
                         this.backToSearch();
                         return;
                     }
 
-                    // Sinon on est déjà à l'état initial, rien à faire
+                    // Sinon on est déjà à l'accueil, rien à faire
                 });
             },
 
