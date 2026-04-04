@@ -1462,7 +1462,16 @@
             }
         };
 
-        document.addEventListener("DOMContentLoaded", () => app.init());
+        document.addEventListener("DOMContentLoaded", () => {
+            app.init();
+            // Empêcher le bouton retour Android de quitter la page
+            history.replaceState({ infoApp: 'base' }, '');
+            history.pushState({ infoApp: 'app' }, '');
+            window.addEventListener('popstate', () => {
+                history.pushState({ infoApp: 'app' }, '');
+                // Pas d'état interne à fermer sur cette page
+            });
+        });
     </script>
 
     <script>

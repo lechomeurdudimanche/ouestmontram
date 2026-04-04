@@ -1046,7 +1046,7 @@
                         <li class="install-step"><span class="install-step-num">1</span><span class="install-step-text">Ouvrez le lien ci-dessus dans <em>Chrome</em></span></li>
                         <li class="install-step"><span class="install-step-num">2</span><span class="install-step-text">Appuyez sur les <em>⋮ trois points</em> en haut à droite</span></li>
                         <li class="install-step"><span class="install-step-num">3</span><span class="install-step-text">Sélectionnez <em>« Ajouter à l'écran d'accueil »</em></span></li>
-                        <li class="install-step"><span class="install-step-num">4</span><span class="install-step-text">Confirmez en appuyant sur <em>« Ajouter »</em></span></li>
+                        <li class="install-step"><span class="install-step-num">4</span><span class="install-step-text">Confirmez en appuyant sur <em>« Installer »</em></span></li>
                     </ul>
                 </div>
 
@@ -1372,6 +1372,39 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                     this.showSearchBar();
                     this.syncShareBtn();
                 }
+                this._initBackButton();
+            },
+
+            _initBackButton() {
+                // Empile un état initial pour pouvoir intercepter le premier "retour"
+                history.replaceState({ tramApp: 'base' }, '');
+                history.pushState({ tramApp: 'app' }, '');
+
+                window.addEventListener('popstate', (e) => {
+                    // Toujours rempiler pour rester dans l'app
+                    history.pushState({ tramApp: 'app' }, '');
+
+                    // 1. Fermer l'overlay d'installation s'il est ouvert
+                    const installOverlay = document.getElementById('install-overlay');
+                    if (installOverlay && installOverlay.classList.contains('open')) {
+                        closeInstallOverlay();
+                        return;
+                    }
+
+                    // 2. Sur mobile : si on voit les horaires, revenir à la liste des arrêts
+                    if (window.innerWidth <= 768 && document.body.classList.contains('view-times')) {
+                        this.showMobileStops();
+                        return;
+                    }
+
+                    // 3. Si une ligne est sélectionnée, revenir à la recherche
+                    if (this.currentLine) {
+                        this.backToSearch();
+                        return;
+                    }
+
+                    // Sinon on est déjà à l'état initial, rien à faire
+                });
             },
 
             async showSearchBar() {

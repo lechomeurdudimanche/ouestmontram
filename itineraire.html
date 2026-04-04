@@ -1100,6 +1100,25 @@
             loadRouteColors();
             this.loadStops();
             this.startGPS();
+            this._initBackButton();
+        },
+
+        _initBackButton() {
+            history.replaceState({ itinApp: 'base' }, '');
+            history.pushState({ itinApp: 'app' }, '');
+            window.addEventListener('popstate', () => {
+                history.pushState({ itinApp: 'app' }, '');
+                // 1. Fermer le modal édition favori
+                const lpEdit = document.getElementById('lp-edit-modal');
+                if (lpEdit && !lpEdit.classList.contains('lp-hidden')) { ITIN.lpCloseEdit(); return; }
+                // 2. Fermer le picker de lieu
+                const picker = document.getElementById('loc-picker');
+                if (picker && !picker.classList.contains('lp-hidden')) { ITIN.closePicker(); return; }
+                // 3. Fermer le popup d'options
+                const popup = document.getElementById('opt-popup');
+                if (popup && popup.classList.contains('open')) { ITIN.closePopup(); return; }
+                // Sinon rien : on reste sur la page carte
+            });
         },
 
         _gpsMarker: null,
@@ -1994,7 +2013,7 @@
         renderResults() {
             const list = document.getElementById('results-list');
             if(!this.sortedItins.length){
-                list.innerHTML='<div class="empty-msg">Aucun itinéraire trouvé.<br>Essayez l\'autre mode.</div>';
+                list.innerHTML='<div class="empty-msg">Aucun itinéraire trouvé.<br>Essayez un autre mode de déplacement.</div>';
                 return;
             }
             const isBike = this.travelMode === 'bicycle';

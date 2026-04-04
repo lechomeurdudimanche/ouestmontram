@@ -1118,7 +1118,16 @@ const suivi = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => suivi.init());
+document.addEventListener('DOMContentLoaded', () => {
+    suivi.init();
+    // Empêcher le bouton retour Android de quitter la page
+    history.replaceState({ suiviApp: 'base' }, '');
+    history.pushState({ suiviApp: 'app' }, '');
+    window.addEventListener('popstate', () => {
+        history.pushState({ suiviApp: 'app' }, '');
+        // Pas d'état interne à fermer sur cette page
+    });
+});
 </script>
 <script>
 if ("serviceWorker" in navigator) {
