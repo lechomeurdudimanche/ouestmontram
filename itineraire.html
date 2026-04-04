@@ -619,7 +619,6 @@
             position: relative; padding-bottom: env(safe-area-inset-bottom, 0);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        .nav-link:hover { background: var(--bg-hover); }
         .nav-link.active { color: var(--accent); }
         .nav-link.active::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
@@ -1113,18 +1112,13 @@
                 history.go(1);
                 setTimeout(() => {
                     handling = false;
-                    // 1. Fermer le modal edition favori
                     const lpEdit = document.getElementById('lp-edit-modal');
                     if (lpEdit && !lpEdit.classList.contains('lp-hidden')) { ITIN.lpCloseEdit(); return; }
-                    // 2. Fermer le picker de lieu
                     const picker = document.getElementById('loc-picker');
                     if (picker && !picker.classList.contains('lp-hidden')) { ITIN.closePicker(); return; }
-                    // 3. Fermer le popup d'options
                     const popup = document.getElementById('opt-popup');
                     if (popup && popup.classList.contains('open')) { ITIN.closePopup(); return; }
-                    // 4. Revenir du detail vers la liste des resultats
                     if (ITIN.detailVisible) { ITIN.closeDetail(); return; }
-                    // Sinon on reste sur la carte
                 }, 50);
             });
         },

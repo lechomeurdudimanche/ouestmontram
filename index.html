@@ -633,10 +633,6 @@
             position: relative;
         }
 
-        .nav-link:hover {
-            background: var(--bg-hover);
-        }
-
         .nav-link.active {
             color: var(--radar-color);
         }
@@ -1092,7 +1088,7 @@
         </div>
 <footer style="font-size: 0.7rem; color: var(--text-muted); text-align: center; padding: 10px;">
     Données : <a href="https://data.mobilites-m.fr/" target="_blank" style="color: var(--radar-color);">Mobilités M</a> 
-    | <a href="mentions.html" style="color: var(--text-muted);">Mentions légales & Licence</a>
+    | <a href="mentions.html" style="color: var(--text-muted);">Mentions légales</a>
 </footer>
     </div>
 
@@ -1382,7 +1378,6 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 window.addEventListener('popstate', () => {
                     if (handling) return;
                     handling = true;
-                    // go(1) annule le retour de facon synchrone avant tout 2e appui
                     history.go(1);
                     setTimeout(() => {
                         handling = false;
@@ -1392,18 +1387,15 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
             },
 
             _handleBack() {
-                // 1. Fermer l'overlay d'installation
                 const installOverlay = document.getElementById('install-overlay');
                 if (installOverlay && installOverlay.classList.contains('open')) {
                     closeInstallOverlay();
                     return;
                 }
-                // 2. Sur mobile : vue horaires -> liste des arrets
                 if (window.innerWidth <= 768 && document.body.classList.contains('view-times')) {
                     this.showMobileStops();
                     return;
                 }
-                // 3. Arret selectionne en mode recherche globale
                 if (this.searchMode && this.currentStop) {
                     this.currentStop = null;
                     this.currentStopName = null;
@@ -1414,12 +1406,10 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                     this.showSearchBar().then(() => this.showTab('arrets'));
                     return;
                 }
-                // 4. Ligne selectionnee / recherche / favoris -> accueil
                 if (this.currentLine || this.searchMode || this.viewingFavorites) {
                     this.backToSearch();
                     return;
                 }
-                // Sinon on est a l'accueil, rien a faire
             },
 
             async showSearchBar() {
