@@ -1257,7 +1257,7 @@
                         }).catch(()=>{})
                 ));
             }).then(()=>{
-                const GRID = 0.0036;
+                const GRID = 0.0037;
                 const grouped = new Map();
                 for (const s of m.values()) {
                     const normName = normalizeQuery(s.name);
@@ -1951,7 +1951,7 @@
         },
 
         buildUrl(mode) {
-            let url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${this.from.lat},${this.from.lon}&toPlace=${this.to.lat},${this.to.lon}&numItineraries=5&mode=${mode}&showIntermediateStops=true`;
+            let url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${this.from.lat},${this.from.lon}&toPlace=${this.to.lat},${this.to.lon}&numItineraries=5&mode=${mode}&showIntermediateStops=true&bannedAgencies=MCO:MCO&walkReluctance=10&transferPenalty=60`;
             if(this.customTime){
                 const dt=new Date(this.customTime);
                 const pad=n=>String(n).padStart(2,'0');
@@ -1973,7 +1973,7 @@
                 let rawItins = [], walkItins = [];
 
                 if(this.travelMode === 'transit') {
-                    const res = await fetch(this.buildUrl('TRANSIT,WALK'), {headers:{origin:'ouestmontram'}});
+                    const res = await fetch(this.buildUrl('TRANSIT'), {headers:{origin:'ouestmontram'}});
                     if(planId !== this._planId) return;
                     const data = res.ok ? await res.json() : null;
                     if(planId !== this._planId) return;
