@@ -1159,8 +1159,80 @@
             { id: "SEM:68", name: "68", color: "rgb(213, 114, 168)", category: "flexo" },
         ];
 
+        const BUS_NAV_RELAIS = [
+            { id: "SEM:NAVA", name: "NAV A", color: "var(--color-a)", category: "nav_relais" },
+            { id: "SEM:NAVB", name: "NAV B", color: "var(--color-b)", category: "nav_relais" },
+            { id: "SEM:NAVC", name: "NAV C", color: "var(--color-c)", category: "nav_relais" },
+            { id: "SEM:NAVD", name: "NAV D", color: "var(--color-d)", category: "nav_relais" },
+            { id: "SEM:NAVE", name: "NAV E", color: "var(--color-e)", category: "nav_relais" },
+        ];
+
         const ALL_BUS_LINES = [...BUS_CHRONO, ...BUS_CHRONO_PERI, ...BUS_PROXIMO_LINES, ...BUS_FLEXO];
-        const ALL_LINES = [...LINES, ...ALL_BUS_LINES];
+        const ALL_LINES = [...LINES, ...ALL_BUS_LINES, ...BUS_NAV_RELAIS];
+
+        let _navRelaisCache = null;
+        let _navRelaisCacheTime = 0;
+        const NAV_RELAIS_CACHE_TTL = 5 * 60 * 1000;
+
+        async function checkNavRelaisActive() {
+            const now = Date.now();
+            if (_navRelaisCache !== null && (now - _navRelaisCacheTime) < NAV_RELAIS_CACHE_TTL) {
+                return _navRelaisCache;
+            }
+
+            const localNow = new Date();
+            const localHour = localNow.getHours();
+            const datesToCheck = new Set();
+
+            const fmt = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            for (let i = 0; i <= 67; i++) {
+                const d = new Date(localNow);
+                d.setDate(d.getDate() + i);
+                datesToCheck.add(fmt(d));
+            }
+            if (localHour < 4) {
+                const yesterday = new Date(localNow);
+                yesterday.setDate(yesterday.getDate() - 1);
+                datesToCheck.add(fmt(yesterday));
+            }
+
+            const navIds = ['SEM:NAVA', 'SEM:NAVB', 'SEM:NAVC', 'SEM:NAVD', 'SEM:NAVE'];
+            const activeIds = new Set();
+
+            try {
+                const results = await Promise.all(
+                    navIds.map(id =>
+                        fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${id}/calendar`)
+                            .then(r => r.ok ? r.json().then(data => ({ id, data })) : { id, data: null })
+                            .catch(() => ({ id, data: null }))
+                    )
+                );
+
+                for (const { id, data } of results) {
+                    if (!data || !Array.isArray(data.calendar)) continue;
+                    for (const isoDate of data.calendar) {
+                        const d = new Date(isoDate);
+                        const localDate = new Date(d.getTime() + 2 * 3600 * 1000);
+                        if (datesToCheck.has(fmt(localDate))) {
+                            activeIds.add(id);
+                            break;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Erreur vérification bus relais:', e);
+            }
+
+            _navRelaisCache = activeIds;
+            _navRelaisCacheTime = now;
+            return activeIds;
+        }
 
         function getLineInfo(lineId) {
             return ALL_LINES.find(l => l.id === lineId) || null;
@@ -1358,10 +1430,10 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 btn.style.display = isHome ? 'flex' : 'none';
             },
 
-            init() {
+            async init() {
                 this.favorites = JSON.parse(localStorage.getItem('tram_favorites') || '[]');
                 this.filters = JSON.parse(localStorage.getItem('tram_filters') || '{"tram":true,"chrono":true,"chrono_peri":true,"proximo":true,"flexo":true}');
-                this.renderLines();
+                await this.renderLines();
                 if(window.innerWidth > 768) {
                     this.selectLine("SEM:A"); 
                 } else {
@@ -1456,9 +1528,14 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         </div>
                     </div>
                     <div id="tab-content-lignes">
-                        ${this.buildLinesListHtml()}
+                        <div class="empty" style="padding:20px;">Chargement…</div>
                     </div>
                     <div id="tab-content-favoris" style="display:none;"></div>`;
+
+                this.buildLinesListHtml().then(html => {
+                    const lignesEl = document.getElementById('tab-content-lignes');
+                    if (lignesEl) lignesEl.innerHTML = html;
+                });
 
                 const input = document.getElementById('stop-search-input');
                 if (input) input.addEventListener('input', (e) => this.filterStops(e.target.value));
@@ -1500,16 +1577,25 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 } else {
                     lignes.style.display = '';
                     btnLignes && btnLignes.classList.add('active');
-                    lignes.innerHTML = this.buildLinesListHtml();
+                    this.buildLinesListHtml().then(html => { lignes.innerHTML = html; });
                     const stopsList = document.getElementById('stops-list');
                     if (stopsList) stopsList.scrollTop = 0;
                 }
             },
 
-            buildLinesListHtml() {
+            async buildLinesListHtml() {
                 const cat = (title, icon, lines) => {
                     const badges = lines.map(l => {
                         const textColor = l.category === 'chrono' ? 'color:black;' : '';
+                        if (l.category === 'nav_relais') {
+                            return `
+                        <div class="line-list-badge"
+                             style="background-color:${l.color}; flex-direction:column; gap:0; line-height:1; min-width:42px; width:42px; height:42px; padding:0; border-radius:50%;"
+                             onclick="app.selectLineFromList('${l.id}')">
+                            <span style="font-size:0.45rem; font-weight:700; opacity:0.85; letter-spacing:0.05em;">NAV</span>
+                            <span style="font-size:0.9rem; font-weight:bold;">${l.name.slice(-1)}</span>
+                        </div>`;
+                        }
                         return `
                         <div class="line-list-badge"
                              style="background-color:${l.color};${textColor}"
@@ -1522,8 +1608,14 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         <div class="lines-list-badges">${badges}</div>
                     </div>`;
                 };
+
+                const activeNavIds = await checkNavRelaisActive();
+                const activeNavLines = BUS_NAV_RELAIS.filter(l => activeNavIds.has(l.id));
+                const navSection = activeNavLines.length > 0 ? cat('Bus relais Tram', '', activeNavLines) : '';
+
                 return `<div class="lines-list-section">
                     ${cat('Lignes de Tram', '', LINES)}
+                    ${navSection}
                     ${cat('Lignes Chrono', '', BUS_CHRONO)}
                     ${cat('Lignes Chrono périurbaines', '', BUS_CHRONO_PERI)}
                     ${cat('Lignes Proximo', '', BUS_PROXIMO_LINES)}
@@ -1563,7 +1655,12 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 try {
                     const allStopsMap = new Map();
 
-                    await Promise.all(ALL_LINES.map(async (line) => {
+                    const activeNavIds = await checkNavRelaisActive();
+                    const linesToLoad = ALL_LINES.filter(line =>
+                        line.category !== 'nav_relais' || activeNavIds.has(line.id)
+                    );
+
+                    await Promise.all(linesToLoad.map(async (line) => {
                         try {
                             const response = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${line.id}/stops`);
                             if (!response.ok) return;
@@ -1685,6 +1782,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         .sort((a, b) => lineOrder(a) - lineOrder(b))
                         .map(name => {
                             const lineInfo = ALL_LINES.find(l => l.name === name);
+                            if (lineInfo && lineInfo.category === 'nav_relais') return '';
                             const color = lineInfo ? lineInfo.color : '#888';
                             const textColor = (lineInfo && lineInfo.category === 'chrono') ? 'color:black;' : '';
                             const isTram = LINES.some(l => l.name === name);
@@ -1731,7 +1829,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 if (this.searchRefreshInterval) clearInterval(this.searchRefreshInterval);
                 this.searchRefreshInterval = setInterval(() => {
                     this.loadTimesForAllLines(stopIds, stopName);
-                }, 15000);
+                }, 10000);
             },
 
             async loadTimesForAllLines(stopIds, stopName) {
@@ -1870,14 +1968,26 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 }
             },
 
-            renderLines() {
+            async renderLines() {
                 const container = document.getElementById("col-lines");
                 const linesBadges = LINES.map(line => `
                     <div class="line-badge" data-id="${line.id}" style="background-color: ${line.color};" onclick="app.selectLine('${line.id}')">
                         ${line.name}
                     </div>
                 `).join('');
-                container.innerHTML = linesBadges + `
+
+                const activeNavIds = await checkNavRelaisActive();
+                const activeNavLines = BUS_NAV_RELAIS.filter(l => activeNavIds.has(l.id));
+                const navBadges = activeNavLines.length > 0 ? (`
+                    <div class="lines-separator" style="margin: 2px 0;"></div>` +
+                    activeNavLines.map(line => `
+                    <div class="line-badge" data-id="${line.id}" style="background-color: ${line.color}; flex-direction: column; gap: 0; line-height: 1;" onclick="app.selectLine('${line.id}')">
+                        <span style="font-size:0.5rem; font-weight:700; opacity:0.85; letter-spacing:0.05em;">NAV</span>
+                        <span style="font-size:1.1rem; font-weight:bold;">${line.name.slice(-1)}</span>
+                    </div>
+                `).join('')) : '';
+
+                container.innerHTML = linesBadges + navBadges + `
                     <div class="lines-separator"></div>
                     <div class="fav-badge" id="fav-tab-badge" title="Favoris" onclick="app.selectFavorites()">⭐</div>
                 `;
@@ -1908,7 +2018,8 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 if (!header) return;
 
                 let pdfBtn = '';
-                if (lineId) {
+                const lineInfo = lineId ? getLineInfo(lineId) : null;
+                if (lineId && (!lineInfo || lineInfo.category !== 'nav_relais')) {
                     const pdfUrl = `https://data.mobilites-m.fr/api/ficheHoraires/pdf?route=${lineId}`;
                     pdfBtn = `
                         <a href="${pdfUrl}" class="pdf-btn" title="Fiche horaire">
@@ -2579,7 +2690,11 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
 
                 const items = this.favorites.map((fav, i) => {
                     const textColor = fav.lineCategory === 'chrono' ? 'black' : 'white';
-                    const dot = `<div class="fav-line-dot" style="background-color:${fav.lineColor};color:${textColor};">${fav.lineName}</div>`;
+                    const dotInner = fav.lineCategory === 'nav_relais'
+                        ? `<span style="font-size:0.45rem;font-weight:700;opacity:0.85;letter-spacing:0.05em;line-height:1;">NAV</span><span style="font-size:0.85rem;font-weight:bold;line-height:1;">${fav.lineName.slice(-1)}</span>`
+                        : fav.lineName;
+                    const dotStyle = fav.lineCategory === 'nav_relais' ? 'flex-direction:column;gap:0;' : '';
+                    const dot = `<div class="fav-line-dot" style="background-color:${fav.lineColor};color:${textColor};${dotStyle}">${dotInner}</div>`;
                     const info = `<div class="fav-stop-info">
                         <div class="fav-stop-name">${fav.stopName}</div>
                         <div class="fav-stop-line">Ligne ${fav.lineName}</div>
