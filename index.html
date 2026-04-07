@@ -1841,13 +1841,16 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 try {
                     const ids = String(stopIds).split(',').map(s => s.trim()).filter(Boolean);
 
-                    const allResponses = await Promise.all(
-                        ids.map(id =>
-                            fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${id}/stoptimes`)
-                                .then(r => r.ok ? r.json() : [])
-                                .catch(() => [])
-                        )
-                    );
+                    const [allResponses, activeNavIds] = await Promise.all([
+                        Promise.all(
+                            ids.map(id =>
+                                fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${id}/stoptimes`)
+                                    .then(r => r.ok ? r.json() : [])
+                                    .catch(() => [])
+                            )
+                        ),
+                        checkNavRelaisActive()
+                    ]);
 
                     const currentId = this.currentStop && (typeof this.currentStop === 'object' ? this.currentStop.id : this.currentStop);
                     if (String(currentId) !== String(stopIds)) return;
@@ -1865,8 +1868,10 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         const patternId = pattern.pattern.id;
                         const lineName = patternId.split(':')[1];
 
-                        const line = ALL_LINES.find(l => l.name === lineName);
+                        const line = ALL_LINES.find(l => l.name === lineName || l.id === `SEM:${lineName}`);
                         if (!line) continue;
+
+                        if (line.category === 'nav_relais' && !activeNavIds.has(line.id)) continue;
 
                         const times = pattern.times
                             .filter(t => t.realtimeState !== 'CANCELED')
@@ -1897,7 +1902,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                                 .slice(0, 2);
                         } else {
                             timesMap.set(key, {
-                                line: lineName,
+                                line: line.name,
                                 lineId: line.id,
                                 color: line.color,
                                 destination,
@@ -1924,8 +1929,17 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         const minutes = Math.floor((departureTime - now) / 60);
                         const isRealtime = time.realtimeState === 'UPDATED';
                         const cssClass = isRealtime ? 'realtime' : 'theoretical';
-                        const displayTime = minutes < 0 ? 0 : minutes;
-                        return `<div class="time-simple ${cssClass}">${displayTime} min</div>`;
+                        let displayText;
+                        if (minutes > 60) {
+                            const passageDate = new Date(departureTime * 1000);
+                            const hh = passageDate.getHours().toString().padStart(2, '0');
+                            const mm = passageDate.getMinutes().toString().padStart(2, '0');
+                            displayText = `${hh}:${mm}`;
+                        } else {
+                            const displayTime = minutes < 0 ? 0 : minutes;
+                            displayText = `${displayTime} min`;
+                        }
+                        return `<div class="time-simple ${cssClass}">${displayText}</div>`;
                     }).join('');
 
                     if (isFirstLoad) {
@@ -1936,10 +1950,14 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                             const cardId = 'tg-' + (group.line + group.destination).replace(/[^a-zA-Z0-9]/g, '_');
                             const groupInfo = getLineInfo(group.lineId);
                             const groupTextColor = (groupInfo && groupInfo.category === 'chrono') ? 'color:black;' : '';
+                            const isNavRelais = groupInfo && groupInfo.category === 'nav_relais';
+                            const badgeStyle = isNavRelais
+                                ? `background-color:${group.color};${groupTextColor}font-size:0.55rem;min-width:36px;width:auto;padding:0 4px;`
+                                : `background-color:${group.color};${groupTextColor}`;
                             return `
                                 <div class="times-group" id="${cardId}">
                                     <div class="times-group-header">
-                                        <div class="times-group-line" style="background-color:${group.color};${groupTextColor}">${group.line}</div>
+                                        <div class="times-group-line" style="${badgeStyle}">${group.line}</div>
                                         <div class="times-group-destination">${group.destination}</div>
                                         <a href="#"
                                            onclick="app.switchToClassicMode('${group.lineId}', '${stopIdForLine}', '${stopName.replace(/'/g, "\'")}'); return false;"
@@ -2243,7 +2261,12 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 let timeText;
                 if (diffMin < 0) timeText = "Départ en cours";
                 else if (diffMin === 0) timeText = "Imminent";
-                else if (diffMin > 59) timeText = `${Math.floor(diffMin/60)}h${(diffMin%60).toString().padStart(2,'0')}`;
+                else if (diffMin > 60) {
+                    const passageDate = new Date(absolutePassage * 1000);
+                    const hh = passageDate.getHours().toString().padStart(2, '0');
+                    const mm = passageDate.getMinutes().toString().padStart(2, '0');
+                    timeText = `${hh}:${mm}`;
+                }
                 else timeText = `${diffMin} min`;
 
                 const isRealtime = timeData.realtime;
