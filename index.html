@@ -1004,6 +1004,64 @@
             will-change: top;
         }
 
+        /* Disruption banner */
+        #disruption-banner {
+            display: none;
+            margin: 10px 0 0;
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            align-items: center;
+            gap: 8px;
+            cursor: default;
+            transition: background 0.2s, border-color 0.2s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #disruption-banner.has-disruptions {
+            display: flex;
+            cursor: pointer;
+        }
+        #disruption-banner.has-disruptions:active {
+            opacity: 0.8;
+        }
+        #disruption-banner.no-disruptions {
+            display: flex;
+            cursor: default;
+        }
+        #disruption-banner.state-current {
+            background: rgba(255, 112, 67, 0.1);
+            border-color: rgba(255, 112, 67, 0.35);
+            color: #ff7043;
+        }
+        #disruption-banner.state-future {
+            background: rgba(255, 152, 0, 0.08);
+            border-color: rgba(255, 152, 0, 0.3);
+            color: #ff9800;
+        }
+        #disruption-banner.state-none {
+            background: rgba(255,255,255,0.03);
+            border-color: #2e2e2e;
+            color: var(--text-muted);
+        }
+        .disruption-banner-icon {
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .disruption-banner-text {
+            flex: 1;
+            font-weight: 500;
+        }
+        .disruption-banner-arrow {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
         #fav-drag-container.reorder-mode {
             user-select: none;
             -webkit-user-select: none;
@@ -2050,6 +2108,10 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         <button class="back-chevron" onclick="app.backToSearch()" title="Retour">‹</button>
                         <h2 id="line-title" style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</h2>
                         ${pdfBtn}
+                    </div>
+                    <div id="disruption-banner" class="state-none" onclick="app.goToInfotrafic()">
+                        <span class="disruption-banner-icon">✅</span>
+                        <span class="disruption-banner-text">Aucune perturbation sur la ligne</span>
                     </div>`;
             },
 
@@ -2065,6 +2127,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 const lineInfo = getLineInfo(lineId);
                 const lineLabel = `Ligne ${lineInfo ? lineInfo.name : lineId}`;
                 this.resetHeader(lineLabel, lineId);
+                this.fetchDisruptionsForLine(lineId);
                 document.getElementById('stops-list').innerHTML = `<div class="empty">Chargement des arrêts...</div>`;
                 this.clearTimes();
                 this.showMobileStops();
@@ -2953,6 +3016,79 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 if (this.searchRefreshInterval) clearInterval(this.searchRefreshInterval);
             },
 
+            goToInfotrafic() {
+                if (this._disruptionHasEvents) {
+                    window.location.href = 'infotrafic.html';
+                }
+            },
+
+            async fetchDisruptionsForLine(lineId) {
+                const banner = document.getElementById('disruption-banner');
+                if (!banner) return;
+                banner.style.display = 'none';
+                this._disruptionHasEvents = false;
+                if (!lineId) return;
+                try {
+                    const response = await fetch('https://data.mobilites-m.fr/api/dyn/evtTC/json');
+                    const data = await response.json();
+                    const normalizeId = (id) => (id || '').replace('_', ':');
+                    const now = new Date();
+                    let currentCount = 0;
+                    let futureCount = 0;
+                    if (data && Object.keys(data).length > 0) {
+                        Object.values(data).forEach(d => {
+                            if (!d.visibleTC) return;
+                            if (normalizeId(d.listeLigne) !== lineId) return;
+                            if (d.dateFin && !d.dateFin.includes('2050')) {
+                                const p = d.dateFin.split(' ');
+                                const dp = (p[0]||'').split('/');
+                                const tp = (p[1]||'00:00').split(':');
+                                if (dp.length === 3) {
+                                    const end = new Date(+dp[2], +dp[1]-1, +dp[0], +(tp[0]||0), +(tp[1]||0));
+                                    if (now > end) return;
+                                }
+                            }
+                            if (d.dateDebut) {
+                                const p = d.dateDebut.split(' ');
+                                const dp = (p[0]||'').split('/');
+                                const tp = (p[1]||'00:00').split(':');
+                                if (dp.length === 3) {
+                                    const start = new Date(+dp[2], +dp[1]-1, +dp[0], +(tp[0]||0), +(tp[1]||0));
+                                    if (now >= start) { currentCount++; } else { futureCount++; }
+                                } else { currentCount++; }
+                            } else { currentCount++; }
+                        });
+                    }
+                    const iconEl = banner.querySelector('.disruption-banner-icon');
+                    const textEl = banner.querySelector('.disruption-banner-text');
+                    let arrowEl = banner.querySelector('.disruption-banner-arrow');
+                    if (currentCount > 0) {
+                        banner.className = 'has-disruptions state-current';
+                        banner.style.display = '';
+                        iconEl.textContent = '⚠️';
+                        textEl.textContent = `${currentCount} perturbation${currentCount > 1 ? 's' : ''} en cours`;
+                        if (!arrowEl) { arrowEl = document.createElement('span'); arrowEl.className = 'disruption-banner-arrow'; arrowEl.textContent = '›'; banner.appendChild(arrowEl); }
+                        this._disruptionHasEvents = true;
+                    } else if (futureCount > 0) {
+                        banner.className = 'has-disruptions state-future';
+                        banner.style.display = '';
+                        iconEl.textContent = '🕐';
+                        textEl.textContent = `${futureCount} perturbation${futureCount > 1 ? 's' : ''} prévue${futureCount > 1 ? 's' : ''}`;
+                        if (!arrowEl) { arrowEl = document.createElement('span'); arrowEl.className = 'disruption-banner-arrow'; arrowEl.textContent = '›'; banner.appendChild(arrowEl); }
+                        this._disruptionHasEvents = true;
+                    } else {
+                        banner.className = 'no-disruptions state-none';
+                        banner.style.display = '';
+                        iconEl.textContent = '✅';
+                        textEl.textContent = 'Aucune perturbation sur la ligne';
+                        if (arrowEl) arrowEl.remove();
+                        this._disruptionHasEvents = false;
+                    }
+                } catch (e) {
+                    banner.style.display = 'none';
+                }
+            },
+
             showMobileStops() {
                 document.body.classList.remove('view-times');
                 const stopsList = document.getElementById('stops-list');
@@ -2992,6 +3128,9 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 const stopsList = document.getElementById('stops-list');
                 if (stopsList) stopsList.scrollTop = 0;
                 this.clearTimes();
+                const banner = document.getElementById('disruption-banner');
+                if (banner) banner.style.display = 'none';
+                this._disruptionHasEvents = false;
                 this.showSearchBar();
                 this.syncShareBtn();
             },
@@ -3020,6 +3159,9 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                 document.getElementById('times-content').innerHTML = '<div class="empty">Sélectionnez un arrêt</div>';
                 const favBtn = document.getElementById('fav-toggle-btn');
                 if (favBtn) { favBtn.style.display = 'none'; favBtn.textContent = '☆'; favBtn.classList.remove('is-fav'); }
+                const disruptBanner = document.getElementById('disruption-banner');
+                if (disruptBanner) disruptBanner.style.display = 'none';
+                this._disruptionHasEvents = false;
 
                 this.activeTab = 'lignes';
 
