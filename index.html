@@ -1007,7 +1007,7 @@
         /* Disruption banner */
         #disruption-banner {
             display: none;
-            margin: 10px 0 0;
+            margin: 8px 0 0;
             padding: 9px 12px;
             border-radius: 10px;
             background: #2a2a2a;
@@ -1043,14 +1043,9 @@
             color: #ff9800;
         }
         #disruption-banner.state-none {
-            background: rgba(255,255,255,0.03);
-            border-color: #2e2e2e;
-            color: var(--text-muted);
-        }
-        .disruption-banner-icon {
-            font-size: 0.95rem;
-            flex-shrink: 0;
-            line-height: 1;
+            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
         }
         .disruption-banner-text {
             flex: 1;
@@ -2110,7 +2105,6 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         ${pdfBtn}
                     </div>
                     <div id="disruption-banner" class="state-none" onclick="app.goToInfotrafic()">
-                        <span class="disruption-banner-icon">✅</span>
                         <span class="disruption-banner-text">Aucune perturbation sur la ligne</span>
                     </div>`;
             },
@@ -3059,27 +3053,23 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                             } else { currentCount++; }
                         });
                     }
-                    const iconEl = banner.querySelector('.disruption-banner-icon');
                     const textEl = banner.querySelector('.disruption-banner-text');
                     let arrowEl = banner.querySelector('.disruption-banner-arrow');
                     if (currentCount > 0) {
                         banner.className = 'has-disruptions state-current';
                         banner.style.display = '';
-                        iconEl.textContent = '⚠️';
                         textEl.textContent = `${currentCount} perturbation${currentCount > 1 ? 's' : ''} en cours`;
                         if (!arrowEl) { arrowEl = document.createElement('span'); arrowEl.className = 'disruption-banner-arrow'; arrowEl.textContent = '›'; banner.appendChild(arrowEl); }
                         this._disruptionHasEvents = true;
                     } else if (futureCount > 0) {
                         banner.className = 'has-disruptions state-future';
                         banner.style.display = '';
-                        iconEl.textContent = '🕐';
                         textEl.textContent = `${futureCount} perturbation${futureCount > 1 ? 's' : ''} prévue${futureCount > 1 ? 's' : ''}`;
                         if (!arrowEl) { arrowEl = document.createElement('span'); arrowEl.className = 'disruption-banner-arrow'; arrowEl.textContent = '›'; banner.appendChild(arrowEl); }
                         this._disruptionHasEvents = true;
                     } else {
                         banner.className = 'no-disruptions state-none';
                         banner.style.display = '';
-                        iconEl.textContent = '✅';
                         textEl.textContent = 'Aucune perturbation sur la ligne';
                         if (arrowEl) arrowEl.remove();
                         this._disruptionHasEvents = false;
