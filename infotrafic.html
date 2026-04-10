@@ -687,19 +687,21 @@
         }
 
         .back-btn {
-            background: var(--bg-hover);
+            font-family: 'DM Sans', sans-serif;
+            width: 30px;
+            height: 30px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             border-radius: 10px;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            padding: 7px 12px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s, background 0.2s;
             flex-shrink: 0;
         }
         .back-btn:active { transform: scale(0.95); background: var(--bg-card); }
@@ -827,7 +829,7 @@
 
     <div id="line-view">
         <div class="line-view-header" id="line-view-header">
-            <button class="back-btn" onclick="app.exitLineView()">← Retour</button>
+            <button class="back-btn" onclick="app.exitLineView()">‹</button>
             <div class="line-view-title">
                 <div class="line-view-badge" id="line-view-badge"></div>
                 <div>
