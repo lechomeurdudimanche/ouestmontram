@@ -1017,22 +1017,24 @@
             color: var(--text-muted);
             align-items: center;
             gap: 8px;
-            cursor: default;
+            cursor: pointer;
             transition: background 0.2s, border-color 0.2s;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        #disruption-banner.has-disruptions {
-            display: flex;
-            cursor: pointer;
-        }
-        #disruption-banner.has-disruptions:active {
+
+        #disruption-banner:active {
             opacity: 0.8;
         }
+
+        #disruption-banner.has-disruptions {
+            display: flex;
+        }
+
         #disruption-banner.no-disruptions {
             display: flex;
-            cursor: default;
         }
+
         #disruption-banner.state-current {
             background: rgba(255, 112, 67, 0.1);
             border-color: rgba(255, 112, 67, 0.35);
@@ -3012,7 +3014,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
             },
 
             goToInfotrafic() {
-                if (this._disruptionHasEvents) {
+                if (this.currentLine) {
                     window.location.href = `infotrafic.html?line=${this.currentLine}`;
                 }
             },
@@ -3072,7 +3074,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
                         banner.className = 'no-disruptions state-none';
                         banner.style.display = '';
                         textEl.textContent = 'Aucune perturbation sur la ligne';
-                        if (arrowEl) arrowEl.remove();
+                        if (!arrowEl) { arrowEl = document.createElement('span'); arrowEl.className = 'disruption-banner-arrow'; arrowEl.textContent = '›'; banner.appendChild(arrowEl); }
                         this._disruptionHasEvents = false;
                     }
                 } catch (e) {

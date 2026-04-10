@@ -656,13 +656,12 @@
         }
         body.line-mode #line-view { display: flex; }
         body.line-mode #content   { display: none; }
-        body.line-mode #bottom-nav { display: none; }
 
         #line-view-content {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-bottom: 24px;
+            padding-bottom: 72px;
         }
         #line-view-content::-webkit-scrollbar { width: 4px; }
         #line-view-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
@@ -925,8 +924,12 @@
             { id: "GSV:91",  name: "91",  color: "rgb(30,113,184)",  category: "proximo" },
             { id: "GSV:92",  name: "92",  color: "rgb(30,113,184)",  category: "proximo" },
         ];
+        const LINES_FLEXO = [
+            { id: "SEM:59",  name: "59",  color: "rgb(213, 114, 168)",  category: "flexo" },
+            { id: "SEM:68",  name: "68",  color: "rgb(213, 114, 168)",  category: "flexo" },
+        ];
 
-        const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_CHRONO_PERI, ...LINES_PROXIMO];
+        const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_CHRONO_PERI, ...LINES_PROXIMO, ...LINES_FLEXO];
 
         const FILTER_CATEGORIES = [
             { key: 'tram',        label: 'Trams',                  dot: '#006eb7' },
@@ -1038,7 +1041,7 @@
             return `
             <div class="disruption-card" style="animation-delay:${delay}ms">
                 <div class="card-top">
-                    <div class="line-badge" style="background-color:${lineColor}; color:${textColor};">${lineName}</div>
+                    <div class="line-badge" style="background-color:${lineColor}; color:${textColor}; cursor:pointer;" onclick="event.stopPropagation(); app.goToLineView('${normalizeId(d.listeLigne)}')">${lineName}</div>
                     <div class="card-meta">
                         <div class="card-title">${titre}</div>
                         <div class="card-dates">${dateHtml}</div>
@@ -1108,12 +1111,24 @@
                 document.body.classList.add('line-mode');
             },
 
+            goToLineView(lineId) {
+                this._enterLineView(lineId);
+                this._renderLineViewDisruptions();
+                const isTram = LINES_TRAM.some(l => l.id === lineId);
+                if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
+                    this.loadPonctualite();
+                }
+            },
+
             exitLineView() {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('line');
                 window.history.pushState({}, '', url.toString());
                 document.body.classList.remove('line-mode');
                 this.lineViewLineId = null;
+                if (Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
+                    this.loadPonctualite();
+                }
             },
 
             _renderLineViewDisruptions() {
