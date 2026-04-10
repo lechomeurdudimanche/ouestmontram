@@ -1114,7 +1114,6 @@
             goToLineView(lineId) {
                 this._enterLineView(lineId);
                 this._renderLineViewDisruptions();
-                document.getElementById('line-view-content').scrollTop = 0;
                 const isTram = LINES_TRAM.some(l => l.id === lineId);
                 if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
                     this.loadPonctualite();
@@ -1683,11 +1682,17 @@
         document.addEventListener("DOMContentLoaded", () => {
             app.init();
             history.pushState({ infoApp: 'app' }, '');
+            let handling = false;
             window.addEventListener('popstate', () => {
-                if (document.body.classList.contains('line-mode')) {
-                    app.exitLineView();
-                }
-                history.pushState({ infoApp: 'app' }, '');
+                if (handling) return;
+                handling = true;
+                history.go(1);
+                setTimeout(() => {
+                    handling = false;
+                    if (document.body.classList.contains('line-mode')) {
+                        app.exitLineView();
+                    }
+                }, 50);
             });
         });
     </script>
