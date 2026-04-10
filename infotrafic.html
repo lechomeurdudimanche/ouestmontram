@@ -814,7 +814,7 @@
                     <span>●</span> A quoi sert cette zone ?
                 </div>
                 <div class="guide-card-body">
-                        <div style="font-size: 0.8em;" class="guide-step-text">Cette zone affiche le détail des retards sur le réseau de tramway. Il est possible d'y voir la moyenne des retards par ligne et par direction, ainsi que le retard maximal pour chaque ligne.
+                        <div style="font-size: 0.8em;" class="guide-step-text">Cette zone affiche le détail des retards sur le réseau de tramway. Tu peux y consulter la moyenne des retards pour chaque ligne, mais aussi pour chaque direction, ainsi que le retard maximal observé sur chaque ligne.
                     </div>
                 </div>
             </div>
@@ -1114,6 +1114,7 @@
             goToLineView(lineId) {
                 this._enterLineView(lineId);
                 this._renderLineViewDisruptions();
+                document.getElementById('line-view-content').scrollTop = 0;
                 const isTram = LINES_TRAM.some(l => l.id === lineId);
                 if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
                     this.loadPonctualite();
@@ -1684,6 +1685,10 @@
             history.pushState({ infoApp: 'app' }, '');
             let handling = false;
             window.addEventListener('popstate', () => {
+                if (document.body.classList.contains('line-mode')) {
+                    app.exitLineView();
+                    return;
+                }
                 if (handling) return;
                 handling = true;
                 history.go(1);
