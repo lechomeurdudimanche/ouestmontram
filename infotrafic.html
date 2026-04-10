@@ -649,6 +649,103 @@
             flex-shrink: 0;
         }
 
+        #line-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        body.line-mode #line-view { display: flex; }
+        body.line-mode #content   { display: none; }
+        body.line-mode #bottom-nav { display: none; }
+
+        #line-view-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 24px;
+        }
+        #line-view-content::-webkit-scrollbar { width: 4px; }
+        #line-view-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .line-view-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 16px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .line-view-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--line-accent, var(--accent-cur));
+        }
+
+        .back-btn {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            padding: 7px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .back-btn:active { transform: scale(0.95); background: var(--bg-card); }
+
+        .line-view-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            flex: 1;
+            min-width: 0;
+        }
+        .line-view-badge {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .line-view-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 400;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .line-view-update {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         .guide-card {
             background: var(--bg-panel);
             border: 1px solid rgba(0, 210, 255, 0.25);
@@ -725,6 +822,26 @@
             Données : <a href="https://data.mobilites-m.fr/" target="_blank">Mobilités M</a>
             &nbsp;|&nbsp;
             <a href="mentions.html" style="color:var(--text-muted);">Mentions légales</a>
+        </div>
+    </div>
+
+    <div id="line-view">
+        <div class="line-view-header" id="line-view-header">
+            <button class="back-btn" onclick="app.exitLineView()">← Retour</button>
+            <div class="line-view-title">
+                <div class="line-view-badge" id="line-view-badge"></div>
+                <div>
+                    <div id="line-view-name"></div>
+                    <div class="line-view-subtitle">Perturbations en cours et à venir</div>
+                </div>
+            </div>
+            <div class="line-view-update" id="line-view-update" style="display:none;">
+                <span class="last-update-dot" id="line-view-dot"></span>
+                <span id="line-view-update-text"></span>
+            </div>
+        </div>
+        <div id="line-view-content">
+            <div class="content-inner" id="line-view-disruptions"></div>
         </div>
     </div>
 
@@ -942,6 +1059,8 @@
             _refreshTimer: null,
             REFRESH_INTERVAL_MS: 30 * 60 * 1000,
 
+            lineViewLineId: null,
+
             init() {
                 const saved = localStorage.getItem(FILTERS_LS_KEY);
                 if (saved) {
@@ -949,9 +1068,90 @@
                 }
                 this.renderFilterChips();
                 this.updateFilterBtn();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const lineParam = urlParams.get('line');
+                if (lineParam) {
+                    this._enterLineView(lineParam);
+                }
+
                 this.loadDisruptions();
-                this.loadPonctualite();
+                if (!lineParam) this.loadPonctualite();
                 this._startAutoRefresh();
+            },
+
+            _enterLineView(lineId) {
+                const normalizedId = lineId.replace('-', ':');
+                const lineInfo = ALL_LINES.find(l => l.id === normalizedId) || null;
+                this.lineViewLineId = normalizedId;
+
+                const badge = document.getElementById('line-view-badge');
+                const nameEl = document.getElementById('line-view-name');
+                const header = document.getElementById('line-view-header');
+
+                if (lineInfo) {
+                    const textColor = lineInfo.category === 'chrono' ? '#000' : '#fff';
+                    badge.style.background = lineInfo.color;
+                    badge.style.color = textColor;
+                    badge.textContent = lineInfo.name;
+                    nameEl.textContent = 'Ligne ' + lineInfo.name;
+                    header.style.setProperty('--line-accent', lineInfo.color);
+                } else {
+                    badge.style.background = '#888';
+                    badge.textContent = normalizedId.split(':')[1] || '?';
+                    nameEl.textContent = 'Ligne ' + (normalizedId.split(':')[1] || lineId);
+                    header.style.setProperty('--line-accent', 'var(--accent-cur)');
+                }
+
+                document.body.classList.add('line-mode');
+            },
+
+            exitLineView() {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('line');
+                window.history.pushState({}, '', url.toString());
+                document.body.classList.remove('line-mode');
+                this.lineViewLineId = null;
+            },
+
+            _renderLineViewDisruptions() {
+                if (!this.lineViewLineId) return;
+                const lid = this.lineViewLineId;
+
+                const current = this.allCurrent.filter(d => normalizeId(d.listeLigne) === lid);
+                const future  = this.allFuture.filter(d => normalizeId(d.listeLigne) === lid);
+
+                const dot = document.getElementById('line-view-dot');
+                const updateEl = document.getElementById('line-view-update');
+                const updateText = document.getElementById('line-view-update-text');
+                if (updateEl && updateText) {
+                    const now = new Date();
+                    updateText.textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                        + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    updateEl.style.display = 'flex';
+                    if (dot) { dot.classList.add('fresh'); setTimeout(() => dot.classList.remove('fresh'), 3000); }
+                }
+
+                const el = document.getElementById('line-view-disruptions');
+                if (!el) return;
+
+                if (current.length === 0 && future.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">checkmark</div><div class="empty-state-title">Trafic normal</div><div class="empty-state-sub">Aucune perturbation pour cette ligne.</div></div>';
+                    el.querySelector('.empty-state-icon').textContent = '\u2705';
+                    return;
+                }
+
+                let html = '';
+                if (current.length > 0) {
+                    html += '<div class="section-header section-cur" style="margin-top:16px;"><span class="section-label">\u26a0 En cours</span><span class="section-badge">' + current.length + '</span><span class="section-line"></span></div>';
+                    current.forEach((d, i) => { html += renderCard(d, i); });
+                }
+                if (future.length > 0) {
+                    if (current.length > 0) html += '<div class="sections-separator"></div>';
+                    html += '<div class="section-header section-fut"><span class="section-label">\ud83d\udcc5 A venir</span><span class="section-badge">' + future.length + '</span><span class="section-line"></span></div>';
+                    future.forEach((d, i) => { html += renderCard(d, i); });
+                }
+                el.innerHTML = html;
             },
 
             _startAutoRefresh() {
@@ -1050,6 +1250,7 @@
                     this.allFuture.sort(sortUpcoming);
 
                     this.renderDisruptions();
+                    this._renderLineViewDisruptions();
                     this.updateLastUpdate();
                     if (dot) dot.classList.remove('refreshing');
 

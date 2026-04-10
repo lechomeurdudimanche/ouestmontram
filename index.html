@@ -3013,7 +3013,7 @@ function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
 
             goToInfotrafic() {
                 if (this._disruptionHasEvents) {
-                    window.location.href = 'infotrafic.html';
+                    window.location.href = `infotrafic.html?line=${this.currentLine}`;
                 }
             },
 
