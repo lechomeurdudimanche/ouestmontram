@@ -1006,10 +1006,9 @@
             will-change: top;
         }
 
-        /* Disruption banner */
         #disruption-banner {
             display: none;
-            margin: 8px 0 0;
+            margin: 10px 0 0;
             padding: 9px 12px;
             border-radius: 10px;
             background: #2a2a2a;
@@ -3224,6 +3223,7 @@ if ("serviceWorker" in navigator) {
     function openInstallOverlay() {
         const overlay = document.getElementById('install-overlay');
         overlay.classList.add('open');
+        overlay.scrollTop = 0;
         document.body.style.overflow = 'hidden';
         if (!qrGenerated) {
             try {
