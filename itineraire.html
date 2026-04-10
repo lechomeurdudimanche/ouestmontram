@@ -1300,6 +1300,12 @@
 
         _pickerField: null,
         _lpSearchTimer: null,
+        _nomTimer: null,
+        _photonTimer: null,
+        _photonController: null,
+        _editPhotonTimer: null,
+        _editPhotonController: null,
+        _geoCache: null,
         _lpBoundInput: null,
 
         openPicker(field) {
@@ -1326,6 +1332,7 @@
             inp.value = '';
             if(this._lpBoundInput) inp.removeEventListener('input', this._lpBoundInput);
             this._pickerField = null;
+            this._geoCache = null;
         },
 
         lpClear() {
@@ -1343,7 +1350,7 @@
         _lpOnInput(e) {
             this._lpUpdateClear(e.target.value);
             clearTimeout(this._lpSearchTimer);
-            this._lpSearchTimer = setTimeout(()=>this._lpRenderList(e.target.value), 160);
+            this._lpSearchTimer = setTimeout(()=>this._lpRenderList(e.target.value), 250);
         },
 
         _lpRenderList(q) {
@@ -1365,26 +1372,59 @@
             title.textContent = 'Résultats';
 
             const tokens = norm.split(/\s+/).filter(Boolean);
+
+            const fuzzyIncludes = (sn, tok) => {
+                if(sn.includes(tok)) return true;
+                if(tok.length <= 2) return false;
+                const snWords = sn.split(/\s+/);
+                for(const word of snWords) {
+                    if(Math.abs(word.length - tok.length) > 2) continue;
+                    const maxErr = tok.length <= 4 ? 1 : 2;
+                    let err = 0;
+                    const minLen = Math.min(tok.length, word.length);
+                    for(let i = 0; i < minLen; i++) {
+                        if(tok[i] !== word[i]) err++;
+                        if(err > maxErr) break;
+                    }
+                    err += Math.abs(tok.length - word.length);
+                    if(err <= maxErr) return true;
+                    if(sn.length >= tok.length) {
+                        for(let start = 0; start <= sn.length - tok.length; start++) {
+                            let e = 0;
+                            for(let i = 0; i < tok.length; i++) {
+                                if(sn[start+i] !== tok[i]) e++;
+                                if(e > 1) break;
+                            }
+                            if(e <= 1) return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+            const scoreStop = (sn) => {
+                let score = 0;
+                if(sn.includes(norm)) score -= 100;
+                if(sn.startsWith(tokens[0])) score -= 50;
+                const snWords = sn.split(/\s+/);
+                if(snWords.some(w => w.startsWith(tokens[0]))) score -= 30;
+                score += sn.length * 0.5;
+                tokens.forEach(tok => { if(!sn.includes(tok)) score += 20; });
+                return score;
+            };
+
             const stopMatches = this.stops
                 .filter(s => {
                     const sn = normalizeQuery(s.name);
-                    return tokens.every(tok => sn.includes(tok));
+                    return tokens.every(tok => tok.length >= 3 ? fuzzyIncludes(sn, tok) : sn.includes(tok));
                 })
-                .sort((a,b) => {
-                    const an = normalizeQuery(a.name), bn = normalizeQuery(b.name);
-                    const aPrefix = an.startsWith(tokens[0]) ? 0 : 1;
-                    const bPrefix = bn.startsWith(tokens[0]) ? 0 : 1;
-                    if(aPrefix !== bPrefix) return aPrefix - bPrefix;
-                    const ai = an.indexOf(norm), bi = bn.indexOf(norm);
-                    if(ai !== bi) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-                    return an.length - bn.length;
-                }).slice(0, 6);
-
-            const renderStops = stopMatches.map((p,i)=>{ _pool[200+i]=p; return this._lpStopItem(p,200+i); }).join('');
-            list.innerHTML = renderStops + '<div class="lp-loading-row" id="lp-geo-loading">Recherche d\'adresses…</div>';
+                .sort((a,b) => scoreStop(normalizeQuery(a.name)) - scoreStop(normalizeQuery(b.name)))
+                .slice(0, 6);
 
             const searchQuery = q.trim();
             const searchNorm  = norm;
+
+            list.innerHTML = `<div class="lp-loading-row" id="lp-geo-loading">Recherche…</div>`;
 
             const withinRadius = (lat, lon) => {
                 const dLat = (lat - 45.1885) * 111;
@@ -1394,19 +1434,81 @@
 
             const pinSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
 
-            const renderMerged = (banResults, nomResults) => {
+            const scoreItem = (p, q) => {
+                const pn = normalizeQuery(p.name);
+                const qn = normalizeQuery(q);
+                let score = 0;
+                if(pn === qn) score -= 200;
+                else if(pn.startsWith(qn)) score -= 100;
+                else if(pn.includes(qn)) score -= 50;
+                else {
+                    const toks = qn.split(/\s+/).filter(Boolean);
+                    toks.forEach(t => { if(pn.includes(t)) score -= 15; });
+                }
+                if(p.type === 'stop') score -= 5;
+                score += pn.length * 0.3;
+                return score;
+            };
+
+            const renderMerged = (banResults, photonResults, fallbackOnly=false, appendPhoton=false) => {
                 if(normalizeQuery(document.getElementById('lp-input').value.trim()) !== searchNorm) return;
+
+                if(appendPhoton) {
+                    const pending = list.querySelector('.lp-photon-pending');
+                    if(pending) pending.remove();
+                    const existingKeys = new Set(
+                        [...list.querySelectorAll('[data-pkey]')].map(el => el.dataset.pkey)
+                    );
+                    const newItems = photonResults.filter(p => {
+                        const k = normalizeQuery(p.name)+'|'+p.lat.toFixed(3)+'|'+p.lon.toFixed(3);
+                        return !existingKeys.has(k);
+                    }).slice(0, 4);
+                    newItems.forEach((p, i) => {
+                        const idx = 280+i;
+                        _pool[idx] = p;
+                        const k = normalizeQuery(p.name)+'|'+p.lat.toFixed(3)+'|'+p.lon.toFixed(3);
+                        const el = document.createElement('div');
+                        el.className = 'lp-result-item';
+                        el.dataset.pkey = k;
+                        el.setAttribute('onclick', `ITIN.lpPick(${idx})`);
+                        el.innerHTML = `<div class="lp-ri-icon">${pinSvg}</div>
+                            <div class="lp-ri-body">
+                                <div class="lp-ri-name">${p.name}</div>
+                                ${p.sub ? `<div class="lp-ri-sub">${p.sub}</div>` : ''}
+                            </div>`;
+                        list.appendChild(el);
+                    });
+                    return;
+                }
+
                 const seen = new Set();
-                const merged = [...nomResults, ...banResults].filter(p => {
+                const geoItems = [...photonResults, ...banResults].filter(p => {
                     const k = normalizeQuery(p.name) + '|' + p.lat.toFixed(3) + '|' + p.lon.toFixed(3);
                     if(seen.has(k)) return false;
                     seen.add(k);
                     return true;
-                }).slice(0, 6);
+                });
 
-                const geoHtml = merged.map((p, i) => {
-                    _pool[300+i] = p;
-                    return `<div class="lp-result-item" onclick="ITIN.lpPick(${300+i})">
+                const allItems = [...stopMatches, ...geoItems];
+                const seenAll = new Set();
+                const sorted = allItems
+                    .filter(p => {
+                        const k = normalizeQuery(p.name) + '|' + p.lat.toFixed(3) + '|' + p.lon.toFixed(3);
+                        if(seenAll.has(k)) return false;
+                        seenAll.add(k);
+                        return true;
+                    })
+                    .sort((a, b) => scoreItem(a, searchQuery) - scoreItem(b, searchQuery))
+                    .slice(0, 8);
+
+                const html = sorted.map((p, i) => {
+                    const k = normalizeQuery(p.name)+'|'+p.lat.toFixed(3)+'|'+p.lon.toFixed(3);
+                    _pool[200+i] = p;
+                    if(p.type === 'stop') {
+                        const el = this._lpStopItem(p, 200+i);
+                        return el.replace('<div class="lp-result-item"', `<div class="lp-result-item" data-pkey="${k}"`);
+                    }
+                    return `<div class="lp-result-item" data-pkey="${k}" onclick="ITIN.lpPick(${200+i})">
                         <div class="lp-ri-icon">${pinSvg}</div>
                         <div class="lp-ri-body">
                             <div class="lp-ri-name">${p.name}</div>
@@ -1415,43 +1517,72 @@
                     </div>`;
                 }).join('');
 
-                list.innerHTML = renderStops + geoHtml;
+                const pendingHtml = fallbackOnly
+                    ? `<div class="lp-photon-pending" style="padding:8px 14px;font-size:0.75rem;color:var(--text-muted);display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:10px;height:10px;border:1.5px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin 0.65s linear infinite;flex-shrink:0"></span>Recherche de lieux…</div>`
+                    : '';
+
+                list.innerHTML = html + pendingHtml;
             };
 
             let _banResults = [];
-            let _nomResults = [];
+            let _photonResults = [];
+            let _banDone = false;
+            let _photonDone = false;
+            let _fallbackShown = false;
+
+            const fallbackTimer = setTimeout(() => {
+                if(_photonDone) return;
+                _fallbackShown = true;
+                renderMerged(_banResults, [], true);
+            }, 3000);
+
+            const checkDone = () => {
+                if(_banDone && _photonDone) {
+                    clearTimeout(fallbackTimer);
+                    renderMerged(_banResults, _photonResults, false, _fallbackShown);
+                }
+            };
+
             const banUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(searchQuery)}&limit=4&lat=45.1885&lon=5.7245`;
             fetch(banUrl).then(r=>r.json()).then(data => {
                 if(normalizeQuery(document.getElementById('lp-input').value.trim()) !== searchNorm) return;
                 _banResults = (data.features||[])
                     .filter(f => withinRadius(f.geometry.coordinates[1], f.geometry.coordinates[0]))
                     .map(f => { const {name,sub,lat,lon} = fmtBAN(f); return {name,sub,lat,lon,type:'address'}; });
-                renderMerged(_banResults, _nomResults);
-            }).catch(()=>{});
+                _banDone = true;
+                checkDone();
+            }).catch(()=>{ _banDone = true; checkDone(); });
 
-            clearTimeout(this._nomTimer);
-            this._nomTimer = setTimeout(() => {
+            clearTimeout(this._photonTimer);
+            if(this._photonController) this._photonController.abort();
+            this._photonController = new AbortController();
+            const photonSignal = this._photonController.signal;
+            this._photonTimer = setTimeout(() => {
                 if(normalizeQuery(document.getElementById('lp-input').value.trim()) !== searchNorm) return;
-                const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=4&viewbox=5.20,45.55,6.23,44.83&bounded=1&addressdetails=1`;
-                fetch(nominatimUrl, {headers:{'Accept-Language':'fr'}}).then(r=>r.json()).then(nomData => {
+                const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&lat=45.1885&lon=5.7245&limit=6&lang=fr&bbox=5.20,44.83,6.23,45.55`;
+                fetch(photonUrl, {signal: photonSignal}).then(r=>r.json()).then(data => {
                     if(normalizeQuery(document.getElementById('lp-input').value.trim()) !== searchNorm) return;
-                    const ADDR_TYPES = new Set(['highway','railway','waterway','boundary','landuse','place','building','address']);
-                    _nomResults = nomData
-                        .filter(item => {
-                            const lat = parseFloat(item.lat), lon = parseFloat(item.lon);
-                            return withinRadius(lat, lon) && !ADDR_TYPES.has(item.class);
+                    const TRANSIT_TAGS = new Set(['bus_stop','tram_stop','stop_position','halt','station']);
+                    _photonResults = (data.features||[])
+                        .filter(f => {
+                            const [lon,lat] = f.geometry.coordinates;
+                            if(!withinRadius(lat,lon)) return false;
+                            return !TRANSIT_TAGS.has(f.properties?.osm_value);
                         })
-                        .map(item => {
-                            const a = item.address||{};
-                            const city = a.city||a.town||a.village||a.municipality||'';
-                            const name = item.name || item.display_name.split(',')[0];
-                            const road = a.road||a.pedestrian||'';
-                            const sub  = [road, city].filter(Boolean).join(', ');
-                            return {name, sub, lat:parseFloat(item.lat), lon:parseFloat(item.lon), type:'poi'};
-                        });
-                    renderMerged(_banResults, _nomResults);
-                }).catch(()=>{});
-            }, 500);
+                        .map(f => {
+                            const p = f.properties||{};
+                            const name = p.name || p.street || p.city || '';
+                            if(!name) return null;
+                            const parts = [p.street, p.city||p.town||p.village].filter(Boolean);
+                            const sub = parts.join(', ');
+                            const [lon, lat] = f.geometry.coordinates;
+                            return {name, sub, lat, lon, type:'poi'};
+                        })
+                        .filter(Boolean);
+                    _photonDone = true;
+                    checkDone();
+                }).catch(e=>{ if(e.name==='AbortError') return; _photonDone = true; checkDone(); });
+            }, 200);
         },
 
         _lpHistItem(p, idx) {
@@ -1671,46 +1802,114 @@
             const norm = normalizeQuery(q);
             const sug  = document.getElementById('lp-edit-suggestions');
 
-            const stopMatches = this.stops.filter(s=>normalizeQuery(s.name).includes(norm)).slice(0,4);
-            stopMatches.forEach((p,i)=>{ _pool[50+i]=p; });
-            const stopHtml = stopMatches.map((p,i)=>`
-                <div class="lp-edit-sug" onclick="ITIN._lpSavePicked(${50+i})">
-                    <div class="lp-edit-sug-dot"></div>
-                    <div>
-                        <div class="lp-edit-sug-name">${p.name}</div>
-                    </div>
-                </div>`).join('');
+            sug.innerHTML = '<div class="lp-loading-row" id="lp-edit-geo-loading" style="margin:0;padding:10px 0">Recherche…</div>';
 
-            sug.innerHTML = stopHtml + '<div class="lp-loading-row" id="lp-edit-geo-loading" style="margin:0;padding:10px 0">Recherche…</div>';
+            const withinRadius = (lat, lon) => {
+                const dLat = (lat - 45.1885) * 111;
+                const dLon = (lon - 5.7245) * 111 * Math.cos(45.1885 * Math.PI / 180);
+                return Math.sqrt(dLat*dLat + dLon*dLon) <= 40;
+            };
 
-            fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=4&lat=45.1885&lon=5.7245&bbox=5.20,44.83,6.23,45.55`)
+            const scoreItem = (p) => {
+                const pn = normalizeQuery(p.name);
+                let score = 0;
+                if(pn === norm) score -= 200;
+                else if(pn.startsWith(norm)) score -= 100;
+                else if(pn.includes(norm)) score -= 50;
+                score += pn.length * 0.3;
+                return score;
+            };
+
+            const editTokens = norm.split(/\s+/).filter(Boolean);
+            const stopMatches = this.stops.filter(s => {
+                const sn = normalizeQuery(s.name);
+                return editTokens.every(tok => sn.includes(tok));
+            }).sort((a,b) => scoreItem(a) - scoreItem(b)).slice(0, 4);
+
+            const renderEditResults = (banResults, photonResults) => {
+                const seen = new Set();
+                const TRANSIT_TAGS = new Set(['bus_stop','tram_stop','stop_position','halt','station']);
+                const geoItems = [...photonResults, ...banResults].filter(p => {
+                    if(p._photonTag && TRANSIT_TAGS.has(p._photonTag)) return false;
+                    const k = normalizeQuery(p.name) + '|' + p.lat.toFixed(3) + '|' + p.lon.toFixed(3);
+                    if(seen.has(k)) return false;
+                    seen.add(k);
+                    return true;
+                });
+
+                const allItems = [...stopMatches, ...geoItems];
+                const seenAll = new Set();
+                const sorted = allItems
+                    .filter(p => {
+                        const k = normalizeQuery(p.name) + '|' + p.lat.toFixed(3) + '|' + p.lon.toFixed(3);
+                        if(seenAll.has(k)) return false;
+                        seenAll.add(k);
+                        return true;
+                    })
+                    .sort((a, b) => scoreItem(a) - scoreItem(b))
+                    .slice(0, 6);
+
+                if(!sorted.length) {
+                    sug.innerHTML = '<div style="font-size:0.8rem;color:var(--text-muted);padding:8px 0">Aucun résultat</div>';
+                    return;
+                }
+
+                sorted.forEach((p, i) => { _pool[50+i] = p; });
+                sug.innerHTML = sorted.map((p, i) => {
+                    const dot = p.type === 'stop'
+                        ? `<div class="lp-edit-sug-dot"></div>`
+                        : `<div class="lp-edit-sug-dot" style="background:#4285F4"></div>`;
+                    return `<div class="lp-edit-sug" onclick="ITIN._lpSavePicked(${50+i})">
+                        ${dot}
+                        <div>
+                            <div class="lp-edit-sug-name">${p.name}</div>
+                            ${p.sub ? `<div class="lp-edit-sug-sub">${p.sub}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            };
+
+            let _banResults = [], _photonResults = [];
+            let _banDone = false, _photonDone = false;
+            const checkDone = () => { if(_banDone && _photonDone) renderEditResults(_banResults, _photonResults); };
+
+            fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=4&lat=45.1885&lon=5.7245`)
                 .then(r=>r.json())
                 .then(data=>{
-                    const features = (data && data.features) ? data.features.filter(f => {
-                        const [lon, lat] = f.geometry.coordinates;
-                        const dLat = (lat - 45.1885) * 111;
-                        const dLon = (lon - 5.7245) * 111 * Math.cos(45.1885 * Math.PI / 180);
-                        return Math.sqrt(dLat*dLat + dLon*dLon) <= 40;
-                    }) : [];
-                    const geoHtml = features.map((feat,i)=>{
-                        const {name, sub, lat, lon} = fmtBAN(feat);
-                        const p = { name, lat, lon, sub, type:'address' };
-                        _pool[60+i] = p;
-                        return `<div class="lp-edit-sug" onclick="ITIN._lpSavePicked(${60+i})">
-                            <div class="lp-edit-sug-dot" style="background:#4285F4"></div>
-                            <div>
-                                <div class="lp-edit-sug-name">${name}</div>
-                                ${sub ? `<div class="lp-edit-sug-sub">${sub}</div>` : ''}
-                            </div>
-                        </div>`;
-                    }).join('');
-                    const loader = document.getElementById('lp-edit-geo-loading');
-                    if(loader) loader.outerHTML = geoHtml || '';
-                    if(!stopHtml && !features.length) sug.innerHTML = '<div style="font-size:0.8rem;color:var(--text-muted);padding:8px 0">Aucun résultat</div>';
-                }).catch(()=>{
-                    const loader = document.getElementById('lp-edit-geo-loading');
-                    if(loader) loader.remove();
-                });
+                    _banResults = (data.features||[])
+                        .filter(f => withinRadius(f.geometry.coordinates[1], f.geometry.coordinates[0]))
+                        .map(f => { const {name,sub,lat,lon} = fmtBAN(f); return {name,sub,lat,lon,type:'address'}; });
+                    _banDone = true; checkDone();
+                }).catch(()=>{ _banDone = true; checkDone(); });
+
+            clearTimeout(this._editPhotonTimer);
+            if(this._editPhotonController) this._editPhotonController.abort();
+            this._editPhotonController = new AbortController();
+            const editSignal = this._editPhotonController.signal;
+            this._editPhotonTimer = setTimeout(() => {
+                const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=45.1885&lon=5.7245&limit=6&lang=fr&bbox=5.20,44.83,6.23,45.55`;
+                fetch(photonUrl, {signal: editSignal}).then(r=>r.json()).then(data=>{
+                    const TRANSIT_TAGS = new Set(['bus_stop','tram_stop','stop_position','halt','station']);
+                    _photonResults = (data.features||[])
+                        .filter(f => {
+                            const [lon,lat] = f.geometry.coordinates;
+                            if(!withinRadius(lat,lon)) return false;
+                            const tag = f.properties?.osm_value;
+                            return !TRANSIT_TAGS.has(tag);
+                        })
+                        .map(f => {
+                            const p = f.properties||{};
+                            const name = p.name || p.street || p.city || '';
+                            if(!name) return null;
+                            const parts = [p.street, p.city||p.town||p.village].filter(Boolean);
+                            const sub = parts.join(', ');
+                            const [lon,lat] = f.geometry.coordinates;
+                            return {name, sub, lat, lon, type:'poi', _photonTag: p.osm_value};
+                        })
+                        .filter(Boolean);
+                    _photonDone = true; checkDone();
+                }).catch(e=>{ if(e.name==='AbortError') return; _photonDone = true; checkDone(); });
+            }, 200);
         },
 
         _lpSavePicked(idx) {
