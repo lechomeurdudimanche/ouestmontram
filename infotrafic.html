@@ -1124,7 +1124,7 @@
             exitLineView() {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('line');
-                window.history.pushState({}, '', url.toString());
+                window.history.replaceState({}, '', url.toString());
                 document.body.classList.remove('line-mode');
                 this.lineViewLineId = null;
                 if (Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
@@ -1683,16 +1683,11 @@
         document.addEventListener("DOMContentLoaded", () => {
             app.init();
             history.pushState({ infoApp: 'app' }, '');
-            let handling = false;
             window.addEventListener('popstate', () => {
                 if (document.body.classList.contains('line-mode')) {
                     app.exitLineView();
-                    return;
                 }
-                if (handling) return;
-                handling = true;
-                history.go(1);
-                setTimeout(() => { handling = false; }, 50);
+                history.pushState({ infoApp: 'app' }, '');
             });
         });
     </script>
