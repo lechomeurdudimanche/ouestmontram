@@ -1114,6 +1114,7 @@
             goToLineView(lineId) {
                 this._enterLineView(lineId);
                 this._renderLineViewDisruptions();
+                document.getElementById('line-view-content').scrollTop = 0;
                 const isTram = LINES_TRAM.some(l => l.id === lineId);
                 if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
                     this.loadPonctualite();
