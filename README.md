@@ -2,13 +2,13 @@
 
 > Application de mobilités pour les transports de Grenoble et du territoire du SMMAG
 
-**[Ouvrir](https://lechomeurdudimanche.github.io/ouestmontram/)**
-
 ---
 
 ## Présentation
 
-**Où est mon tram ?** est une web app, indépendante et non officielle, qui utilise les données de l'API publique Mobilités M pour fournir des informations sur les transports en commun du réseau de Grenoble. L'application est faite pour une utilisation sur mobile mais fonctionne aussi sur PC.
+**Où est mon tram ?** est une web app, indépendante et non officielle, qui utilise les données de l'API publique Mobilités M pour fournir des informations sur les transports en commun du réseau de Grenoble. L'application est faite pour une utilisation sur mobile mais fonctionne aussi sur PC. Pour obtenir l'application sur votre téléphone, ouvrez le lien ci dessous sur votre appareil et ajoutez la page sur l'écran d'accueil.
+
+**[Ouvrir l'application](https://lechomeurdudimanche.github.io/ouestmontram/)**
 
 ---
 
