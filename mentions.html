@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Mentions Légales - Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --radar-color: #00d2ff;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; 
+            -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;}
+        html { overscroll-behavior: none; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: var(--app-height);
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            position: sticky;
+            z-index: 100;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:active {
+            background: var(--bg-hover);
+        }
+
+        .header-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: env(safe-area-inset-bottom, 40px);
+        }
+
+        .mention-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .mention-card h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mention-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .mention-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .mention-card a {
+            color: var(--radar-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .mention-card a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .mention-card ul {
+            list-style-position: outside;
+            margin-left: 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        
+        .mention-card ul li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
+        <div class="header-title">Mentions Légales</div>
+    </div>
+
+    <div class="content">
+        <div class="mention-card">
+            <h2>Sources des données</h2>
+            <p>Cette application utilise les API publiques de <strong>Mobilités M</strong> (le service d'information des mobilités de l'aire grenobloise).</p>
+            <p>Les données de transport sont fournies par le <strong>SMMAG</strong> (Syndicat Mixte des Mobilités de l'Aire Grenobloise) et sont diffusées sous la licence <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer">Open Database License (ODbL)</a>.</p>
+            <p>Les données de calcul d'itinéraire sont également fournies par l'API <strong>Mobilités M</strong> via OpenTripPlanner.</p>
+            <p>Les données sont à titre indicatif.</p>
+        </div>
+
+        <div class="mention-card">
+            <h2>Cartographie</h2>
+            <p>Les cartes affichées dans l'application utilisent :</p>
+            <ul>
+                <li>Les tuiles cartographiques de <strong>CARTO</strong> - <a href="https://carto.com/legal/" target="_blank" rel="noopener noreferrer">Conditions d'utilisation</a></li>
+                <li>Les données géographiques d'<strong>OpenStreetMap</strong>, diffusées sous licence <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">ODbL</a> - © les contributeurs OpenStreetMap</li>
+                <li>La bibliothèque de cartographie open source <strong>Leaflet</strong> - <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">leafletjs.com</a></li>
+            </ul>
+        </div>
+
+        <div class="mention-card">
+            <h2>Recherche de lieux</h2>
+            <p>La recherche d'adresses et de lieux utilise deux services :</p>
+            <ul>
+                <li>La <strong>Base Adresse Nationale (BAN)</strong>, un service public de l'État français - <a href="https://adresse.data.gouv.fr/" target="_blank" rel="noopener noreferrer">adresse.data.gouv.fr</a></li>
+                <li><strong>Photon</strong>, un moteur de géocodage open source basé sur les données OpenStreetMap, développé par Komoot - <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">photon.komoot.io</a></li>
+            </ul>
+            <p>Aucune donnée saisie dans la recherche n'est conservée par ces services au-delà du temps de la requête.</p>
+        </div>
+
+        <div class="mention-card">
+            <h2>Confidentialité & Cookies</h2>
+            <p>Cette application a été conçue dans le respect de votre vie privée :</p>
+            <ul>
+                <li>Aucune donnée personnelle n'est collectée, stockée côté serveur ou revendue.</li>
+                <li>Aucun traceur publicitaire ou outil d'analyse intrusif n'est utilisé.</li>
+                <li>L'historique de recherches et les adresses favorites de la page Itinéraire sont sauvegardés <strong>uniquement sur votre appareil</strong> (via le stockage local du navigateur). Ces données ne quittent jamais votre appareil et peuvent être effacées en vidant le cache de votre navigateur. Même chose pour vos arrêts favoris sur la page Horaires.</li>
+                <li>La géolocalisation de votre appareil peut être utilisée pour centrer la carte ou définir un point de départ. Elle est activée uniquement à votre demande, n'est jamais transmise à un serveur tiers, et reste soumise aux autorisations accordées dans votre navigateur.</li>
+            </ul>
+        </div>
+
+        <div class="mention-card">
+            <h2>Code Source</h2>
+            <p><strong>Où est mon tram ?</strong> est une application web indépendante et non officielle. Elle n'est ni éditée ni affiliée au SMMAG ou à M TAG.</p>
+            <p>Le code source de cette application est disponible en Open Source.</p>
+            <p><a href="https://github.com/lechomeurdudimanche/ouestmontram" target="_blank" rel="noopener noreferrer">Voir le code source</a></p>
+        </div>
+    </div>
+</body>
+</html>

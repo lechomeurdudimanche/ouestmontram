@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Infotrafic - Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark:      #0d0d0f;
+            --bg-panel:     #18181c;
+            --bg-hover:     #232328;
+            --bg-card:      #1c1c22;
+            --text-main:    #f0f0f5;
+            --text-muted:   #888899;
+            --border:       #2a2a35;
+            --radar-color:  #00d2ff;
+            --accent-cur:   #ff7043;
+            --accent-fut:   #448aff;
+            --color-a: #006eb7;
+            --color-b: #00a459;
+            --color-c: #e2007a;
+            --color-d: #f29400;
+            --color-e: #5c2a90;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;}
+        html { overscroll-behavior: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            height: var(--app-height, 100vh);
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior: none;
+        }
+
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 72px;
+        }
+        #content::-webkit-scrollbar { width: 4px; }
+        #content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .page-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 16px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-cur), var(--radar-color), var(--accent-fut));
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+
+        .page-title-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff7043, #ff9800);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(255,112,67,0.35);
+        }
+
+        .last-update {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .last-update-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .last-update-dot.fresh {
+            background: #4caf50;
+            box-shadow: 0 0 5px rgba(76,175,80,0.5);
+        }
+        .last-update-dot.refreshing {
+            background: var(--radar-color);
+            box-shadow: 0 0 6px rgba(0,210,255,0.6);
+            animation: pulse-dot 0.8s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.6; }
+        }
+        
+
+        .filter-toggle-btn {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            padding: 7px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            letter-spacing: 0.01em;
+        }
+        .filter-toggle-btn:active { transform: scale(0.95); }
+        .filter-toggle-btn.has-filter {
+            color: var(--radar-color);
+            border-color: var(--radar-color);
+            background: rgba(0,210,255,0.08);
+        }
+        .filter-toggle-btn .filter-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: background 0.2s;
+        }
+        .filter-toggle-btn.has-filter .filter-dot { background: var(--radar-color); }
+
+        .filter-panel {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px 14px;
+            overflow: hidden;
+            transform-origin: top;
+            animation: slideDown 0.22s ease forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .filter-panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s;
+            user-select: none;
+        }
+        .filter-chip.active {
+            border-color: rgba(255,255,255,0.25);
+            color: var(--text-main);
+            background: rgba(255,255,255,0.07);
+        }
+        .filter-chip-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .content-inner {
+            padding: 16px 14px 6px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            margin-top: 4px;
+        }
+
+        .section-header + .section-header { margin-top: 28px; }
+
+        .section-label {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .section-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+        }
+
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .section-cur .section-label { color: var(--accent-cur); }
+        .section-cur .section-badge { background: rgba(255,112,67,0.15); color: var(--accent-cur); }
+
+        .section-fut .section-label { color: var(--accent-fut); }
+        .section-fut .section-badge { background: rgba(68,138,255,0.15); color: var(--accent-fut); }
+
+        .disruption-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            overflow: hidden;
+            transition: transform 0.15s;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .disruption-card:active { transform: scale(0.99); }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px 10px;
+        }
+
+        .line-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        }
+
+        .card-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-dates {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .date-pill {
+            background: rgba(0,210,255,0.1);
+            color: var(--radar-color);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .date-pill.unknown {
+            background: rgba(255,152,0,0.12);
+            color: #ff9800;
+        }
+
+        .card-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0 14px;
+        }
+
+        .card-body {
+            padding: 10px 14px 12px;
+            font-size: 0.84rem;
+            line-height: 1.65;
+            color: var(--text-muted);
+            word-wrap: break-word;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            color: var(--radar-color);
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            background: rgba(0,210,255,0.08);
+            border-radius: 8px;
+            padding: 5px 10px;
+            transition: background 0.2s;
+        }
+        .card-link:active { background: rgba(0,210,255,0.16); }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 30px;
+            text-align: center;
+            color: var(--text-muted);
+            gap: 10px;
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            opacity: 0.6;
+        }
+
+        .empty-state-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .empty-state-sub {
+            font-size: 0.87rem;
+            color: var(--text-muted);
+        }
+
+        .sections-separator {
+            height: 1px;
+            background: var(--border);
+            margin: 24px 0 20px;
+        }
+
+        .page-footer {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 14px 20px 6px;
+        }
+        .page-footer a { color: var(--radar-color); text-decoration: none; }
+        .page-footer a:hover { text-decoration: underline; }
+
+        #bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-buttons { display: flex; height: 100%; }
+
+        .nav-link {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .nav-link.active { color: var(--radar-color); }
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--radar-color);
+        }
+        .nav-icon { font-size: 1.3rem; }
+
+        .skeleton-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            padding: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .skel {
+            background: linear-gradient(90deg, var(--bg-hover) 25%, #29293a 50%, var(--bg-hover) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 6px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skel-circle { border-radius: 50%; width: 42px; height: 42px; flex-shrink: 0; }
+        .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+        .skel-line { height: 12px; }
+
+        .ponct-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0 0;
+        }
+        .ponct-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 16px 10px;
+        }
+        .ponct-section-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            flex: 1;
+        }
+        .ponct-refresh-btn {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            padding: 7px 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ponct-refresh-btn:active { transform: scale(0.95); }
+        .ponct-refresh-btn.loading { color: var(--radar-color); border-color: var(--radar-color); background: rgba(0,210,255,0.08); }
+
+        .ponct-cards { padding: 0 14px; }
+        .ponct-line-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            overflow: hidden;
+            animation: fadeUp 0.3s ease both;
+        }
+        .ponct-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .ponct-card-header:active { background: rgba(255,255,255,0.03); }
+        .ponct-line-badge {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.1rem; color: white;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        }
+        .ponct-card-info { flex: 1; min-width: 0; }
+        .ponct-card-name {
+            font-weight: 600; font-size: 0.88rem;
+            color: var(--text-muted); margin-bottom: 5px;
+        }
+        .ponct-stats-mini { display: flex; gap: 12px; flex-wrap: wrap; }
+        .ponct-stat-chip {
+            font-size: 0.73rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 3px;
+        }
+        .ponct-stat-chip b { font-weight: 700; font-size: 0.8rem; }
+        .ponct-score-dot {
+            width: 11px; height: 11px;
+            border-radius: 50%; flex-shrink: 0;
+        }
+        .ponct-expand-icon {
+            color: var(--text-muted); font-size: 1rem;
+            transition: transform 0.2s; flex-shrink: 0;
+        }
+        .ponct-line-card.expanded .ponct-expand-icon { transform: rotate(180deg); }
+
+        .delay-ok        { color: #4caf50; }
+        .delay-slight    { color: #ffc107; }
+        .delay-moderate  { color: #ff9800; }
+        .delay-heavy     { color: #f44336; }
+        .dot-ok          { background: #4caf50; box-shadow: 0 0 6px rgba(76,175,80,0.5); }
+        .dot-slight      { background: #ffc107; }
+        .dot-moderate    { background: #ff9800; }
+        .dot-heavy       { background: #f44336; box-shadow: 0 0 6px rgba(244,67,54,0.45); }
+
+        .ponct-details { display: none; border-top: 1px solid var(--border); }
+        .ponct-line-card.expanded .ponct-details { display: block; }
+
+        .ponct-direction { border-bottom: 1px solid var(--border); }
+        .ponct-direction:last-child { border-bottom: none; }
+        .ponct-dir-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-hover);
+            cursor: pointer; user-select: none;
+            transition: background 0.15s;
+        }
+        .ponct-dir-header:active { background: rgba(255,255,255,0.04); }
+        .ponct-dir-arrow { font-size: 0.65rem; color: var(--text-muted); transition: transform 0.2s; }
+        .ponct-direction.dir-expanded .ponct-dir-arrow { transform: rotate(90deg); }
+        .ponct-dir-name { flex: 1; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .ponct-dir-count { font-size: 0.72rem; color: var(--text-muted); }
+        .ponct-dir-avg { font-size: 0.8rem; font-weight: 700; margin-left: 6px; }
+
+        .ponct-trips { display: none; }
+        .ponct-direction.dir-expanded .ponct-trips { display: block; }
+
+        .ponct-trip {
+            display: flex; flex-direction: column;
+            padding: 10px 14px 10px 34px;
+            border-bottom: 1px solid rgba(255,255,255,0.035);
+            gap: 6px;
+        }
+        .ponct-trip:last-child { border-bottom: none; }
+        .ponct-trip-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .ponct-trip-delay { font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+        .ponct-trip-id { font-size: 0.65rem; color: #444; font-family: monospace; margin-left: auto; flex-shrink: 0; }
+        .ponct-trip-pos {
+            overflow: hidden;
+        }
+        .ponct-trip-pos .radar-info {
+            font-size: .85rem;
+            color: var(--radar-color);
+            background: rgba(0, 210, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .ponct-trip-pos .radar-info b {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .ponct-trip-pos .radar-info.at-stop {
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .ponct-trip-pos .radar-icon {
+            width: 12px; height: 12px;
+            border: 2px solid var(--radar-color);
+            border-radius: 50%; flex-shrink: 0;
+            animation: radar-pulse 2s infinite;
+        }
+        .ponct-trip-pos .radar-info.at-stop .radar-icon { border-color: #ffd700; }
+        .ponct-trip-pos .radar-static {
+            width: 8px; height: 8px;
+            background: var(--radar-color);
+            border-radius: 50%; flex-shrink: 0;
+        }
+        .ponct-trip-pos .radar-info.at-stop .radar-static { background: #ffd700; }
+        .ponct-trip-id { font-size: 0.65rem; color: #444; font-family: monospace; }
+
+        .ponct-no-rt {
+            padding: 28px 16px; text-align: center;
+            font-size: 0.83rem; color: var(--text-muted);
+        }
+        .ponct-last-upd {
+            font-size: 0.68rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        .ponct-line-timestamp {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 4px;
+        }
+        .ponct-line-timestamp .ts-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        #line-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        body.line-mode #line-view { display: flex; }
+        body.line-mode #content   { display: none; }
+
+        #line-view-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 72px;
+        }
+        #line-view-content::-webkit-scrollbar { width: 4px; }
+        #line-view-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .line-view-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 16px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .line-view-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--line-accent, var(--accent-cur));
+        }
+
+        .back-btn {
+            font-family: 'DM Sans', sans-serif;
+            width: 30px;
+            height: 30px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .back-btn:active { transform: scale(0.95); background: var(--bg-card); }
+
+        .line-view-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            flex: 1;
+            min-width: 0;
+        }
+        .line-view-badge {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .line-view-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 400;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .line-view-update {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .guide-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            border-radius: 14px; overflow: hidden;
+            margin: 0px 15px 15px 15px;
+        }
+        .guide-card-header {
+            padding: 10px 16px;
+            background: rgba(0, 210, 255, 0.06);
+            border-bottom: 1px solid rgba(0, 210, 255, 0.15);
+            font-size: .78rem; color: var(--radar-color);
+            text-transform: uppercase; letter-spacing: .07em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .guide-card-body {
+            padding: 16px; display: flex; flex-direction: column; gap: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div class="page-header">
+            <div class="page-title">
+                <div class="page-title-icon">⚠️</div>
+                Infotrafic
+            </div>
+            <div class="last-update" id="last-update" style="display:none;">
+                <span class="last-update-dot" id="last-update-dot"></span>
+                <span id="last-update-text"></span>
+            </div>
+            <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="app.toggleFilterPanel()">
+                <span class="filter-dot"></span>
+                Filtres
+            </button>
+        </div>
+
+        <div id="filter-panel" style="display:none;" class="filter-panel">
+            <div class="filter-panel-title">Afficher les perturbations de :</div>
+            <div class="filter-chips" id="filter-chips"></div>
+        </div>
+
+        <div id="disruptions-content">
+            <div class="content-inner">
+                <div style="margin-bottom:10px;margin-top:2px;">
+                    <div class="skeleton-card">
+                        <div class="skel skel-circle"></div>
+                        <div class="skel-lines"><div class="skel skel-line" style="width:65%"></div><div class="skel skel-line" style="width:45%"></div><div class="skel skel-line" style="width:90%"></div></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skel skel-circle"></div>
+                        <div class="skel-lines"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:50%"></div><div class="skel skel-line" style="width:70%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ponct-sep"></div>
+
+        <div class="ponct-section-header">
+            <div class="ponct-section-title">Retards</div>
+            <button class="ponct-refresh-btn" id="ponct-refresh-btn" onclick="app.loadPonctualite()">↻ Actualiser</button>
+        </div>
+            <div class="guide-card">
+                <div class="guide-card-header">
+                    <span>●</span> A quoi sert cette zone ?
+                </div>
+                <div class="guide-card-body">
+                        <div style="font-size: 0.8em;" class="guide-step-text">Cette zone affiche le détail des retards sur le réseau de tramway. Il est possible d'y voir la moyenne des retards par ligne et par direction, ainsi que le retard maximal pour chaque ligne.
+                    </div>
+                </div>
+            </div>
+        <div class="ponct-cards" id="ponctualite-content"></div>
+        <div class="page-footer">
+            Données : <a href="https://data.mobilites-m.fr/" target="_blank">Mobilités M</a>
+            &nbsp;|&nbsp;
+            <a href="mentions.html" style="color:var(--text-muted);">Mentions légales</a>
+        </div>
+    </div>
+
+    <div id="line-view">
+        <div class="line-view-header" id="line-view-header">
+            <button class="back-btn" onclick="app.exitLineView()">‹</button>
+            <div class="line-view-title">
+                <div class="line-view-badge" id="line-view-badge"></div>
+                <div>
+                    <div id="line-view-name"></div>
+                    <div class="line-view-subtitle">Perturbations en cours et à venir</div>
+                </div>
+            </div>
+            <div class="line-view-update" id="line-view-update" style="display:none;">
+                <span class="last-update-dot" id="line-view-dot"></span>
+                <span id="line-view-update-text"></span>
+            </div>
+        </div>
+        <div id="line-view-content">
+            <div class="content-inner" id="line-view-disruptions"></div>
+        </div>
+    </div>
+
+    <div id="bottom-nav">
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">🕐</span>
+                <span>Horaires</span>
+            </a>
+            <a href="suivi.html" class="nav-link">
+                <span class="nav-icon">🚋</span>
+                <span>Suivi tram</span>
+            </a>
+            <a href="itineraire.html" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>Itinéraire</span>
+            </a>
+            <a href="infotrafic.html" class="nav-link active">
+                <span class="nav-icon">⚠️</span>
+                <span>Infotrafic</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const LINES_TRAM = [
+            { id: "SEM:A",   name: "A",   color: "#006eb7", category: "tram" },
+            { id: "SEM:B",   name: "B",   color: "#00a459", category: "tram" },
+            { id: "SEM:C",   name: "C",   color: "#e2007a", category: "tram" },
+            { id: "SEM:D",   name: "D",   color: "#f29400", category: "tram" },
+            { id: "SEM:E",   name: "E",   color: "#5c2a90", category: "tram" },
+        ];
+        const LINES_CHRONO = [
+            { id: "SEM:C1",  name: "C1",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C2",  name: "C2",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C3",  name: "C3",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C4",  name: "C4",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C5",  name: "C5",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C6",  name: "C6",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C7",  name: "C7",  color: "rgb(245,210,77)",  category: "chrono" },
+            { id: "SEM:C8",  name: "C8",  color: "rgb(245,210,77)",  category: "chrono" },
+        ];
+        const LINES_CHRONO_PERI = [
+            { id: "GSV:C9",  name: "C9",  color: "rgb(239,124,0)",   category: "chrono_peri" },
+            { id: "SEM:C10", name: "C10", color: "rgb(239,124,0)",   category: "chrono_peri" },
+            { id: "SE2:C11", name: "C11", color: "rgb(239,124,0)",   category: "chrono_peri" },
+            { id: "SE2:C12", name: "C12", color: "rgb(239,124,0)",   category: "chrono_peri" },
+            { id: "SE2:C13", name: "C13", color: "rgb(239,124,0)",   category: "chrono_peri" },
+            { id: "SEM:C14", name: "C14", color: "rgb(239,124,0)",   category: "chrono_peri" },
+        ];
+        const LINES_PROXIMO = [
+            { id: "SEM:15",  name: "15",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SEM:16",  name: "16",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:17",  name: "17",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:18",  name: "18",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:19",  name: "19",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:20",  name: "20",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SEM:21",  name: "21",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SEM:22",  name: "22",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:23",  name: "23",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SEM:24",  name: "24",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "SEM:25",  name: "25",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "TPV:30",  name: "30",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "TPV:31",  name: "31",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "TPV:32",  name: "32",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "TPV:33",  name: "33",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "TPV:34",  name: "34",  color: "rgb(51,164,87)",   category: "proximo" },
+            { id: "GSV:35",  name: "35",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "GSV:36",  name: "36",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "GSV:37",  name: "37",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:80",  name: "80",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:82",  name: "82",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:84",  name: "84",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:85",  name: "85",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:86",  name: "86",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:88",  name: "88",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "GSV:89",  name: "89",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "SE2:90",  name: "90",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "GSV:91",  name: "91",  color: "rgb(30,113,184)",  category: "proximo" },
+            { id: "GSV:92",  name: "92",  color: "rgb(30,113,184)",  category: "proximo" },
+        ];
+        const LINES_FLEXO = [
+            { id: "SEM:59",  name: "59",  color: "rgb(213, 114, 168)",  category: "flexo" },
+            { id: "SEM:68",  name: "68",  color: "rgb(213, 114, 168)",  category: "flexo" },
+        ];
+
+        const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_CHRONO_PERI, ...LINES_PROXIMO, ...LINES_FLEXO];
+
+        const FILTER_CATEGORIES = [
+            { key: 'tram',        label: 'Trams',                  dot: '#006eb7' },
+            { key: 'chrono',      label: 'Bus Chrono',             dot: 'rgb(245,210,77)' },
+            { key: 'chrono_peri', label: 'Bus Chrono Périurbain',  dot: 'rgb(239,124,0)' },
+            { key: 'proximo',     label: 'Bus Proximo',            dot: 'rgb(51,164,87)' },
+        ];
+
+        const FILTERS_LS_KEY = 'infotrafic_filters';
+
+        function normalizeId(listeLigne) {
+            return (listeLigne || '').replace('_', ':');
+        }
+
+        function getLineInfo(listeLigne) {
+            const norm = normalizeId(listeLigne);
+            return ALL_LINES.find(l => l.id === norm) || null;
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            try {
+                const [date, time] = dateStr.split(' ');
+                const [day, month, year] = date.split('/');
+                const [hour, minute] = (time || '00:00').split(':');
+                return new Date(+year, +month - 1, +day, +hour, +minute);
+            } catch (e) { return null; }
+        }
+
+        function isUnknownEnd(dateFin) {
+            return !dateFin || dateFin.includes('2050');
+        }
+
+        function formatDateLabel(dateStr) {
+            try {
+                const [date, time] = dateStr.split(' ');
+                const [day, month, year] = date.split('/');
+                return `${day}/${month}/${year} ${time}`;
+            } catch (e) { return dateStr; }
+        }
+
+        function cleanText(text) {
+            if (!text) return '';
+            let t = text.replace(/<[^>]*>/g, '');
+            t = t.replace(/\r\n|\r|\n/g, ' ');
+            t = t.trim();
+            t = t.replace(/^[àÀa]\s+partir\s+du\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*\|\s*[Jj]usqu['\u2019']au\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*/gi, '');
+            t = t.replace(/^[Jj]usqu['\u2019']au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g, '');
+            t = t.replace(/^[AÀa]\s+partir\s+du\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/gi, '');
+            t = t.replace(/^[Dd]u\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s+au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g, '');
+            t = t.replace(/^\s*\|+\s*/g, '').replace(/\s*\|+\s*$/g, '').replace(/\|/g, '');
+            t = t.replace(/\s+/g, ' ').trim();
+            if (!t) return '';
+            t = t.charAt(0).toUpperCase() + t.slice(1);
+            t = t.replace(/\.\s+([A-Z])/g, '.<br>$1');
+            return t;
+        }
+
+        function getLineSortIndex(listeLigne) {
+            const norm = normalizeId(listeLigne);
+            const idx = ALL_LINES.findIndex(l => l.id === norm);
+            return idx === -1 ? 9999 : idx;
+        }
+
+        function sortCurrent(a, b) {
+            const lineA = getLineSortIndex(a.listeLigne);
+            const lineB = getLineSortIndex(b.listeLigne);
+            if (lineA !== lineB) return lineA - lineB;
+            const endA = parseDate(a.dateFin);
+            const endB = parseDate(b.dateFin);
+            if (endA && endB) return endA - endB;
+            if (endA) return -1;
+            if (endB) return  1;
+            return 0;
+        }
+
+        function sortUpcoming(a, b) {
+            const lineA = getLineSortIndex(a.listeLigne);
+            const lineB = getLineSortIndex(b.listeLigne);
+            if (lineA !== lineB) return lineA - lineB;
+            const startA = parseDate(a.dateDebut);
+            const startB = parseDate(b.dateDebut);
+            if (startA && startB) return startA - startB;
+            if (startA) return -1;
+            if (startB) return  1;
+            return 0;
+        }
+
+        function renderCard(d, index) {
+            const lineInfo = getLineInfo(d.listeLigne);
+            const lineName = lineInfo ? lineInfo.name : (normalizeId(d.listeLigne).split(':')[1] || '?');
+            const lineColor = lineInfo ? lineInfo.color : '#888';
+            const textColor = lineInfo && lineInfo.category === 'chrono' ? '#000' : '#fff';
+
+            let titre = d.titre || 'Perturbation';
+            titre = titre.charAt(0).toUpperCase() + titre.slice(1);
+
+            const description = cleanText(d.description || d.texte || '');
+            const dateDebut   = formatDateLabel(d.dateDebut);
+            const unknownEnd  = isUnknownEnd(d.dateFin);
+            const dateFin     = unknownEnd ? null : formatDateLabel(d.dateFin);
+
+            const dateHtml = unknownEnd
+                ? `<span class="date-pill">Depuis le ${dateDebut}</span><span class="date-pill unknown">Fin imprévue</span>`
+                : `<span class="date-pill">Du ${dateDebut}</span><span style="color:var(--border);"></span><span class="date-pill">au ${dateFin}</span>`;
+
+            const delay = index * 45;
+
+            return `
+            <div class="disruption-card" style="animation-delay:${delay}ms">
+                <div class="card-top">
+                    <div class="line-badge" style="background-color:${lineColor}; color:${textColor}; cursor:pointer;" onclick="event.stopPropagation(); app.goToLineView('${normalizeId(d.listeLigne)}')">${lineName}</div>
+                    <div class="card-meta">
+                        <div class="card-title">${titre}</div>
+                        <div class="card-dates">${dateHtml}</div>
+                    </div>
+                </div>
+                ${description ? `
+                <div class="card-divider"></div>
+                <div class="card-body">
+                    ${description}
+                    ${d.plan ? `<br><a href="${d.plan}" class="card-link">📄 Plus d'infos</a>` : ''}
+                </div>` : (d.plan ? `<div class="card-divider"></div><div class="card-body"><a href="${d.plan}" target="_blank" class="card-link">📄 Plus d'infos</a></div>` : '')}
+            </div>`;
+        }
+
+        const app = {
+            filters: { tram: true, chrono: true, chrono_peri: true, proximo: true },
+            allCurrent: [],
+            allFuture: [],
+            filterPanelOpen: false,
+            _refreshTimer: null,
+            REFRESH_INTERVAL_MS: 30 * 60 * 1000,
+
+            lineViewLineId: null,
+
+            init() {
+                const saved = localStorage.getItem(FILTERS_LS_KEY);
+                if (saved) {
+                    try { this.filters = { ...this.filters, ...JSON.parse(saved) }; } catch(e) {}
+                }
+                this.renderFilterChips();
+                this.updateFilterBtn();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const lineParam = urlParams.get('line');
+                if (lineParam) {
+                    this._enterLineView(lineParam);
+                }
+
+                this.loadDisruptions();
+                if (!lineParam) this.loadPonctualite();
+                this._startAutoRefresh();
+            },
+
+            _enterLineView(lineId) {
+                const normalizedId = lineId.replace('-', ':');
+                const lineInfo = ALL_LINES.find(l => l.id === normalizedId) || null;
+                this.lineViewLineId = normalizedId;
+
+                const badge = document.getElementById('line-view-badge');
+                const nameEl = document.getElementById('line-view-name');
+                const header = document.getElementById('line-view-header');
+
+                if (lineInfo) {
+                    const textColor = lineInfo.category === 'chrono' ? '#000' : '#fff';
+                    badge.style.background = lineInfo.color;
+                    badge.style.color = textColor;
+                    badge.textContent = lineInfo.name;
+                    nameEl.textContent = 'Ligne ' + lineInfo.name;
+                    header.style.setProperty('--line-accent', lineInfo.color);
+                } else {
+                    badge.style.background = '#888';
+                    badge.textContent = normalizedId.split(':')[1] || '?';
+                    nameEl.textContent = 'Ligne ' + (normalizedId.split(':')[1] || lineId);
+                    header.style.setProperty('--line-accent', 'var(--accent-cur)');
+                }
+
+                document.body.classList.add('line-mode');
+            },
+
+            goToLineView(lineId) {
+                this._enterLineView(lineId);
+                this._renderLineViewDisruptions();
+                document.getElementById('line-view-content').scrollTop = 0;
+                const isTram = LINES_TRAM.some(l => l.id === lineId);
+                if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
+                    this.loadPonctualite();
+                }
+            },
+
+            exitLineView() {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('line');
+                window.history.replaceState({}, '', url.toString());
+                document.body.classList.remove('line-mode');
+                this.lineViewLineId = null;
+                if (Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
+                    this.loadPonctualite();
+                }
+            },
+
+            _renderLineViewDisruptions() {
+                if (!this.lineViewLineId) return;
+                const lid = this.lineViewLineId;
+
+                const current = this.allCurrent.filter(d => normalizeId(d.listeLigne) === lid);
+                const future  = this.allFuture.filter(d => normalizeId(d.listeLigne) === lid);
+
+                const dot = document.getElementById('line-view-dot');
+                const updateEl = document.getElementById('line-view-update');
+                const updateText = document.getElementById('line-view-update-text');
+                if (updateEl && updateText) {
+                    const now = new Date();
+                    updateText.textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                        + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    updateEl.style.display = 'flex';
+                    if (dot) { dot.classList.add('fresh'); setTimeout(() => dot.classList.remove('fresh'), 3000); }
+                }
+
+                const el = document.getElementById('line-view-disruptions');
+                if (!el) return;
+
+                if (current.length === 0 && future.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">checkmark</div><div class="empty-state-title">Trafic normal</div><div class="empty-state-sub">Aucune perturbation pour cette ligne.</div></div>';
+                    el.querySelector('.empty-state-icon').textContent = '\u2705';
+                    return;
+                }
+
+                let html = '';
+                if (current.length > 0) {
+                    html += '<div class="section-header section-cur" style="margin-top:16px;"><span class="section-label">\u26a0 En cours</span><span class="section-badge">' + current.length + '</span><span class="section-line"></span></div>';
+                    current.forEach((d, i) => { html += renderCard(d, i); });
+                }
+                if (future.length > 0) {
+                    if (current.length > 0) html += '<div class="sections-separator"></div>';
+                    html += '<div class="section-header section-fut"><span class="section-label">\ud83d\udcc5 A venir</span><span class="section-badge">' + future.length + '</span><span class="section-line"></span></div>';
+                    future.forEach((d, i) => { html += renderCard(d, i); });
+                }
+                el.innerHTML = html;
+            },
+
+            _startAutoRefresh() {
+                if (this._refreshTimer) clearInterval(this._refreshTimer);
+                this._scheduleNextRefresh();
+            },
+
+            _scheduleNextRefresh() {
+                if (this._refreshTimer) clearTimeout(this._refreshTimer);
+                this._refreshTimer = setTimeout(() => {
+                    this.loadDisruptions();
+                    this._scheduleNextRefresh();
+                }, this.REFRESH_INTERVAL_MS);
+            },
+
+            renderFilterChips() {
+                const el = document.getElementById('filter-chips');
+                if (!el) return;
+                el.innerHTML = FILTER_CATEGORIES.map(cat => `
+                    <div class="filter-chip ${this.filters[cat.key] ? 'active' : ''}"
+                         onclick="app.toggleFilter('${cat.key}')">
+                        <span class="filter-chip-dot" style="background:${cat.dot};"></span>
+                        ${cat.label}
+                    </div>`).join('');
+            },
+
+            toggleFilter(key) {
+                this.filters[key] = !this.filters[key];
+                localStorage.setItem(FILTERS_LS_KEY, JSON.stringify(this.filters));
+                this.renderFilterChips();
+                this.updateFilterBtn();
+                this.renderDisruptions();
+            },
+
+            toggleFilterPanel() {
+                this.filterPanelOpen = !this.filterPanelOpen;
+                const panel = document.getElementById('filter-panel');
+                if (!panel) return;
+                if (this.filterPanelOpen) {
+                    panel.style.display = '';
+                    panel.style.animation = 'none';
+                    requestAnimationFrame(() => {
+                        panel.style.animation = '';
+                    });
+                document.getElementById('content').scrollTop = 0;
+                } else {
+                    panel.style.display = 'none';
+                }
+            },
+
+            updateFilterBtn() {
+                const btn = document.getElementById('filter-toggle-btn');
+                if (!btn) return;
+                const allOn = Object.values(this.filters).every(v => v);
+                btn.classList.toggle('has-filter', !allOn);
+            },
+
+            async loadDisruptions() {
+                const dot = document.getElementById('last-update-dot');
+                if (dot) dot.classList.add('refreshing');
+                try {
+                    const response = await fetch('https://data.mobilites-m.fr/api/dyn/evtTC/json');
+                    const data = await response.json();
+
+                    if (!data || Object.keys(data).length === 0) {
+                        this.showEmpty('Trafic normal', 'Aucune perturbation signalée');
+                        return;
+                    }
+
+                    const now = new Date();
+
+                    const allDisruptions = Object.values(data).filter(d => {
+                        const lineInfo = getLineInfo(d.listeLigne);
+                        if (!lineInfo) return false;
+                        if (!d.visibleTC) return false;
+                        if (!isUnknownEnd(d.dateFin)) {
+                            const end = parseDate(d.dateFin);
+                            if (end && now > end) return false;
+                        }
+                        return true;
+                    });
+
+                    this.allCurrent = [];
+                    this.allFuture  = [];
+
+                    allDisruptions.forEach(d => {
+                        const start = parseDate(d.dateDebut);
+                        if (!start || now >= start) {
+                            this.allCurrent.push(d);
+                        } else {
+                            this.allFuture.push(d);
+                        }
+                    });
+
+                    this.allCurrent.sort(sortCurrent);
+                    this.allFuture.sort(sortUpcoming);
+
+                    this.renderDisruptions();
+                    this._renderLineViewDisruptions();
+                    this.updateLastUpdate();
+                    if (dot) dot.classList.remove('refreshing');
+
+                } catch (error) {
+                    if (dot) dot.classList.remove('refreshing');
+                    console.error('Erreur:', error);
+                    document.getElementById('disruptions-content').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚡</div>
+                            <div class="empty-state-title">Erreur de chargement</div>
+                            <div class="empty-state-sub">Vérifiez votre connexion et réessayez.</div>
+                        </div>`;
+                }
+            },
+
+            renderDisruptions() {
+                const current = this.allCurrent.filter(d => {
+                    const info = getLineInfo(d.listeLigne);
+                    return info && this.filters[info.category];
+                });
+                const future = this.allFuture.filter(d => {
+                    const info = getLineInfo(d.listeLigne);
+                    return info && this.filters[info.category];
+                });
+
+                if (current.length === 0 && future.length === 0) {
+                    const allOn = Object.values(this.filters).every(v => v);
+                    const msg = allOn
+                        ? 'Aucune perturbation signalée'
+                        : 'Aucune perturbation pour les lignes sélectionnées';
+                    this.showEmpty('Trafic normal', msg);
+                    return;
+                }
+
+                let html = '<div class="content-inner">';
+
+                if (current.length > 0) {
+                    html += `
+                    <div class="section-header section-cur">
+                        <span class="section-label">⚠ En cours</span>
+                        <span class="section-badge">${current.length}</span>
+                        <span class="section-line"></span>
+                    </div>`;
+                    current.forEach((d, i) => { html += renderCard(d, i); });
+                }
+
+                if (future.length > 0) {
+                    if (current.length > 0) html += '<div class="sections-separator"></div>';
+                    html += `
+                    <div class="section-header section-fut">
+                        <span class="section-label">📅 À venir</span>
+                        <span class="section-badge">${future.length}</span>
+                        <span class="section-line"></span>
+                    </div>`;
+                    future.forEach((d, i) => { html += renderCard(d, i); });
+                }
+
+                html += `</div>`;
+
+                document.getElementById('disruptions-content').innerHTML = html;
+            },
+
+            updateLastUpdate() {
+                const now = new Date();
+                const text = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                    + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const el = document.getElementById('last-update');
+                const textEl = document.getElementById('last-update-text');
+                const dot = document.getElementById('last-update-dot');
+                if (el && textEl) {
+                    textEl.textContent = text;
+                    el.style.display = 'flex';
+                    dot.classList.add('fresh');
+                    setTimeout(() => dot.classList.remove('fresh'), 3000);
+                }
+            },
+
+            showEmpty(title, sub) {
+                document.getElementById('disruptions-content').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-title">${title}</div>
+                        <div class="empty-state-sub">${sub}</div>
+                    </div>`;
+            },
+
+            ponctualiteData: {},
+            ponctClusters: {},
+            ponctLineLoading: new Set(),
+            ponctualiteLoading: false,
+
+            async loadPonctualite() {
+                if (this.ponctualiteLoading) return;
+                this.ponctualiteLoading = true;
+                const btn = document.getElementById('ponct-refresh-btn');
+                if (btn) btn.classList.add('loading');
+                this._renderPonctSkeleton();
+                this.ponctualiteData = {};
+                this.ponctClusters   = {};
+
+                await Promise.all(LINES_TRAM.map(async (line) => {
+                    try {
+                        const res = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${line.id}/clusters`);
+                        const clusters = await res.json();
+                        this.ponctClusters[line.id] = Array.isArray(clusters) ? clusters : [];
+                    } catch (e) {
+                        console.warn(`Clusters ${line.id}:`, e);
+                        this.ponctClusters[line.id] = [];
+                    }
+                }));
+
+                this.ponctualiteLoading = false;
+                if (btn) btn.classList.remove('loading');
+
+                this._renderPonct();
+            },
+
+            async _loadLineDetail(lineId) {
+                if (this.ponctLineLoading.has(lineId)) return;
+                const clusters = this.ponctClusters[lineId];
+                if (!clusters || clusters.length === 0) return;
+
+                this.ponctLineLoading.add(lineId);
+                const line     = LINES_TRAM.find(l => l.id === lineId);
+                const lineShort = lineId.split(':')[1];
+                const nowSec   = this._getNowSec();
+                const safe     = lineId.replace(':', '-');
+
+                const detailEl = document.getElementById(`ponct-details-${safe}`);
+                if (detailEl) detailEl.innerHTML = `<div style="padding:14px 16px;color:var(--text-muted);font-size:0.8rem;display:flex;align-items:center;gap:8px;"><span class="last-update-dot refreshing" style="flex-shrink:0"></span> Chargement des données…</div>`;
+
+                try {
+                    const allStoptimes = await Promise.all(
+                        clusters.map(c =>
+                            fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${c.code}/stoptimes`)
+                                .then(r => r.ok ? r.json() : []).catch(() => [])
+                        )
+                    );
+
+                    let serviceDay = 0;
+                    outer: for (const stops of allStoptimes) {
+                        for (const pattern of stops) {
+                            for (const t of pattern.times) {
+                                if (t.serviceDay) { serviceDay = t.serviceDay; break outer; }
+                            }
+                        }
+                    }
+                    const nowSec = this._getNowSec(serviceDay);
+
+                    const tripMap = new Map();
+
+                    for (let ci = 0; ci < allStoptimes.length; ci++) {
+                        const stopName = clusters[ci].name;
+                        for (const pattern of allStoptimes[ci]) {
+                            if (pattern.pattern.id.split(':')[1] !== lineShort) continue;
+                            const rawDesc = pattern.pattern.desc || '';
+                            const direction = rawDesc.includes(' > ')
+                                ? rawDesc.split(' > ').slice(1).join(' > ').trim()
+                                : rawDesc;
+
+                            for (const t of pattern.times) {
+                                if (!t.tripId || t.realtimeState !== 'UPDATED') continue;
+                                const scheduledSec = t.scheduledDeparture ?? t.scheduledArrival;
+                                const realtimeSec  = t.realtimeDeparture  ?? t.realtimeArrival ?? scheduledSec;
+
+                                if (!tripMap.has(t.tripId)) {
+                                    tripMap.set(t.tripId, { tripId: t.tripId, direction, schedule: [] });
+                                }
+                                tripMap.get(t.tripId).schedule.push({ stopName, clusterIdx: ci, scheduledSec, realtimeSec,
+                                    serviceDay: t.serviceDay || serviceDay,
+                                    delay: t.departureDelay ?? t.arrivalDelay ?? (realtimeSec - scheduledSec) });
+                            }
+                        }
+                    }
+
+                    for (const [tripId, trip] of tripMap) {
+                        trip.schedule.sort((a, b) => a.scheduledSec - b.scheduledSec);
+                        const hasPast   = trip.schedule.some(s => s.scheduledSec <= nowSec);
+                        const hasFuture = trip.schedule.some(s => s.scheduledSec > nowSec && s.scheduledSec <= nowSec + 7200);
+                        if (!hasPast && !hasFuture) { tripMap.delete(tripId); continue; }
+
+
+                        const firstFuture = trip.schedule.find(s => s.scheduledSec > nowSec);
+                        const lastPassed  = [...trip.schedule].reverse().find(s => s.scheduledSec <= nowSec);
+                        const refStop     = firstFuture ?? lastPassed;
+                        trip.delay = refStop ? refStop.delay : 0;
+
+                        const nextStop = trip.schedule.find(s => s.realtimeSec > nowSec);
+                        trip.positionIdx = nextStop
+                            ? nextStop.clusterIdx
+                            : (trip.schedule[trip.schedule.length - 1]?.clusterIdx ?? 9999);
+                    }
+
+                    const directions = {};
+                    for (const trip of tripMap.values()) {
+                        if (!directions[trip.direction]) directions[trip.direction] = [];
+                        directions[trip.direction].push(trip);
+                    }
+                    for (const arr of Object.values(directions)) {
+                        const sample = arr.find(t => t.schedule.length >= 2);
+                        const isReverse = sample
+                            ? sample.schedule[sample.schedule.length - 1].clusterIdx < sample.schedule[0].clusterIdx
+                            : false;
+                        arr.sort((a, b) => isReverse ? b.positionIdx - a.positionIdx : a.positionIdx - b.positionIdx);
+
+                        if (arr.length > 1) {
+                            const firstPosIdx = arr[0].positionIdx;
+                            const atFirst = arr.filter(t => t.positionIdx === firstPosIdx);
+                            if (atFirst.length > 1) {
+                                atFirst.sort((a, b) => a.schedule[0].scheduledSec - b.schedule[0].scheduledSec);
+                                const toRemove = new Set(atFirst.slice(1).map(t => t.tripId));
+                                arr.splice(0, arr.length, ...arr.filter(t => !toRemove.has(t.tripId)));
+                            }
+                        }
+                    }
+
+                    this.ponctualiteData[lineId] = { line, directions, total: tripMap.size, loadedAt: Date.now() };
+                } catch (e) {
+                    console.warn(`Détail ${lineId}:`, e);
+                    this.ponctualiteData[lineId] = { line, directions: {}, total: 0, loadedAt: Date.now() };
+                }
+
+                this.ponctLineLoading.delete(lineId);
+                this._renderPonctCard(lineId);
+            },
+
+            _getNowSec(serviceDay = 0) {
+                if (serviceDay) return Math.floor(Date.now() / 1000) - serviceDay;
+                const n = new Date();
+                let s = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+                if (n.getHours() < 4) s += 86400;
+                return s;
+            },
+
+            _getPonctPositionHtml(schedule) {
+                if (!schedule || schedule.length === 0)
+                    return `<div class="ponct-trip-pos"><div class="radar-info"><div class="radar-icon"></div> Position inconnue</div></div>`;
+                const serviceDay = schedule[0]?.serviceDay || 0;
+                const now = this._getNowSec(serviceDay);
+                let lastPassed = null, nextStop = null;
+                for (const s of schedule) {
+                    if (s.realtimeSec <= now) lastPassed = s;
+                    else if (!nextStop)       nextStop   = s;
+                }
+                if (nextStop) {
+                    const displayStop = (lastPassed && (now - lastPassed.realtimeSec) < 10) ? lastPassed : nextStop;
+                    return `<div class="ponct-trip-pos"><div class="radar-info"><div class="radar-icon"></div> Vers <b>${displayStop.stopName}</b></div></div>`;
+                }
+                if (lastPassed)
+                    return `<div class="ponct-trip-pos"><div class="radar-info at-stop"><div class="radar-static"></div> Au terminus</div></div>`;
+                return `<div class="ponct-trip-pos"><div class="radar-info"><div class="radar-icon"></div> Position inconnue</div></div>`;
+            },
+
+            _ponctStats(trips) {
+                if (!trips.length) return null;
+                const delays = trips.map(t => t.delay);
+                const sorted = [...delays].sort((a, b) => a - b);
+                const mean  = Math.round(delays.reduce((s, d) => s + d, 0) / delays.length);
+                const worst = sorted[sorted.length - 1];
+                return { mean, worst, count: delays.length };
+            },
+
+            _delayCls(s) {
+                if (s <= 30)  return 'delay-ok';
+                if (s <= 60)  return 'delay-slight';
+                if (s <= 180) return 'delay-moderate';
+                return 'delay-heavy';
+            },
+
+            _dotCls(s) {
+                if (s <= 30)  return 'dot-ok';
+                if (s <= 60)  return 'dot-slight';
+                if (s <= 180) return 'dot-moderate';
+                return 'dot-heavy';
+            },
+
+            _fmtDelay(s) {
+                if (s > -30 && s <= 30) return `<span class="delay-ok">À l'heure</span>`;
+                const abs = Math.abs(s);
+                const m   = Math.floor(abs / 60);
+                const sec = abs % 60;
+                const sign = s < 0 ? '-' : '+';
+                const str  = m > 0
+                    ? `${sign}${m} min${sec > 0 ? ' ' + sec : ''}`
+                    : `${sign}${sec}s`;
+                return `<span class="${this._delayCls(s)}">${str}</span>`;
+            },
+
+            togglePonctLine(safeId) {
+                const card = document.getElementById(`ponct-card-${safeId}`);
+                if (!card) return;
+                const wasExpanded = card.classList.contains('expanded');
+                card.classList.toggle('expanded');
+                if (!wasExpanded) {
+                    const lineId = safeId.replace('-', ':');
+                    if (!this.ponctualiteData[lineId]) this._loadLineDetail(lineId);
+                }
+            },
+
+            togglePonctDir(safeId, idx) {
+                document.getElementById(`ponct-dir-${safeId}-${idx}`)?.classList.toggle('dir-expanded');
+            },
+
+            _renderPonctSkeleton() {
+                const el = document.getElementById('ponctualite-content');
+                if (!el) return;
+                el.innerHTML = LINES_TRAM.map(() => `
+                    <div class="ponct-line-card">
+                        <div class="ponct-card-header">
+                            <div class="skel skel-circle"></div>
+                            <div class="skel-lines">
+                                <div class="skel skel-line" style="width:35%;height:10px;"></div>
+                                <div class="skel skel-line" style="width:65%;height:10px;margin-top:5px;"></div>
+                            </div>
+                        </div>
+                    </div>`).join('');
+            },
+
+            _renderPonct() {
+                const el = document.getElementById('ponctualite-content');
+                if (!el) return;
+
+                el.innerHTML = LINES_TRAM.map((line, li) => {
+                    const safe = line.id.replace(':', '-');
+                    return `<div class="ponct-line-card" id="ponct-card-${safe}" style="animation-delay:${li*60}ms">
+                        <div class="ponct-card-header" onclick="app.togglePonctLine('${safe}')">
+                            <div class="ponct-line-badge" style="background:${line.color}">${line.name}</div>
+                            <div class="ponct-card-info">
+                                <div class="ponct-card-name">Ligne ${line.name}</div>
+                                <div class="ponct-stats-mini">
+                                    <span style="font-size:0.72rem;color:var(--text-muted);">Appuyer pour charger</span>
+                                </div>
+                            </div>
+                            <div class="ponct-score-dot" style="background:var(--border)"></div>
+                            <span class="ponct-expand-icon">▾</span>
+                        </div>
+                        <div class="ponct-details" id="ponct-details-${safe}"></div>
+                    </div>`;
+                }).join('');
+            },
+
+            _renderPonctCard(lineId) {
+                const safe = lineId.replace(':', '-');
+                const card = document.getElementById(`ponct-card-${safe}`);
+                if (!card) return;
+
+                const data  = this.ponctualiteData[lineId];
+                const line  = LINES_TRAM.find(l => l.id === lineId);
+                if (!line) return;
+
+                const trips = data ? Object.values(data.directions).flat() : [];
+
+                const header = card.querySelector('.ponct-card-header');
+                const gs = trips.length ? this._ponctStats(trips) : null;
+
+                const loadedAt = data && data.loadedAt
+                    ? new Date(data.loadedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    : null;
+                const timestampHtml = loadedAt
+                    ? `<div class="ponct-line-timestamp"><span class="ts-dot"></span>Actualisé à ${loadedAt}</div>`
+                    : '';
+
+                if (header) {
+                    header.querySelector('.ponct-card-info').innerHTML = trips.length === 0
+                        ? `<div class="ponct-card-name">Ligne ${line.name}</div>
+                           <div style="font-size:0.73rem;color:var(--text-muted);">Pas de données temps réel</div>
+                           ${timestampHtml}`
+                        : `<div class="ponct-card-name">Ligne ${line.name} &nbsp;·&nbsp; ${trips.length} tram${trips.length>1?'s':''}</div>
+                           <div class="ponct-stats-mini">
+                               ${gs ? `<span class="ponct-stat-chip">Moyenne : <b class="${this._delayCls(gs.mean)}">${this._fmtDelay(gs.mean)}</b></span>
+                               <span class="ponct-stat-chip">Max : <b class="${this._delayCls(gs.worst)}">${this._fmtDelay(gs.worst)}</b></span>` : ''}
+                           </div>
+                           ${timestampHtml}`;
+                    const dot = header.querySelector('.ponct-score-dot');
+                    if (dot) { dot.className = `ponct-score-dot ${gs ? this._dotCls(gs.mean) : 'dot-ok'}`; dot.style.background = ''; }
+                }
+
+                const detailEl = document.getElementById(`ponct-details-${safe}`);
+                if (!detailEl) return;
+
+                if (trips.length === 0) {
+                    detailEl.innerHTML = `<div style="padding:12px 16px;font-size:0.8rem;color:var(--text-muted);">Aucun tram en circulation avec données temps réel.</div>`;
+                    return;
+                }
+
+                const maxDelay = Math.max(60, ...trips.map(t => Math.abs(t.delay)));
+
+                detailEl.innerHTML = Object.entries(data.directions).map(([dir, dtrips], di) => {
+                    const ds = this._ponctStats(dtrips);
+                    const tripsHtml = dtrips.map(trip => `
+                        <div class="ponct-trip">
+                            <div class="ponct-trip-top">
+                                <span class="ponct-trip-delay">${this._fmtDelay(trip.delay)}</span>
+                                <span class="ponct-trip-id">${trip.tripId}</span>
+                            </div>
+                            ${this._getPonctPositionHtml(trip.schedule)}
+                        </div>`).join('');
+
+                    return `<div class="ponct-direction" id="ponct-dir-${safe}-${di}">
+                        <div class="ponct-dir-header" onclick="app.togglePonctDir('${safe}',${di})">
+                            <span class="ponct-dir-arrow">▶</span>
+                            <span class="ponct-dir-name">Vers ${dir}</span>
+                            <span class="ponct-dir-count">${dtrips.length} tram${dtrips.length>1?'s':''}</span>
+                            <span class="ponct-dir-avg ${ds ? this._delayCls(ds.mean) : ''}">${ds ? this._fmtDelay(ds.mean) : ''}</span>
+                        </div>
+                        <div class="ponct-trips">${tripsHtml}</div>
+                    </div>`;
+                }).join('');
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            app.init();
+            history.pushState({ infoApp: 'app' }, '');
+            let handling = false;
+            window.addEventListener('popstate', () => {
+                if (handling) return;
+                handling = true;
+                history.go(1);
+                setTimeout(() => {
+                    handling = false;
+                    if (document.body.classList.contains('line-mode')) {
+                        app.exitLineView();
+                    }
+                }, 50);
+            });
+        });
+    </script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/ouestmontram/sw.js")
+                .then(() => console.log("Service Worker enregistré"));
+        }
+    </script>
+</body>
+</html>
