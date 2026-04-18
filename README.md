@@ -33,7 +33,7 @@
 - Suivi d'un voyage en tram précis via son **identifiant de voyage** (ou tripId)
 - Affichage de la **ponctualité** du tram en temps réel (à l'heure / en retard / en avance)
 - Affichage en temps réel de la **position du tram** sur la ligne
-- Affichage du temps restant avant l’arrivée à un arrêt futur du trajet, ainsi que de l’heure de passage estimée, basé sur les données en temps réel.
+- Affichage du temps restant avant l’arrivée à un arrêt futur du trajet, ainsi que de l’heure de passage estimée, basé sur les données en temps réel et les prochaines correspondances.
 <div align="center">
   <img src="screenshots/suivi.jpg" width="200"/>
 </div>
