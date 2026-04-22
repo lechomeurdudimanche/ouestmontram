@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Suivi tram – Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --realtime: #4caf50;
+            --theoretical: #ff9800;
+            --radar-color: #00d2ff;
+            --radar-at-stop: #ffd700;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
+        html {
+            overscroll-behavior: none;
+        }
+        body {
+            background: var(--bg-dark); color: var(--text-main);
+            height: var(--app-height, 100vh); width: 100vw;
+            overflow: hidden; display: flex; flex-direction: column;
+            overscroll-behavior: none;
+        }
+        #page-content {
+            flex: 1; overflow-y: auto; padding: 16px 16px 76px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        #suivi-content {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        .input-card {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+        }
+        .input-card label {
+            display: block; font-size: .78rem; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em;
+        }
+        .input-row { display: flex; gap: 10px; }
+        .trip-input {
+            flex: 1; background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); font-size: .95rem;
+            padding: 10px 12px; outline: none; min-width: 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+            transition: border-color .2s;
+        }
+        .trip-input:focus { border-color: var(--radar-color); }
+        .trip-input::placeholder { color: #444; }
+        .track-btn {
+            background: var(--radar-color); color: #000; border: none;
+            border-radius: 8px; font-size: .9rem; font-weight: 700;
+            padding: 10px 16px; cursor: pointer; white-space: nowrap;
+            flex-shrink: 0; transition: opacity .2s;
+        }
+        .track-btn:hover { opacity: .85; }
+
+        .info-card {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+        .card-header {
+            padding: 10px 16px; background: var(--bg-hover);
+            border-bottom: 1px solid var(--border);
+            font-size: .78rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .05em;
+        }
+        .card-body { padding: 16px; }
+
+        .delay-value { font-size: 2.4rem; font-weight: 700; line-height: 1; }
+        .delay-value.ontime { color: var(--realtime); }
+        .delay-value.late   { color: #ff5252; }
+        .delay-value.early  { color: var(--theoretical); }
+        .delay-label { font-size: .85rem; color: var(--text-muted); margin-top: 6px; }
+        .last-update { font-size: .72rem; color: var(--text-muted); margin-top: 8px; }
+
+        .radar-info {
+            font-size: .85rem;
+            color: var(--radar-color);
+            background: rgba(0, 210, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .radar-info.at-stop {
+            color: var(--radar-at-stop);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .radar-icon {
+            width: 12px; height: 12px;
+            border: 2px solid var(--radar-color);
+            border-radius: 50%;
+            flex-shrink: 0;
+            animation: radar-pulse 2s infinite;
+        }
+        .radar-info.at-stop .radar-icon {
+            border-color: var(--radar-at-stop);
+        }
+        .radar-static {
+            width: 8px; height: 8px;
+            background: var(--radar-color);
+            border-radius: 50%; flex-shrink: 0;
+        }
+        .radar-info.at-stop .radar-static { background: var(--radar-at-stop); }
+        @keyframes radar-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+            50%       { box-shadow: 0 0 0 5px rgba(0, 210, 255, 0); }
+        }
+
+        .stop-select {
+            width: 100%; background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); font-size: .95rem;
+            padding: 10px 32px 10px 12px; outline: none;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            transition: border-color .2s;
+        }
+        .stop-select:focus { border-color: var(--radar-color); }
+        .stop-select option { background: #1e1e1e; }
+        .arrival-display { display: flex; align-items: baseline; gap: 8px; margin-top: 14px; }
+        .arrival-time { font-size: 2rem; font-weight: 700; color: var(--radar-color); }
+        .arrival-unit { font-size: 1rem; color: var(--text-muted); }
+        .arrival-clock { font-size: .85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .correspondances-container { margin-top: 14px; display: none; }
+        .correspondances-header {
+            font-size: .72rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: 6px;
+        }
+        .correspondances-loading { font-size: .82rem; color: var(--text-muted); }
+        .corresp-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 0; border-top: 1px solid var(--border);
+        }
+        .corresp-info {
+            display: flex; flex: 1; align-items: center;
+            justify-content: space-between; min-width: 0;
+        }
+        .corresp-dest {
+            font-size: .85rem; color: var(--text-main);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            flex: 1; margin-right: 8px;
+        }
+        .corresp-time { font-size: .85rem; flex-shrink: 0; }
+
+        .trip-meta { display: flex; align-items: center; gap: 10px; }
+        .line-badge-sm {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .9rem; color: white; flex-shrink: 0;
+        }
+        .trip-meta-dest { font-size: 1rem; font-weight: 600; }
+        .trip-meta-text { font-size: .72rem; color: #555; font-family: monospace; margin-top: 2px; }
+
+        .state-idle {
+            text-align: center; padding: 40px 20px;
+            color: var(--text-muted); font-size: 1rem; line-height: 1.7;
+        }
+        .state-idle { font-size: 3rem; display: block; margin-bottom: 14px; }
+
+        .guide-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            border-radius: 14px; overflow: hidden;
+        }
+        .guide-card-header {
+            padding: 10px 16px;
+            background: rgba(0, 210, 255, 0.06);
+            border-bottom: 1px solid rgba(0, 210, 255, 0.15);
+            font-size: .78rem; color: var(--radar-color);
+            text-transform: uppercase; letter-spacing: .07em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .guide-card-body {
+            padding: 16px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .guide-step {
+            display: flex; align-items: flex-start; gap: 12px;
+        }
+        .guide-step-num {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: rgba(0, 210, 255, 0.12);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--radar-color); font-size: .72rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; margin-top: 1px;
+        }
+        .guide-step-text {
+            font-size: .88rem; color: var(--text-muted); line-height: 1.55;
+        }
+        .guide-step-text b { color: var(--text-main); font-weight: 600; }
+        .guide-step-text code {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: .82rem; color: var(--radar-color);
+            background: rgba(0, 210, 255, 0.08);
+            padding: 1px 5px; border-radius: 4px;
+        }
+        .guide-divider {
+            height: 1px; background: var(--border); margin: 2px 0;
+        }
+        .error-msg {
+            background: rgba(255,82,82,.1); border: 1px solid rgba(255,82,82,.3);
+            border-radius: 10px; padding: 14px 16px;
+            color: #ff8a80; font-size: .9rem; line-height: 1.6;
+        }
+        .loading-msg {
+            display: flex; align-items: center; gap: 12px;
+            padding: 20px; color: var(--text-muted); font-size: .95rem;
+        }
+        .spinner {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid #333; border-top-color: var(--radar-color);
+            animation: spin .7s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 60px; background: var(--bg-panel);
+            border-top: 1px solid var(--border); z-index: 1000;
+        }
+        .nav-buttons { display: flex; height: 100%; }
+        .nav-link {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px; text-decoration: none;
+            color: var(--text-muted); font-size: .9rem;
+            transition: all .2s; position: relative;
+        }
+        .nav-link.active { color: var(--radar-color); }
+        .nav-link.active::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: var(--radar-color);
+        }
+        .nav-icon { font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+    <div id="page-content">
+        <div class="input-card">
+            <label>Identifiant du voyage</label>
+            <div class="input-row">
+                <input type="text" class="trip-input" id="trip-input"
+                       placeholder="ex: SEM:31764271"
+                       autocomplete="off" autocorrect="off" spellcheck="false">
+                <button class="track-btn" id="track-btn" onclick="suivi.start()">Trouver</button>
+            </div>
+        </div>
+        <div id="suivi-content">
+            <div class="guide-card">
+                <div class="guide-card-header">
+                    <span>●</span> A quoi sert le suivi ?
+                </div>
+                <div class="guide-card-body">
+                    <div class="guide-step">
+                        <div class="guide-step-text">Cette page vous permet de suivre un tramway en temps réel : ponctualité, position sur le réseau et heure de passage à l’arrêt de votre choix.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <div id="suivi-content">
+            <div class="guide-card">
+                <div class="guide-card-header">
+                    <span>●</span> Comment utiliser le suivi ?
+                </div>
+                <div class="guide-card-body">
+                    <div class="guide-step">
+                        <div class="guide-step-num">1</div>
+                        <div class="guide-step-text">
+                            Rendez-vous sur la page <b>Horaires</b> et trouvez un départ d'un tram en temps réel.
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <div class="guide-step-num">2</div>
+                        <div class="guide-step-text">
+                            Appuyez sur <b>⎘</b> à côté de « Temps Réel » pour copier l'identifiant du voyage.
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <div class="guide-step-num">3</div>
+                        <div class="guide-step-text">
+                            Collez l'identifiant ci-dessus. Il ressemble à <code>SEM:31764271</code>. Puis appuyez sur <b>Trouver</b>.
+                        </div>
+                    </div>
+                    <div class="guide-divider"></div>
+                    <div class="guide-step">
+                        <div class="guide-step-num" style="background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.3);color:var(--theoretical)">i</div>
+                        <div class="guide-step-text">
+                            Les identifiants <b>changent chaque jour</b>. Si le tram est introuvable, copiez-en un nouveau depuis Horaires.
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <div class="guide-step-num" style="background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.3);color:var(--theoretical)">i</div>
+                        <div class="guide-step-text">
+                            L'outil de suivi <b>fonctionne uniquement</b> sur les <b>lignes de trams</b>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-nav">
+        <div class="nav-buttons">
+        <a href="index.html" class="nav-link">
+            <span class="nav-icon">🕐</span><span>Horaires</span>
+        </a>
+        <a href="suivi.html" class="nav-link active">
+            <span class="nav-icon">🚋</span><span>Suivi tram</span>
+        </a>
+        <a href="itineraire.html" class="nav-link">
+            <span class="nav-icon">🗺️</span><span>Itinéraire</span>
+        </a>
+        <a href="infotrafic.html" class="nav-link">
+            <span class="nav-icon">⚠️</span><span>Infotrafic</span>
+        </a>
+        </div>
+    </div>
+
+<script>
+const API_BASE    = "https://data.mobilites-m.fr/api/routers/default/index";
+const LINE_COLORS = { A:'#006eb7', B:'#00a459', C:'#e2007a', D:'#f29400', E:'#5c2a90' };
+const LINES_IDS   = { A:'SEM:A',   B:'SEM:B',   C:'SEM:C',   D:'SEM:D',   E:'SEM:E'   };
+
+const LINES = [
+    { id: "SEM:A", name: "A", color: "#006eb7", category: "tram" },
+    { id: "SEM:B", name: "B", color: "#00a459", category: "tram" },
+    { id: "SEM:C", name: "C", color: "#e2007a", category: "tram" },
+    { id: "SEM:D", name: "D", color: "#f29400", category: "tram" },
+    { id: "SEM:E", name: "E", color: "#5c2a90", category: "tram" }
+];
+
+const BUS_CHRONO = [
+    { id: "SEM:C1",  name: "C1",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C2",  name: "C2",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C3",  name: "C3",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C4",  name: "C4",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C5",  name: "C5",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C6",  name: "C6",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C7",  name: "C7",  color: "rgb(245,210,77)",  category: "chrono" },
+    { id: "SEM:C8",  name: "C8",  color: "rgb(245,210,77)",  category: "chrono" },
+];
+
+const BUS_CHRONO_PERI = [
+    { id: "GSV:C9",  name: "C9",  color: "rgb(239,124,0)",   category: "chrono_peri" },
+    { id: "SEM:C10", name: "C10", color: "rgb(239,124,0)",   category: "chrono_peri" },
+    { id: "SE2:C11", name: "C11", color: "rgb(239,124,0)",   category: "chrono_peri" },
+    { id: "SE2:C12", name: "C12", color: "rgb(239,124,0)",   category: "chrono_peri" },
+    { id: "SE2:C13", name: "C13", color: "rgb(239,124,0)",   category: "chrono_peri" },
+    { id: "SEM:C14", name: "C14", color: "rgb(239,124,0)",   category: "chrono_peri" },
+];
+
+const BUS_PROXIMO_LINES = [
+    { id: "SEM:15", name: "15", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SEM:16", name: "16", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:17", name: "17", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:18", name: "18", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:19", name: "19", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:20", name: "20", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SEM:21", name: "21", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SEM:22", name: "22", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:23", name: "23", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SEM:24", name: "24", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "SEM:25", name: "25", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "TPV:30", name: "30", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "TPV:31", name: "31", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "TPV:32", name: "32", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "TPV:33", name: "33", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "TPV:34", name: "34", color: "rgb(51,164,87)",   category: "proximo" },
+    { id: "GSV:35", name: "35", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "GSV:36", name: "36", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "GSV:37", name: "37", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:80", name: "80", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:82", name: "82", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:84", name: "84", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:85", name: "85", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:86", name: "86", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:88", name: "88", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "GSV:89", name: "89", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "SE2:90", name: "90", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "GSV:91", name: "91", color: "rgb(30,113,184)",  category: "proximo" },
+    { id: "GSV:92", name: "92", color: "rgb(30,113,184)",  category: "proximo" },
+];
+
+const BUS_FLEXO = [
+    { id: "SEM:59", name: "59", color: "rgb(213,114,168)", category: "flexo" },
+    { id: "SEM:68", name: "68", color: "rgb(213,114,168)", category: "flexo" },
+];
+
+const BUS_NAV_RELAIS = [
+    { id: "SEM:NAVA", name: "NAV A", color: "#006eb7", category: "nav_relais" },
+    { id: "SEM:NAVB", name: "NAV B", color: "#00a459", category: "nav_relais" },
+    { id: "SEM:NAVC", name: "NAV C", color: "#e2007a", category: "nav_relais" },
+    { id: "SEM:NAVD", name: "NAV D", color: "#f29400", category: "nav_relais" },
+    { id: "SEM:NAVE", name: "NAV E", color: "#5c2a90", category: "nav_relais" },
+];
+
+const ALL_LINES = [...LINES, ...BUS_CHRONO, ...BUS_CHRONO_PERI, ...BUS_PROXIMO_LINES, ...BUS_FLEXO, ...BUS_NAV_RELAIS];
+function findLineByPatternId(patId) {
+    for (const l of ALL_LINES) {
+        if (patId === l.id || patId.startsWith(l.id + ':')) return l;
+    }
+    return null;
+}
+
+const SPECIAL_STOPS = [
+    { line: "A", stopCode: "SEM:GENMOUNIER",   direction: "1", atStopThreshold: 0, departDelay: 25  },
+    { line: "A", stopCode: "SEM:GENALB",       direction: "1", atStopThreshold: 10, departDelay: 15  },
+    { line: "A", stopCode: "SEM:GENALB",       direction: "2", atStopThreshold: 15, departDelay: 0  },
+    { line: "A", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  },
+    { line: "A", stopCode: "SEM:GENGARES",     direction: "1", atStopThreshold: 15, departDelay: 0  },
+    { line: "A", stopCode: "SEM:GENGARES",     direction: "2", atStopThreshold: 15, departDelay: 0  },
+    { line: "B", stopCode: "SEM:GENGARES",     direction: "1", atStopThreshold: 15, departDelay: 0  },
+    { line: "B", stopCode: "SEM:GENGARES",     direction: "2", atStopThreshold: 15, departDelay: 0  },
+    { line: "B", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  },
+    { line: "D", stopCode: "SEM:GENDUBEDOUT",  direction: "1", atStopThreshold: 15, departDelay: 0  }
+];
+
+const BRANCH_TOPOLOGIES = {
+    'SEM:D': {
+        main:   ['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENILEVERTE','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO','SEM:GENTA','SEM:GENNEYRBELL','SEM:GENMC','SEM:GENEDVAILLA','SEM:GENBLANCHON','SEM:GENETIEGRAP'],
+        depot:  ['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENILEVERTE','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS'],
+        depot2: ['SEM:GENETIEGRAP','SEM:GENBLANCHON','SEM:GENEDVAILLA','SEM:GENMC','SEM:GENNEYRBELL','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS'],
+        mainOnlyStops:  new Set(['SEM:GENNEYRBELL','SEM:GENMC','SEM:GENEDVAILLA','SEM:GENBLANCHON','SEM:GENETIEGRAP']),
+        depotOnlyStops: new Set(['SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS']),
+        depotKeywords: ['plaine','gières','giere','gabriel','faure'],
+        mainKeywords:  ['grappe']
+    },
+    'SEM:E': {
+        main:  ['SEM:GENLMICHEL','SEM:GENALLIES','SEM:GENVALLIBE','SEM:GENCONDORCE','SEM:GENALSACELO','SEM:GENCASAVILL','SEM:GENMAIRIESM','SEM:GENHORLOGE','SEM:GENNERON','SEM:GENPREDIEU','SEM:GENMURET','SEM:GENPTVENCE','SEM:GENPINEA','SEM:GENKARBEN','SEM:GENRAFOUR','SEM:GENFTL'],
+        depot: ['SEM:GENFTL','SEM:GENRAFOUR','SEM:GENKARBEN','SEM:GENPINEA','SEM:GENPTVENCE','SEM:GENMURET','SEM:GENPREDIEU','SEM:GENNERON','SEM:GENHORLOGE','SEM:GENMAIRIESM','SEM:GENCASAVILL','SEM:GENALSACELO','SEM:GENCONDORCE','SEM:GENFOCHFERI','SEM:GENGUSTRIVE','SEM:GENCHAVANT','SEM:GENGREHOTEL','SEM:GENVALMY','SEM:GENPERIBROS','SEM:GENNEYRBELL','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS'],
+        mainOnlyStops:  new Set(['SEM:GENLMICHEL','SEM:GENALLIES','SEM:GENVALLIBE']),
+        depotOnlyStops: new Set(['SEM:GENFOCHFERI','SEM:GENGUSTRIVE','SEM:GENCHAVANT','SEM:GENGREHOTEL','SEM:GENVALMY','SEM:GENPERIBROS','SEM:GENNEYRBELL','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS']),
+        depotKeywords: ['plaine','gières','giere','foch','ferrié','ferri','gabriel','faure']
+    }
+};
+
+function getBranchTopology(lineId, destination, currentStopCode, topologyFull) {
+    const cfg = BRANCH_TOPOLOGIES[lineId];
+    if (!cfg) return (topologyFull || []).map(s => s.cluster);
+
+    const dest = (destination || '').toLowerCase();
+    const isDepotBound = cfg.depotKeywords.some(kw => dest.includes(kw));
+    const isMainBound  = cfg.mainKeywords ? cfg.mainKeywords.some(kw => dest.includes(kw)) : false;
+
+    if (lineId === 'SEM:D' && isDepotBound) {
+        if (currentStopCode !== 'SEM:GENGARES' && cfg.depot2) {
+            return cfg.depot2;
+        }
+        return cfg.depot;
+    }
+
+    if (cfg.depotOnlyStops.has(currentStopCode)) {
+        return (isMainBound && cfg.depot2) ? cfg.depot2 : cfg.depot;
+    }
+    if (cfg.mainOnlyStops.has(currentStopCode)) {
+        return (isDepotBound && cfg.depot2) ? cfg.depot2 : cfg.main;
+    }
+
+    return isDepotBound ? cfg.depot : cfg.main;
+}
+
+const suivi = {
+    tripId: null,
+    lineId: null, lineColor: '#888', lineName: '?',
+    topology: [],
+    lineTopology: [],
+    lineTopologyFull: [],
+    atStopSince: {},
+    schedule: [],
+    destination: null,
+    selectedStopCluster: null,
+    _interval: null,
+
+    init() {
+        document.getElementById('trip-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') this.start();
+        });
+        try {
+            const raw = localStorage.getItem('suivi_ctx');
+            if (raw) {
+                const ctx = JSON.parse(raw);
+                if (ctx.tripId) {
+                    document.getElementById('trip-input').value = ctx.tripId;
+                    this.tripId = ctx.tripId;
+                    if (ctx.lineLetter && LINE_COLORS[ctx.lineLetter]) {
+                        this.lineName  = ctx.lineLetter;
+                        this.lineId    = LINES_IDS[ctx.lineLetter];
+                        this.lineColor = LINE_COLORS[ctx.lineLetter];
+                    }
+                    localStorage.removeItem('suivi_ctx');
+                    this._begin();
+                }
+            }
+        } catch(e) {}
+    },
+
+    start() {
+        let raw = document.getElementById('trip-input').value.trim();
+        if (!raw) return;
+        if (raw.toLowerCase().startsWith('sem:')) raw = 'SEM:' + raw.slice(4);
+        document.getElementById('trip-input').value = raw;
+        if (!raw.startsWith('SEM:')) {
+            this._showError('Le tripId doit commencer par <b>SEM:</b><br><small>ex : SEM:31764271</small>');
+            return;
+        }
+        if (raw.length !== 12) {
+            this._showError('L\'identifiant doit contenir exactement 12 caractères.<br><small>ex : SEM:31764271</small>');
+            return;
+        }
+        if (raw === 'SEM:31764271') {
+            this._showError('C\'est l\'identifiant d\'exemple. Copiez-en un vrai depuis la page <b>Horaires</b>.');
+            return;
+        }
+        this._reset();
+        this.tripId    = raw;
+        this.lineId    = null;
+        this.lineColor = '#888';
+        this.lineName  = '?';
+        this._begin();
+    },
+
+    _reset() {
+        if (this._interval) clearInterval(this._interval);
+        this.schedule = []; this.topology = [];
+        this.lineTopology = []; this.lineTopologyFull = [];
+        this.atStopSince = {};
+        this.destination = null;
+        this.selectedStopCluster = null;
+        this.serviceDay = 0;
+    },
+
+    _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+
+    _setSearching(on) {
+        const btn = document.getElementById('track-btn');
+        const inp = document.getElementById('trip-input');
+        if (btn) { btn.disabled = on; btn.textContent = on ? 'Chargement…' : 'Trouver'; }
+        if (inp) inp.disabled = on;
+    },
+
+    async _begin() {
+        this._setSearching(true);
+        if (this.lineId) {
+            this._showLoading(`Ligne ${this.lineName} — Recherche du tram ${this.tripId}…`);
+            try {
+                const found = await this._loadTopoAndScan();
+                if (!found) throw new Error(
+                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
+                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                );
+            } catch(e) {
+                this._showError(e.message || 'Erreur inconnue');
+                this._setSearching(false);
+                return;
+            }
+        } else {
+            const letters = Object.keys(LINES_IDS);
+            let found = false;
+            for (let i = 0; i < letters.length; i++) {
+                const letter = letters[i];
+                this.lineName  = letter;
+                this.lineId    = LINES_IDS[letter];
+                this.lineColor = LINE_COLORS[letter];
+
+                this._showLoading(`Recherche sur la ligne ${letter}…`);
+                found = await this._loadTopoAndScan();
+                if (found) break;
+
+                if (i < letters.length - 1) {
+                    const next = letters[i + 1];
+                    for (let s = 3; s > 0; s--) {
+                        this._showLoading(`Tram non trouvé sur la ligne ${letter}. Recherche sur la ligne ${next} dans ${s}s…`);
+                        await this._sleep(1000);
+                    }
+                }
+            }
+            if (!found) {
+                this._showError(
+                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
+                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                );
+                this._setSearching(false);
+                return;
+            }
+        }
+
+        this._setSearching(false);
+        this._render();
+        this._interval = setInterval(async () => {
+            await this._refreshPartial();
+            this._updateCards();
+        }, 10000);
+    },
+
+    async _loadTopoAndScan() {
+        try {
+            const res = await fetch(`${API_BASE}/routes/${this.lineId}/clusters`);
+            if (!res.ok) return false;
+            const data = await res.json();
+            this.topology = data.map(s => ({ cluster: s.code || s.id, name: s.name }));
+            this.lineTopology = this.topology;
+            this.lineTopologyFull = this.topology;
+        } catch(e) { return false; }
+
+        const realtimeMap = new Map();
+        for (const { cluster, name } of this.topology) {
+            try {
+                const res  = await fetch(`${API_BASE}/clusters/${cluster}/stoptimes`);
+                if (!res.ok) continue;
+                const data = await res.json();
+                for (const pattern of data) {
+                    const patternLetter = pattern.pattern?.id?.split(':')[1];
+                    if (patternLetter && LINE_COLORS[patternLetter] && patternLetter !== this.lineName) continue;
+
+                    for (const t of pattern.times) {
+                        if (t.tripId !== this.tripId) continue;
+                        const sched = t.scheduledDeparture ?? t.scheduledArrival;
+                        const rt    = t.realtimeDeparture  ?? t.realtimeArrival ?? sched;
+                        if (!this.serviceDay && t.serviceDay) this.serviceDay = t.serviceDay;
+                        const isRealtime = t.realtimeState === 'UPDATED';
+                        realtimeMap.set(cluster, {
+                            cluster, name,
+                            scheduledSec: sched, realtimeSec: rt,
+                            delay: t.departureDelay ?? t.arrivalDelay ?? (rt - sched),
+                            isRealtime
+                        });
+                        if (!this.destination) {
+                            const desc = pattern.pattern?.desc || '';
+                            this.destination = desc.split(' > ')[1] || desc || 'Terminus';
+                        }
+                        const letter = pattern.pattern?.id?.split(':')[1];
+                        if (letter && LINE_COLORS[letter]) {
+                            this.lineName  = letter;
+                            this.lineId    = LINES_IDS[letter];
+                            this.lineColor = LINE_COLORS[letter];
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+
+        if (!realtimeMap.size) return false;
+
+        const getKnownDelay = () => {
+            const rtEntries = [...realtimeMap.values()].filter(e => e.isRealtime);
+            if (!rtEntries.length) return 0;
+            rtEntries.sort((a, b) => a.scheduledSec - b.scheduledSec);
+            return rtEntries[rtEntries.length - 1].delay;
+        };
+
+        const theoreticalMap = new Map();
+
+        const dateObj = this.serviceDay
+            ? new Date(this.serviceDay * 1000)
+            : new Date();
+        const dateStr = `${dateObj.getFullYear()}${String(dateObj.getMonth()+1).padStart(2,'0')}${String(dateObj.getDate()).padStart(2,'0')}`;
+
+        const knownClusters = [...realtimeMap.keys()];
+        for (const probeCluster of knownClusters) {
+            try {
+                const url = `${API_BASE}/clusters/${probeCluster}/stoptimes/${dateStr}?route=${this.lineId}`;
+                const res = await fetch(url);
+                if (!res.ok) continue;
+                const dayData = await res.json();
+                for (const pattern of dayData) {
+                    if (!this.matchesLine(pattern.pattern?.id, this.lineId)) continue;
+                    for (const t of pattern.times) {
+                        if (t.tripId !== this.tripId) continue;
+                        const sched = t.scheduledDeparture ?? t.scheduledArrival;
+                        if (sched !== undefined) theoreticalMap.set(probeCluster, sched);
+                    }
+                }
+                if (theoreticalMap.size > 0) break;
+            } catch(e) {}
+        }
+
+        const missingClusters = this.topology
+            .map(s => s.cluster)
+            .filter(c => !realtimeMap.has(c));
+
+        if (missingClusters.length > 0) {
+            await Promise.all(missingClusters.map(async (cluster) => {
+                const stopName = this.topology.find(s => s.cluster === cluster)?.name || cluster;
+                try {
+                    const url = `${API_BASE}/clusters/${cluster}/stoptimes/${dateStr}?route=${this.lineId}`;
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+                    const dayData = await res.json();
+                    for (const pattern of dayData) {
+                        if (!this.matchesLine(pattern.pattern?.id, this.lineId)) continue;
+                        for (const t of pattern.times) {
+                            if (t.tripId !== this.tripId) continue;
+                            const sched = t.scheduledDeparture ?? t.scheduledArrival;
+                            if (sched !== undefined) theoreticalMap.set(cluster, sched);
+                        }
+                    }
+                } catch(e) {}
+            }));
+        }
+
+        const schedule = [];
+
+        for (const { cluster, name } of this.topology) {
+            if (realtimeMap.has(cluster)) {
+                schedule.push(realtimeMap.get(cluster));
+            } else if (theoreticalMap.has(cluster)) {
+                const sched = theoreticalMap.get(cluster);
+                schedule.push({
+                    cluster, name,
+                    scheduledSec: sched,
+                    realtimeSec: sched,
+                    delay: 0,
+                    isRealtime: false,
+                    isEstimated: true
+                });
+            }
+        }
+
+        if (!schedule.length) return false;
+        schedule.sort((a, b) => a.scheduledSec - b.scheduledSec);
+
+        const finalDelay = getKnownDelay();
+        for (const entry of schedule) {
+            if (!entry.isRealtime && finalDelay !== 0) {
+                entry.realtimeSec = entry.scheduledSec + finalDelay;
+                entry.delay = finalDelay;
+                entry.isEstimated = true;
+            } else if (!entry.isRealtime) {
+                entry.isEstimated = true;
+            }
+        }
+
+        this.schedule = schedule;
+        return true;
+    },
+
+    async _refreshPartial() {
+        const now = this._getNow();
+
+        const nextStop = this.schedule.find(s => s.realtimeSec > now - 60);
+
+        const selectedEntry = this.selectedStopCluster
+            ? this.schedule.find(s => s.cluster === this.selectedStopCluster && s.realtimeSec > now - 60)
+            : null;
+
+        const toFetch = [nextStop, selectedEntry].filter(Boolean).filter((e, i, arr) =>
+            e && arr.findIndex(x => x && x.cluster === e.cluster) === i
+        );
+
+        for (const entry of toFetch) {
+            try {
+                const delay = this._getDelay();
+                const found = await this._fetchAndUpdateEntry(entry);
+
+                if (!found && entry === nextStop) {
+                    const startIdx = this.schedule.indexOf(nextStop);
+                    const FALLBACK_MAX = 4;
+                    for (let i = 1; i <= FALLBACK_MAX; i++) {
+                        const candidate = this.schedule[startIdx + i];
+                        if (!candidate) break;
+                        if (candidate === selectedEntry) continue;
+                        const fbFound = await this._fetchAndUpdateEntry(candidate);
+                        if (fbFound) {
+                            const newDelay = candidate.delay;
+                            nextStop.delay = newDelay;
+                            nextStop.realtimeSec = nextStop.scheduledSec + newDelay;
+                            if (!nextStop.isRealtime) nextStop.isEstimated = true;
+                            console.log(`[RETARD] fallback appliqué sur "${nextStop.name}" : ${newDelay >= 0 ? '+' : ''}${newDelay}s (source : "${candidate.name}")`);
+                            for (const s of this.schedule) {
+                                if (s === candidate || s === nextStop || s === selectedEntry) continue;
+                                if (s.scheduledSec > now && !s.isRealtime) {
+                                    s.delay = newDelay;
+                                    s.realtimeSec = s.scheduledSec + newDelay;
+                                    s.isEstimated = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (entry === nextStop) {
+                    const newDelay = this._getDelay();
+                    const delta = newDelay - delay;
+                    if (delta !== 0) {
+                        for (const s of this.schedule) {
+                            if (s === nextStop || s === selectedEntry) continue;
+                            if (s.scheduledSec > now && !s.isRealtime) {
+                                s.realtimeSec += delta;
+                                s.delay = (s.delay ?? 0) + delta;
+                                s.isEstimated = true;
+                            }
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+        this._invalidatePassedEstimates();
+    },
+
+    _invalidatePassedEstimates() {
+        let lastRtIdx = -1;
+        for (let i = 0; i < this.schedule.length; i++) {
+            if (this.schedule[i].isRealtime) lastRtIdx = i;
+        }
+        if (lastRtIdx <= 0) return;
+        for (let i = 0; i < lastRtIdx; i++) {
+            const s = this.schedule[i];
+            if (!s.isRealtime) {
+                s.isPassed = true;
+                console.log(`[INVALIDE] "${s.name}" marqué passé : estimé avant un arrêt temps réel`);
+            }
+        }
+    },
+
+    async _fetchAndUpdateEntry(entry) {
+        try {
+            const res = await fetch(`${API_BASE}/clusters/${entry.cluster}/stoptimes`);
+            if (!res.ok) return false;
+            const data = await res.json();
+            for (const pattern of data) {
+                for (const t of pattern.times) {
+                    if (t.tripId !== this.tripId) continue;
+                    const rt = t.realtimeDeparture ?? t.realtimeArrival ?? entry.scheduledSec;
+                    entry.realtimeSec = rt;
+                    entry.delay       = t.departureDelay ?? t.arrivalDelay ?? (rt - entry.scheduledSec);
+                    entry.isRealtime  = t.realtimeState === 'UPDATED';
+                    if (entry.isRealtime) entry.isEstimated = false;
+                    console.log(`[RETARD] ${entry.delay >= 0 ? '+' : ''}${entry.delay}s — constaté à "${entry.name}" (${entry.cluster})`);
+                    return true;
+                }
+            }
+            console.log(`[RETARD] trip absent de stoptimes à "${entry.name}" (${entry.cluster}) — délai inchangé : ${entry.delay >= 0 ? '+' : ''}${entry.delay ?? '?'}s`);
+            return false;
+        } catch(e) {
+            return false;
+        }
+    },
+
+    _getNow() {
+        return Math.floor(Date.now() / 1000) - this.serviceDay;
+    },
+    _getDelay() {
+        const now = this._getNow();
+        for (const s of this.schedule)
+            if (s.realtimeSec > now - 60) return s.delay ?? (s.realtimeSec - s.scheduledSec);
+        const last = this.schedule[this.schedule.length - 1];
+        return last ? (last.delay ?? last.realtimeSec - last.scheduledSec) : 0;
+    },
+    _getPosition() {
+        const now = this._getNow();
+        let lastPassed = null, nextStop = null;
+        for (const s of this.schedule) {
+            if (s.isPassed || s.realtimeSec <= now) lastPassed = s;
+            else if (!nextStop)                      nextStop   = s;
+        }
+        return { lastPassed, nextStop };
+    },
+    _getUpcoming() {
+        const now = this._getNow();
+        return this.schedule.filter(s => s.realtimeSec > now && !s.isPassed);
+    },
+    _fmtTime(sec) {
+        const s = sec % 86400;
+        return `${Math.floor(s/3600).toString().padStart(2,'0')}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}`;
+    },
+    _delayDisplay(min) {
+        if (Math.abs(min) <= 0) return { t: 'À l\'heure', c: 'ontime', l: 'Trafic normal' };
+        if (min > 0) return { t: `+${min} min`, c: 'late',  l: min >= 5 ? 'Retard important' : 'Léger retard' };
+        return { t: `${min} min`, c: 'early', l: 'En avance' };
+    },
+    _buildPosHtml(lastPassed, nextStop) {
+        const now = this._getNow();
+        if (nextStop) {
+            const displayStop = (lastPassed && (now - lastPassed.realtimeSec) < 10) ? lastPassed : nextStop;
+            return `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${displayStop.name}</b></div>`;
+        }
+        if (lastPassed) {
+            return `<div class="radar-info at-stop"><div class="radar-static"></div> Au terminus</div>`;
+        }
+        return `<div class="radar-info"><div class="radar-icon"></div> Position inconnue</div>`;
+    },
+
+    _render() {
+        const dmin = Math.trunc(this._getDelay() / 60);
+        const { t: dText, c: dClass, l: dLabel } = this._delayDisplay(dmin);
+        const { lastPassed, nextStop } = this._getPosition();
+        const upcoming = this._getUpcoming();
+        const hhmm = new Date().toLocaleTimeString('fr-FR');
+
+        const stopOpts = upcoming
+            .filter((s, i, arr) => arr.findIndex(x => x.cluster === s.cluster) === i)
+            .map(s => `<option value="${s.cluster}">${s.name}</option>`).join('');
+
+        document.getElementById('suivi-content').innerHTML = `
+            <div class="info-card">
+                <div class="card-body">
+                    <div class="trip-meta">
+                        <div class="line-badge-sm" style="background:${this.lineColor}">${this.lineName}</div>
+                        <div>
+                            <div class="trip-meta-dest">Destination : ${this.destination || 'Terminus'}</div>
+                            <div class="trip-meta-text">${this.tripId}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Ponctualité</div>
+                <div class="card-body">
+                    <div class="delay-value ${dClass}" id="delay-value">${dText}</div>
+                    <div class="delay-label" id="delay-label">${dLabel}</div>
+                    <div class="last-update">Mis à jour à <span id="delay-ts">${hhmm}</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Position en temps réel</div>
+                <div class="card-body">
+                    <div id="pos-box"><div class="radar-info"><div class="radar-icon"></div> Localisation...</div></div>
+                    <div class="last-update">Mis à jour à <span id="pos-ts">${hhmm}</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="card-header">Arrivée à un arrêt</div>
+                <div class="card-body">
+                    ${upcoming.length === 0
+                        ? '<div style="color:var(--text-muted);font-size:.9rem">Terminus atteint</div>'
+                        : `<select class="stop-select" id="stop-selector" onchange="suivi.onStopChange(this.value)">
+                               <option value="" disabled selected>Choisir un arrêt…</option>
+                               ${stopOpts}
+                           </select>
+                           <div id="arrival-result"></div>`
+                    }
+                </div>
+            </div>
+        `;
+        setTimeout(() => this._triggerRadar(), 100);
+    },
+
+    _updateCards() {
+        const dmin = Math.trunc(this._getDelay() / 60);
+        const { t, c, l } = this._delayDisplay(dmin);
+        const hhmm = new Date().toLocaleTimeString('fr-FR');
+
+        const dv = document.getElementById('delay-value');
+        const dl = document.getElementById('delay-label');
+        const dt = document.getElementById('delay-ts');
+        if (dv) { dv.textContent = t; dv.className = `delay-value ${c}`; }
+        if (dl) dl.textContent = l;
+        if (dt) dt.textContent = hhmm;
+
+        const pb = document.getElementById('pos-box');
+        const pt = document.getElementById('pos-ts');
+        if (pt) pt.textContent = hhmm;
+        setTimeout(() => this._triggerRadar(), 100);
+
+        const sel = document.getElementById('stop-selector');
+        if (sel) {
+            const currentVal = sel.value;
+            const upcoming = this._getUpcoming();
+            const noChoice = !currentVal || currentVal === '';
+            sel.innerHTML = `<option value="" disabled ${noChoice ? 'selected' : ''}>Choisir un arrêt…</option>` +
+                upcoming
+                    .filter((s, i, arr) => arr.findIndex(x => x.cluster === s.cluster) === i)
+                    .map(s => `<option value="${s.cluster}">${s.name}</option>`).join('');
+
+            if (!noChoice) {
+                const stillUpcoming = upcoming.some(s => s.cluster === currentVal);
+                if (stillUpcoming) {
+                    sel.value = currentVal;
+                    this._refreshArrivalDisplay(currentVal);
+                } else {
+                    sel.value = '';
+                    this.selectedStopCluster = null;
+                    const ar = document.getElementById('arrival-result');
+                    if (ar) ar.innerHTML = '';
+                }
+            }
+        }
+    },
+
+    onStopChange(cluster) {
+        if (!cluster || cluster === '') return;
+        this.selectedStopCluster = cluster;
+        this.showArrival(cluster);
+    },
+
+    _arrivalTimeHtml(entry) {
+        const diffMin = Math.floor((entry.realtimeSec - this._getNow()) / 60);
+        let timeHtml;
+        if (diffMin < 0)       timeHtml = `<span style="color:var(--radar-at-stop);font-size:1.9rem;font-weight:700">Départ en cours</span>`;
+        else if (diffMin === 0) timeHtml = `<span style="color:var(--radar-at-stop);font-size:1.9rem;font-weight:700">Imminent</span>`;
+        else if (diffMin > 59) timeHtml = `<span class="arrival-time">${Math.floor(diffMin/60)}h${(diffMin%60).toString().padStart(2,'0')}</span>`;
+        else                   timeHtml = `<span class="arrival-time">${diffMin}</span><span class="arrival-unit">min</span>`;
+        const isRt = entry.isRealtime && !entry.isEstimated;
+        const qualityColor = isRt ? 'var(--realtime)' : 'var(--theoretical)';
+        const qualityLabel = isRt ? '● Temps réel' : '● Estimé';
+        return { timeHtml, qualityColor, qualityLabel, clockTime: this._fmtTime(entry.realtimeSec) };
+    },
+
+    showArrival(cluster) {
+        const entry = this.schedule.find(s => s.cluster === cluster && !s.isPassed);
+        const el    = document.getElementById('arrival-result');
+        if (!entry || !el) return;
+
+        const { timeHtml, qualityColor, qualityLabel, clockTime } = this._arrivalTimeHtml(entry);
+
+        el.innerHTML = `
+            <div id="arrival-time-display" class="arrival-display">${timeHtml}</div>
+            <div id="arrival-clock-display" class="arrival-clock">
+                Passage prévu à <b>${clockTime}</b>
+                <span style="margin-left:8px;font-size:.78rem;color:${qualityColor}">${qualityLabel}</span>
+            </div>
+            <div id="correspondances-result" class="correspondances-container"></div>`;
+        this.loadCorrespondances(cluster);
+    },
+
+    _refreshArrivalDisplay(cluster) {
+        const entry = this.schedule.find(s => s.cluster === cluster && !s.isPassed);
+        if (!entry) return;
+
+        const { timeHtml, qualityColor, qualityLabel, clockTime } = this._arrivalTimeHtml(entry);
+
+        const td = document.getElementById('arrival-time-display');
+        const cd = document.getElementById('arrival-clock-display');
+        if (td) td.innerHTML = timeHtml;
+        if (cd) cd.innerHTML = `Passage prévu à <b>${clockTime}</b>
+            <span style="margin-left:8px;font-size:.78rem;color:${qualityColor}">${qualityLabel}</span>`;
+        this.loadCorrespondances(cluster);
+    },
+
+    async loadCorrespondances(cluster) {
+        const el = document.getElementById('correspondances-result');
+        if (!el) return;
+        try {
+            const nowUnix = Math.floor(Date.now() / 1000);
+            const res = await fetch(`${API_BASE}/clusters/${cluster}/stoptimes`);
+            if (!res.ok) { el.style.display = 'none'; return; }
+            const data = await res.json();
+
+            const dirMap = {};
+            for (const pattern of data) {
+                const patId = pattern.pattern?.id || '';
+                const line = findLineByPatternId(patId);
+                if (!line) continue;
+                if (line.id === this.lineId) continue;
+
+                const desc = pattern.pattern?.desc || '';
+                const dest = desc.split(' > ')[1] || desc;
+
+                for (const t of pattern.times) {
+                    const rt = t.realtimeDeparture ?? t.realtimeArrival
+                             ?? t.scheduledDeparture ?? t.scheduledArrival;
+                    if (rt === undefined) continue;
+                    const absTime = (this.serviceDay || 0) + rt;
+                    const diffSec = absTime - nowUnix;
+                    if (diffSec < -30) continue;
+                    if (t.realtimeState !== 'UPDATED' && diffSec < 30) continue;
+                    if (!dirMap[patId] || absTime < dirMap[patId].absTime) {
+                        dirMap[patId] = { line, dest, diffSec, absTime,
+                                          isRealtime: t.realtimeState === 'UPDATED' };
+                    }
+                }
+            }
+
+            const items = Object.values(dirMap)
+                .sort((a, b) => a.absTime - b.absTime)
+                .slice(0, 10);
+
+            if (items.length === 0) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+
+            const badgeStyle = (item) => {
+                const isShort = item.line.name.length <= 2;
+                const radius = isShort ? '50%' : '6px';
+                const w = isShort ? '24px' : 'auto';
+                const px = isShort ? '0' : '5px 7px';
+                const textColor = item.line.category === 'chrono' ? '#000' : '#fff';
+                return `display:inline-flex;align-items:center;justify-content:center;` +
+                       `background:${item.line.color};color:${textColor};font-weight:700;font-size:.72rem;` +
+                       `border-radius:${radius};width:${w};height:24px;padding:${px};` +
+                       `flex-shrink:0;white-space:nowrap;`;
+            };
+
+            const rows = items.map(item => {
+                const diffMin = Math.floor(item.diffSec / 60);
+                const timeStr = diffMin <= 0
+                    ? `<span style="color:var(--radar-at-stop);font-weight:700">Imminent</span>`
+                    : `<span style="font-weight:700;color:var(--text-main)">${diffMin} min</span>`;
+                const dot = item.isRealtime
+                    ? `<span style="color:var(--realtime);font-size:.65rem;margin-left:4px">●</span>`
+                    : `<span style="color:var(--theoretical);font-size:.65rem;margin-left:4px">●</span>`;
+                return `<div class="corresp-row">
+                    <span style="${badgeStyle(item)}">${item.line.name}</span>
+                    <div class="corresp-info">
+                        <span class="corresp-dest">${item.dest}</span>
+                        <span class="corresp-time">${timeStr}${dot}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            el.innerHTML = `<div class="correspondances-header">Correspondances</div>${rows}`;
+            el.style.display = 'block';
+        } catch(e) {
+            el.style.display = 'none';
+        }
+    },
+
+    matchesLine(patternId, lineId) {
+        return patternId === lineId || patternId.startsWith(lineId + ":");
+    },
+
+    getStopConfig(lineId, stopCode, destination) {
+        const lineName = LINES.find(l => l.id === lineId)?.name || '';
+        const destWord = (destination || '').toLowerCase().split(' ')[0];
+
+        let direction = '1';
+        if (this.lineTopology.length > 0) {
+            const firstStop = this.lineTopology[0].name.toLowerCase();
+            const lastStop  = this.lineTopology[this.lineTopology.length - 1].name.toLowerCase();
+            if (lastStop.includes(destWord))       direction = '1';
+            else if (firstStop.includes(destWord)) direction = '2';
+        }
+
+        const match = SPECIAL_STOPS.find(s =>
+            s.line      === lineName &&
+            s.stopCode  === stopCode &&
+            s.direction === direction
+        );
+        return match
+            ? { atStopThreshold: match.atStopThreshold, departDelay: match.departDelay }
+            : { atStopThreshold: 30, departDelay: 0 };
+    },
+
+    getStopName(clusterCode) {
+        const domEl = document.getElementById(`stop-${clusterCode}`);
+        if (domEl) {
+            const nameAttr = domEl.dataset.name;
+            if (nameAttr) return nameAttr;
+            const span = domEl.querySelector('span');
+            if (span) return span.innerText;
+        }
+
+        const topo = (this.lineTopologyFull.length ? this.lineTopologyFull : this.lineTopology).find(s => s.cluster === clusterCode);
+        return topo ? topo.name : "Arrêt inconnu";
+    },
+
+    async locateTram(tripId, currentStopCode, destination, elementId, timeData) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        if (!el.innerHTML.trim()) {
+            el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Localisation...</div>`;
+        }
+
+        const nowUnix = Math.floor(Date.now() / 1000);
+        const absolutePassage = this.serviceDay + (timeData.realtimeDeparture || timeData.scheduledDeparture);
+        const currentTimeSec = absolutePassage - nowUnix;
+
+        console.log(`[RADAR] trip=${tripId} stop=${currentStopCode} → temps API : ${currentTimeSec}s (realtime=${timeData.realtime})`);
+
+        if (currentTimeSec < 0) {
+            const currentName = this.getStopName(currentStopCode);
+            const cfg = this.getStopConfig(this.lineId, currentStopCode, destination);
+            if (currentTimeSec >= -cfg.departDelay) {
+                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${currentName}</b></div>`;
+            } else {
+                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${currentName}</b></div>`;
+            }
+            return;
+        }
+
+        const { atStopThreshold } = this.getStopConfig(this.lineId, currentStopCode, destination);
+        if (currentTimeSec <= atStopThreshold) {
+            const currentName = this.getStopName(currentStopCode);
+            if (!this.atStopSince[tripId]) this.atStopSince[tripId] = Date.now();
+            const elapsedReal = (Date.now() - this.atStopSince[tripId]) / 1000;
+            if (elapsedReal > atStopThreshold) {
+                delete this.atStopSince[tripId];
+                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${currentName}</b></div>`;
+            } else {
+                el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${currentName}</b></div>`;
+            }
+            return;
+        }
+        delete this.atStopSince[tripId];
+
+        const orderedClusters = getBranchTopology(this.lineId, destination, currentStopCode, (this.lineTopologyFull && this.lineTopologyFull.length) ? this.lineTopologyFull : this.lineTopology);
+
+        const currentIndices = [];
+        orderedClusters.forEach((cluster, idx) => {
+            if (cluster === currentStopCode) currentIndices.push(idx);
+        });
+
+        if (currentIndices.length === 0) {
+            el.innerHTML = '';
+            return;
+        }
+
+        const destLower = (destination || '').toLowerCase().split(/[\s\-]/)[0];
+        const destEntry = (this.lineTopologyFull.length ? this.lineTopologyFull : this.lineTopology)
+            .find(s => s.name.toLowerCase().includes(destLower));
+
+        const destIndices = [];
+        if (destEntry) {
+            orderedClusters.forEach((cluster, idx) => {
+                if (cluster === destEntry.cluster) destIndices.push(idx);
+            });
+        }
+
+        let selectedCurrentIndex = currentIndices[0];
+        let searchStep = -1;
+
+        if (destIndices.length > 0 && currentIndices.length > 0) {
+            let bestPair = null;
+            let minDistance = Infinity;
+            for (const currIdx of currentIndices) {
+                for (const destIdx of destIndices) {
+                    const distance = Math.abs(destIdx - currIdx);
+                    if (distance > 0 && distance < minDistance) {
+                        minDistance = distance;
+                        bestPair = { currIdx, destIdx };
+                    }
+                }
+            }
+            if (bestPair) {
+                selectedCurrentIndex = bestPair.currIdx;
+                searchStep = (bestPair.destIdx > bestPair.currIdx) ? -1 : 1;
+            }
+        }
+
+        const MAX_DEPTH = 30;
+        let searchIndex = selectedCurrentIndex + searchStep;
+        let lastSeenWithTime = null;
+        let depth = 0;
+        let reachedTerminus = false;
+
+        while (depth < MAX_DEPTH) {
+            if (searchIndex < 0 || searchIndex >= orderedClusters.length) {
+                reachedTerminus = true;
+                break;
+            }
+
+            const checkCluster = orderedClusters[searchIndex];
+
+            if (checkCluster === currentStopCode) {
+                searchIndex += searchStep;
+                depth++;
+                continue;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/clusters/${checkCluster}/stoptimes`);
+                const checkData = await res.json();
+
+                let foundTime = null;
+                for (const pattern of checkData) {
+                    if (!this.matchesLine(pattern.pattern.id, this.lineId)) continue;
+                    for (const t of pattern.times) {
+                        if (t.tripId !== tripId) continue;
+                        if (t.realtimeState !== 'UPDATED') {
+                            console.log(`[RADAR] ${checkCluster} ignoré : pas de donnée temps réel (state=${t.realtimeState})`);
+                            break;
+                        }
+                        const nowUnix = Math.floor(Date.now() / 1000);
+                        foundTime = (this.serviceDay + t.realtimeDeparture) - nowUnix;
+                        break;
+                    }
+                    if (foundTime !== null) break;
+                }
+
+                if (foundTime !== null) {
+                    const stopName = this.getStopName(checkCluster);
+                    const cfg = this.getStopConfig(this.lineId, checkCluster, destination);
+
+                    if (foundTime < -cfg.departDelay) {
+                        delete this.atStopSince[tripId];
+                        el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${stopName}</b></div>`;
+                        return;
+                    } else if (foundTime <= cfg.atStopThreshold) {
+                        if (!this.atStopSince[tripId]) this.atStopSince[tripId] = Date.now();
+                        const elapsedReal = (Date.now() - this.atStopSince[tripId]) / 1000;
+                        if (elapsedReal > cfg.atStopThreshold) {
+                            delete this.atStopSince[tripId];
+                            el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> Part de <b>${stopName}</b></div>`;
+                        } else {
+                            el.innerHTML = `<div class="radar-info at-stop"><div class="radar-static"></div> À quai à <b>${stopName}</b></div>`;
+                        }
+                        return;
+                    } else if (foundTime <= 60) {
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${stopName}</b></div>`;
+                        return;
+                    } else {
+                        lastSeenWithTime = { cluster: checkCluster, time: Math.floor(foundTime / 60) };
+                    }
+                } else {
+                    if (lastSeenWithTime !== null) {
+                        const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+                        return;
+                    } else {
+                        const currentName = this.getStopName(currentStopCode);
+                        el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
+                        return;
+                    }
+                }
+
+                searchIndex += searchStep;
+                depth++;
+
+            } catch (e) {
+                break;
+            }
+        }
+
+        if (reachedTerminus) {
+            if (lastSeenWithTime !== null) {
+                const terminusName = this.getStopName(lastSeenWithTime.cluster);
+                el.innerHTML = `<div class="radar-info"><div class="radar-static"></div> En attente au terminus de <b>${terminusName}</b></div>`;
+            } else {
+                const currentName = this.getStopName(currentStopCode);
+                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${currentName}</b></div>`;
+            }
+        } else {
+            if (lastSeenWithTime !== null) {
+                const nextStopName = this.getStopName(lastSeenWithTime.cluster);
+                el.innerHTML = `<div class="radar-info"><div class="radar-icon"></div> Arrive vers <b>${nextStopName}</b></div>`;
+            } else {
+                el.innerHTML = '';
+            }
+        }
+    },
+
+    _triggerRadar() {
+        const { nextStop } = this._getPosition();
+        if (!nextStop) return;
+        const timeData = {
+            realtimeDeparture: nextStop.realtimeSec,
+            scheduledDeparture: nextStop.scheduledSec,
+            realtime: nextStop.isRealtime
+        };
+        this.locateTram(this.tripId, nextStop.cluster, this.destination, 'pos-box', timeData);
+    },
+
+    _showLoading(msg) {
+        document.getElementById('suivi-content').innerHTML =
+            `<div class="loading-msg"><div class="spinner"></div>${msg}</div>`;
+    },
+    _showError(msg) {
+        document.getElementById('suivi-content').innerHTML =
+            `<div class="error-msg">⚠️ ${msg.replace(/\n/g, '<br>')}</div>`;
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    suivi.init();
+    history.pushState({ suiviApp: 'app' }, '');
+    let handling = false;
+    window.addEventListener('popstate', () => {
+        if (handling) return;
+        handling = true;
+        history.go(1);
+        setTimeout(() => { handling = false; }, 50);
+    });
+});
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/ouestmontram/sw.js")
+    .then(() => console.log("Service Worker enregistré"));
+}
+</script>
+</body>
+</html>
