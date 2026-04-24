@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="https://lechomeurdudimanche.github.io/ouestmontram/logo.png" type="image/png">
     <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -1070,8 +1071,10 @@ const suivi = {
                 if (!line) continue;
                 if (line.id === this.lineId) continue;
 
-                const desc = pattern.pattern?.desc || '';
-                const dest = desc.split(' > ')[1] || desc;
+                const lastStopName = pattern.pattern?.lastStopName || pattern.pattern?.desc || '';
+                const commaIdx = lastStopName.indexOf(',');
+                const dest = commaIdx !== -1 ? lastStopName.slice(commaIdx + 1).trim() : lastStopName;
+                const dirKey = line.id + '|' + lastStopName;
 
                 for (const t of pattern.times) {
                     const rt = t.realtimeDeparture ?? t.realtimeArrival
@@ -1081,9 +1084,19 @@ const suivi = {
                     const diffSec = absTime - nowUnix;
                     if (diffSec < -30) continue;
                     if (t.realtimeState !== 'UPDATED' && diffSec < 30) continue;
-                    if (!dirMap[patId] || absTime < dirMap[patId].absTime) {
-                        dirMap[patId] = { line, dest, diffSec, absTime,
-                                          isRealtime: t.realtimeState === 'UPDATED' };
+
+                    const isRealtime = t.realtimeState === 'UPDATED';
+                    const existing = dirMap[dirKey];
+
+                    if (!existing) {
+                        dirMap[dirKey] = { line, dest, diffSec, absTime, isRealtime };
+                    } else {
+                        const newBeatsExisting =
+                            (isRealtime && !existing.isRealtime) ||
+                            (isRealtime === existing.isRealtime && absTime < existing.absTime);
+                        if (newBeatsExisting) {
+                            dirMap[dirKey] = { line, dest, diffSec, absTime, isRealtime };
+                        }
                     }
                 }
             }

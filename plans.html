@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="https://lechomeurdudimanche.github.io/ouestmontram/logo.png" type="image/png">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Plans du réseau - Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --radar-color: #00d2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
+        }
+
+        html { overscroll-behavior: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: var(--app-height);
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .back-btn:active { background: var(--bg-hover); }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .plan-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .plan-btn:active {
+            background: var(--bg-hover);
+            border-color: rgba(0, 210, 255, 0.3);
+        }
+
+        .plan-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .plan-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .plan-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .plan-arrow {
+            color: var(--radar-color);
+            font-size: 1rem;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
+        <div class="header-title">Plans du réseau</div>
+    </div>
+
+    <div class="content">
+        <a class="plan-btn"
+           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4603&path=PLAN-Mreso-NORD-2024-09.pdf"
+           download>
+            <div class="plan-info">
+                <div class="plan-name">Grenoble et zone urbaine</div>
+                <div class="plan-sub">PDF (2 Mo)</div>
+            </div>
+            <span class="plan-arrow">↓</span>
+        </a>
+
+        <a class="plan-btn"
+           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4604&path=PLAN-Mreso-SUD-2025-07.pdf"
+           download>
+            <div class="plan-info">
+                <div class="plan-name">Grand Sud</div>
+                <div class="plan-sub">PDF (1.7 Mo)</div>
+            </div>
+            <span class="plan-arrow">↓</span>
+        </a>
+
+        <a class="plan-btn"
+           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4602&path=PLAN-Mreso-GRESIVAUDAN-2025-11.pdf"
+           download>
+            <div class="plan-info">
+                <div class="plan-name">Secteur Grésivaudan</div>
+                <div class="plan-sub">PDF (0.7 Mo)</div>
+            </div>
+            <span class="plan-arrow">↓</span>
+        </a>
+
+        <a class="plan-btn"
+           href="https://www.reso-m.fr/cms_viewFile.php?idtf=6642&path=Plan-Voironnais-Interurbain-2026-01.pdf"
+           download>
+            <div class="plan-info">
+                <div class="plan-name">Secteur Voironnais</div>
+                <div class="plan-sub">PDF (0.6 Mo)</div>
+            </div>
+            <span class="plan-arrow">↓</span>
+        </a>
+
+        <a class="plan-btn"
+           href="https://www.reso-m.fr/cms_viewFile.php?idtf=6643&path=Plan-Voironnais-2026-01.pdf"
+           download>
+            <div class="plan-info">
+                <div class="plan-name">Voiron, zone urbaine</div>
+                <div class="plan-sub">PDF (0.9 Mo)</div>
+            </div>
+            <span class="plan-arrow">↓</span>
+        </a>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="https://lechomeurdudimanche.github.io/ouestmontram/logo.png" type="image/png">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>Contact - Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --radar-color: #00d2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
+        }
+
+        html { overscroll-behavior: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: var(--app-height);
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .back-btn:active { background: var(--bg-hover); }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .card p {
+            font-size: 0.92rem;
+            line-height: 1.65;
+            color: var(--text-muted);
+        }
+
+        .mail-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 14px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .mail-btn:active {
+            background: #383838;
+        }
+
+        .mail-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .mail-label span:first-child {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .mail-label span:last-child {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--radar-color);
+        }
+
+        .arrow {
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .faq-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: border-color 0.2s, background 0.2s;
+            width: 100%;
+        }
+
+        .faq-btn:active {
+            background: #383838;
+        }
+
+        .faq-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .faq-label span:first-child {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .faq-label span:last-child {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
+        <div class="header-title">Contact</div>
+    </div>
+
+    <div class="content">
+        <div class="card">
+            <div class="card-title">Me contacter</div>
+            <p>Pour toute question, remarque ou signalement, vous pouvez me contacter par e-mail. Je réponds à tous les mails dans les plus brefs délais.</p>
+            <a href="mailto:contact.ouestmontram@gmail.com" class="mail-btn">
+                <div class="mail-label">
+                    <span>Adresse e-mail</span>
+                    <span>contact.ouestmontram@gmail.com</span>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Avant d'écrire</div>
+            <p>Votre question a peut-être déjà une réponse dans la FAQ. Consultez-la pour trouver rapidement de l'aide sur l'utilisation de l'application.</p>
+            <a href="faq.html" class="faq-btn" style="margin-top: 14px;">
+                <div class="faq-label">
+                    <span>Foire aux questions</span>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

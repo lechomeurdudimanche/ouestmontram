@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="https://lechomeurdudimanche.github.io/ouestmontram/logo.png" type="image/png">
+    <meta name="theme-color" content="#000000">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <script>
+        function setAppHeight() {
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+    </script>
+    <title>FAQ - Où est mon tram ?</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --radar-color: #00d2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
+        }
+
+        html { overscroll-behavior: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .back-btn:active { background: var(--bg-hover); }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+        }
+
+        .faq-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .faq-item.open {
+            border-color: rgba(0, 210, 255, 0.3);
+        }
+
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: left;
+            padding: 18px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: background 0.2s;
+            line-height: 1.4;
+        }
+
+        .faq-question:active {
+            background: var(--bg-hover);
+        }
+
+        .faq-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.25s, border-color 0.25s, transform 0.3s ease;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .faq-item.open .faq-icon {
+            background: rgba(0, 210, 255, 0.12);
+            border-color: rgba(0, 210, 255, 0.4);
+            color: var(--radar-color);
+            transform: rotate(45deg);
+        }
+
+        .faq-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease;
+        }
+
+        .faq-item.open .faq-body {
+            grid-template-rows: 1fr;
+        }
+
+        .faq-body-inner {
+            overflow: hidden;
+        }
+
+        .faq-answer {
+            padding: 0 20px 18px 20px;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 14px;
+        }
+
+        .faq-answer a {
+            color: var(--radar-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .faq-answer a:hover {
+            text-decoration: underline;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 3px;
+            position: relative;
+            top: -1px;
+        }
+        .dot-green { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+        .dot-orange { background: #ff9800; }
+        .dot-blue { background: var(--radar-color); box-shadow: 0 0 6px var(--radar-color); }
+
+        .tag {
+            display: inline-block;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1px 7px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
+        <div class="header-title">Questions fréquentes</div>
+    </div>
+
+    <div class="content">
+
+        <h4>Questions générales</h4><br>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                L'application est-elle officielle ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Non. <strong>Où est mon tram ?</strong> est une application indépendante et non officielle. Elle n'est ni éditée ni affiliée au SMMAG ou à M TAG.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Les données affichées sont-elles fiables ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Dans la très très grande majorité des cas <strong>Oui</strong>. Les données proviennent directement des API publiques du SMMAG et sont parfois traitées pour corriger des erreurs. Bien que de nombreux efforts sont faits pour garantir le plus haut niveau de fiabilité possible, des erreurs restent possiblent. N'hésitez pas à signaler des éventuels erreurs via la <a href="contact.html">page de contact</a>.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment installer l'application sur mon téléphone ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                      <h4>Sur Android :</h4>
+                      <ol>
+                        <li>Ouvrez <a href="https://lechomeurdudimanche.github.io/ouestmontram">ce lien</a> dans Chrome</li>
+                        <li>Appuyez sur les ⋮ trois points en haut à droite</li>
+                        <li>Sélectionnez « Ajouter à l'écran d'accueil »</li>
+                        <li>Confirmez en appuyant sur « Installer »</li>
+                      </ol><br>
+
+                      <h4>Sur iPhone / iPad :</h4>
+                      <ol>
+                        <li>Ouvrez <a href="https://lechomeurdudimanche.github.io/ouestmontram">ce lien</a> dans Safari</li>
+                        <li>Appuyez sur l'icône Partager</li>
+                        <li>Faites défiler et choisissez « Sur l'écran d'accueil »</li>
+                        <li>Appuyez sur « Ajouter » en haut à droite</li>
+                      </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                L'application fonctionne-t-elle sans connexion internet ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Non. Les horaires et les perturbations sont chargés en temps réel. Une connexion internet est indispensable pour utiliser l'application.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                L'application est-elle mise à jour régulièrement ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Oui. L'application fait régulièrment des mises à jour pour améliorer les services. Vous n'avez pas besoin de faire les mises à jour vous même. Elles sont automatiques.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><h4>Page Horaires</h4><br>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Que signifie le point coloré à côté des temps d'attente ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Le point indique la nature de l'horaire affiché :<br><br>
+                        <span class="dot dot-green"></span> <strong>Vert</strong> : horaire en temps réel, très fiable.<br>
+                        <span class="dot dot-orange"></span> <strong>Orange</strong> : horaire théorique issu de la fiche horaire, sans confirmation temps réel et donc bien moins fiable.<br><br>
+                        L'application favorisera toujours les données en temps réel mais si elles ne sont pas disponiblent, elle se reporte sur les données théoriques.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment ajouter un arrêt en favori ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Pour ajouter un arrêt à votre liste de favori, appuyez sur l'icône ⭐ qui apparaît à côté du nom de l'arrêt quand vous regardez ses passages. <br><br>L'arrêt sera sauvegardé localement sur votre appareil et accessible rapidement depuis la section favoris.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Pourquoi ma ligne n'affiche pas la position du prochain bus/tram ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Plusieurs raisons peuvent expliquer ce problème. Afin de garder un bon niveau de fiabilité, voir la position du prochain bus/tram n'est disponible que sur certaines lignes (lignes de trams, chronos de C1 à C8 et proximo de 15 à 25). Aussi, pour obtenir la position du prochain bus/tram, il faut que l'application récupère des données en temps réel qui ne sont pas toujours disponiblent.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment télécharger la fiche horaire d'une ligne ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Après avoir sélectionné une ligne depuis la page Horaires, un bouton de téléchargement est disponible en haut à droite. Il permet d'obtenir la fiche horaire actuelle de la ligne au format PDF.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><h4>Page Suivi tram</h4><br>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment utiliser la page Suivi ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        La page <strong>Suivi tram</strong> permet de suivre un voyage de tram précis en entrant son identifiant de voyage (tripId). Elle affiche en temps réel la position du tram sur la ligne, sa ponctualité, et les temps avant le passage aux prochains arrêts avec les correspondances disponibles.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment obtenir l'identifiant de voyage (tripId) ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Le tripId s'affiche sur la page Horaires lorsqu'un passage en temps réel est disponible pour un tram. Un bouton avec cette apparence : ⎘ s'affiche. Appuyez dessus pour copier l'identifiant, puis collez-le dans la page Suivi tram.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><h4>Page Itinéraire</h4><br>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Quels modes de transport sont disponibles pour les itinéraires ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Le calcul d'itinéraire est assuré par OpenTripPlanner via l'API Mobilités M. Il propose des itinéraires en <strong>transports en commun</strong> (tram, bus), à <strong>pied</strong> et à <strong>vélo</strong>. Les résultats couvrent l'ensemble du réseau de l'aire grenobloise.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Est-il possible d'enregistrer un lieu favori comme mon travail ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Oui. Sur la page Itinéraire, juste en dessous du champ de texte pour trouver sa destination, il est possible de définir des lieux favoris.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><h4>Page Infotrafic</h4><br>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Comment savoir si ma ligne est perturbée ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        La page <strong>Infotrafic</strong> liste toutes les perturbations en cours et à venir sur le réseau (dans la limite des lignes de trams, chronos, chronos périurbaines et proximo). Vous pouvez filtrer les perturbations par type de ligne si vous le souhaitez.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Toutes les lignes sont-elles couvertes par l'infotrafic ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        L'infotrafic couvre l'ensemble du réseau de tramway ainsi qu'une grande partie du réseau bus (Chrono, Chrono périurbain, Proximo).
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="border-bottom: 2px solid var(--border); margin-bottom: 10px;"></div>
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+                Que faire si aucune de ces réponses ne répond à ma question ?
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-body" role="region">
+                <div class="faq-body-inner">
+                    <div class="faq-answer">
+                        Vous pouvez me contacter par e-mail. Rendez-vous sur la <a href="contact.html">page de contact</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.faq-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = btn.closest('.faq-item');
+                const isOpen = item.classList.contains('open');
+
+                document.querySelectorAll('.faq-item.open').forEach(el => {
+                    if (el !== item) {
+                        el.classList.remove('open');
+                        el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                item.classList.toggle('open', !isOpen);
+                btn.setAttribute('aria-expanded', String(!isOpen));
+            });
+        });
+    </script>
+</body>
+</html>
