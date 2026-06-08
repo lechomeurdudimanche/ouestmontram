@@ -29,7 +29,7 @@
   <img src="screenshots/horaires4.jpg" width="200"/>
 </div>
 
-### Suivi tram (`suivi.html`)
+### Infos tram (`suivi.html`)
 - Suivi d'un voyage en tram précis via son **identifiant de voyage**
 - Affichage de la **ponctualité** du tram en temps réel (à l'heure / en retard / en avance)
 - Affichage en temps réel de la **position du tram** sur la ligne
