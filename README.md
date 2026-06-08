@@ -21,7 +21,7 @@
 - Affichage du nombre de **perturbations sur la ligne** et possibilité d'obtenir le détail des perturbations
 - Téléchargement de la **fiche horaire** pour chaque ligne.
 - Système d'**arrêts favoris** avec accès rapide
-- Copie du tripId pour les trams
+- Copie de l'identifiant de voyage pour les trams
 <div align="center">
   <img src="screenshots/horaires.jpg" width="200"/>
   <img src="screenshots/horaires2.jpg" width="200"/>
@@ -30,10 +30,11 @@
 </div>
 
 ### Suivi tram (`suivi.html`)
-- Suivi d'un voyage en tram précis via son **identifiant de voyage** (ou tripId)
+- Suivi d'un voyage en tram précis via son **identifiant de voyage**
 - Affichage de la **ponctualité** du tram en temps réel (à l'heure / en retard / en avance)
 - Affichage en temps réel de la **position du tram** sur la ligne
 - Affichage du temps restant avant l’arrivée à un arrêt futur du trajet, ainsi que de l’heure de passage et les prochaines correspondances de l'arrêt.
+- Bouton de partage pour partager les infos concernant le tram.
 <div align="center">
   <img src="screenshots/suivi.jpg" width="200"/>
 </div>
@@ -50,9 +51,8 @@
 </div>
 
 ### Infotrafic (`infotrafic.html`)
-- Liste de toutes les **perturbations en cours et à venir** sur le réseau tram et sur une bonne partie du réseau bus
-- Filtrage possible par type de ligne (trams, bus chronos, bus chronos périurbains, bus proximo, bus flexo)
-- Liste des perturbations d'une ligne spécifique disponible en cliquant sur l'icone de la ligne
+- Liste de toutes les lignes ayant des **perturbations en cours et à venir** sur le réseau
+- Liste des perturbations d'une ligne disponible en cliquant sur l'icone de la ligne
 - Affichage détaillé des retards en temps réel de l'ensemble du réseau de tramway
 <div align="center">
   <img src="screenshots/infotrafic.jpg" width="200"/>
@@ -72,9 +72,13 @@ ouestmontram/
 ├── suivi.html        # Suivi d'un voyage
 ├── itineraire.html   # Calcul d'itinéraire
 ├── infotrafic.html   # Perturbations réseau
+├── contact.html      # Page de contact
+├── plans.html        # Plans du réseau
+├── faq.html          # Foire aux questions
 ├── mentions.html     # Mentions légales
 ├── manifest.json     # Manifeste PWA
 ├── sw.js             # Service Worker
+├── plan_grenoble.png # Plan
 └── logo.png          # Icône de l'application
 ```
 

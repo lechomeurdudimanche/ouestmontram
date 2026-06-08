@@ -165,7 +165,29 @@
         }
         .corresp-time { font-size: .85rem; flex-shrink: 0; }
 
-        .trip-meta { display: flex; align-items: center; gap: 10px; }
+        .trip-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .trip-meta { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+        .share-btn {
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 210, 255, 0.1); border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--radar-color); border-radius: 8px;
+            width: 36px; height: 36px;
+            cursor: pointer; flex-shrink: 0;
+            transition: background .2s, opacity .2s;
+        }
+        .share-btn:active { opacity: .7; }
+        .share-btn.shared {
+            background: rgba(76, 175, 80, 0.15); border-color: rgba(76, 175, 80, 0.4);
+            color: var(--realtime);
+        }
+
+        #refresh-arrow {
+            background: none; border: none;
+            color: #fff; cursor: pointer;
+            display: flex; align-items: center;
+        }
+        body.trip-active .input-card { display: none; }
         .line-badge-sm {
             width: 30px; height: 30px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -252,9 +274,14 @@
         .nav-link.active { color: var(--radar-color); }
         .nav-link.active::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: var(--radar-color);
+            height: 0px; background: var(--radar-color);
         }
-        .nav-icon { font-size: 1.3rem; }
+        .nav-icon { display: flex; align-items: center; justify-content: center; }
+
+        a {
+            color: var(--radar-color);
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -271,11 +298,11 @@
         <div id="suivi-content">
             <div class="guide-card">
                 <div class="guide-card-header">
-                    <span>●</span> A quoi sert le suivi ?
+                    <span>●</span> A quoi ça sert ?
                 </div>
                 <div class="guide-card-body">
                     <div class="guide-step">
-                        <div class="guide-step-text">Cette page vous permet de suivre un tramway en temps réel : ponctualité, position sur le réseau et heure de passage à l’arrêt de votre choix.
+                        <div class="guide-step-text">Vous vous êtes déjà demandé où se trouve exactement votre tram ou encore s'il a du retard ? Et bien cet outil permet entre autres de répondre à ces questions.
                         </div>
                     </div>
                 </div>
@@ -284,9 +311,11 @@
         <div id="suivi-content">
             <div class="guide-card">
                 <div class="guide-card-header">
-                    <span>●</span> Comment utiliser le suivi ?
+                    <span>●</span> Comment ça marche ?
                 </div>
                 <div class="guide-card-body">
+                        <div class="guide-step-text">Pour pouvoir obtenir des informations sur un trajet, nous avons besoin de son identifiant de voyage. Voici les étapes pour le récupérer :
+                        </div>
                     <div class="guide-step">
                         <div class="guide-step-num">1</div>
                         <div class="guide-step-text">
@@ -296,26 +325,20 @@
                     <div class="guide-step">
                         <div class="guide-step-num">2</div>
                         <div class="guide-step-text">
-                            Appuyez sur <b>⎘</b> à côté de « Temps Réel » pour copier l'identifiant du voyage.
+                            Appuyez sur <b>⎘</b> à droite de « Temps Réel » pour copier l'identifiant du voyage.
                         </div>
                     </div>
                     <div class="guide-step">
                         <div class="guide-step-num">3</div>
                         <div class="guide-step-text">
-                            Collez l'identifiant ci-dessus. Il ressemble à <code>SEM:31764271</code>. Puis appuyez sur <b>Trouver</b>.
+                            Collez l'identifiant ci-dessus. Il ressemble à <code>SEM:31764271</code>. Puis appuyez sur Trouver.
                         </div>
                     </div>
                     <div class="guide-divider"></div>
                     <div class="guide-step">
                         <div class="guide-step-num" style="background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.3);color:var(--theoretical)">i</div>
                         <div class="guide-step-text">
-                            Les identifiants <b>changent chaque jour</b>. Si le tram est introuvable, copiez-en un nouveau depuis Horaires.
-                        </div>
-                    </div>
-                    <div class="guide-step">
-                        <div class="guide-step-num" style="background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.3);color:var(--theoretical)">i</div>
-                        <div class="guide-step-text">
-                            L'outil de suivi <b>fonctionne uniquement</b> sur les <b>lignes de trams</b>.
+                            Pour plus d'infos, n'hésitez pas à consulter la <a href="faq.html">Foire aux questions</a>.
                         </div>
                     </div>
                 </div>
@@ -326,16 +349,16 @@
     <div id="bottom-nav">
         <div class="nav-buttons">
         <a href="index.html" class="nav-link">
-            <span class="nav-icon">🕐</span><span>Horaires</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Horaires</span>
         </a>
         <a href="suivi.html" class="nav-link active">
-            <span class="nav-icon">🚋</span><span>Suivi tram</span>
+            <span class="nav-icon"><svg width="19" height="22" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3,16 L3,7 Q3,1 10,1 Q17,1 17,7 L17,16 Q17,19 14,19.5 Q10,20 6,19.5 Q3,19 3,16 Z"/><line x1="4" y1="5" x2="16" y2="5"/><path d="M3,14 Q10,17 17,14"/><circle cx="10" cy="17.5" r="0.9" fill="currentColor" stroke="none"/><line x1="7.5" y1="20" x2="4" y2="24"/><line x1="12.5" y1="20" x2="16" y2="24"/></svg></span><span>Infos tram</span>
         </a>
         <a href="itineraire.html" class="nav-link">
-            <span class="nav-icon">🗺️</span><span>Itinéraire</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>Itinéraire</span>
         </a>
         <a href="infotrafic.html" class="nav-link">
-            <span class="nav-icon">⚠️</span><span>Infotrafic</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span>Infotrafic</span>
         </a>
         </div>
     </div>
@@ -451,8 +474,8 @@ const SPECIAL_STOPS = [
             'SEM:A:1:-1554408538':['SEM:GENLAPOYA','SEM:GENCHARLMIC','SEM:GENFONTAHDV','SEM:GENMAISONNA','SEM:GENFOVOG','SEM:GENBER','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
             'SEM:A:1:77378402':   ['SEM:GENLAPOYA','SEM:GENCHARLMIC','SEM:GENFONTAHDV','SEM:GENMAISONNA','SEM:GENFOVOG','SEM:GENBER','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
 
-            'SEM:B:1:1768382833': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
-            'SEM:B:1:-1809559566':['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
+            'SEM:B:1:-975427951': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
+            'SEM:B:1:231135571':['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
             'SEM:B:1:-763789647': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENIL','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS'],
             'SEM:B:1:1605123276': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENIL','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO'],
             'SEM:B:0:-115220173': ['SEM:GENPLAINEDS','SEM:GENGIERGARE','SEM:GENMAYENCIN','SEM:GENCONDIUNI','SEM:GENBIBLIUNI','SEM:GENGABFAURE','SEM:GENTA','SEM:GENGRDSABLO','SEM:GENMICHALLO','SEM:GENTRONCHOP','SEM:GENIL','SEM:GENNOTREDAM','SEM:GENSTECLAIR','SEM:GENDUBEDOUT','SEM:GENVICTHUGO','SEM:GENALSACELO','SEM:GENGARES','SEM:GENSTBRUNO','SEM:GENPALJUSTI','SEM:GENCITEINTE','SEM:GENCEACAMB','SEM:GENOXF'],
@@ -512,12 +535,37 @@ const suivi = {
     destination: null,
     patternId: null,
     selectedStopCluster: null,
+    _pendingStopCluster: null,
+    _passedStopEntry: null,
     _interval: null,
 
     init() {
         document.getElementById('trip-input').addEventListener('keydown', e => {
             if (e.key === 'Enter') this.start();
         });
+
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const tripParam = params.get('trip');
+            const stopParam = params.get('stop');
+            const lineParam = params.get('line');
+            if (tripParam && tripParam.startsWith('SEM:')) {
+                document.getElementById('trip-input').value = tripParam;
+                this.tripId = tripParam;
+                if (stopParam) this._pendingStopCluster = stopParam;
+                if (lineParam && LINE_COLORS[lineParam]) {
+                    this.lineName  = lineParam;
+                    this.lineId    = LINES_IDS[lineParam];
+                    this.lineColor = LINE_COLORS[lineParam];
+                }
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, '', cleanUrl);
+                try { localStorage.removeItem('suivi_ctx'); } catch(e) {}
+                this._begin();
+                return;
+            }
+        } catch(e) {}
+
         try {
             const raw = localStorage.getItem('suivi_ctx');
             if (raw) {
@@ -570,6 +618,8 @@ const suivi = {
         this.destination = null;
         this.patternId = null;
         this.selectedStopCluster = null;
+        this._pendingStopCluster = null;
+        this._passedStopEntry = null;
         this.serviceDay = 0;
     },
 
@@ -585,12 +635,13 @@ const suivi = {
     async _begin() {
         this._setSearching(true);
         if (this.lineId) {
-            this._showLoading(`Ligne ${this.lineName} — Recherche du tram ${this.tripId}…`);
+            this._showLoading(`Recherche du tram ${this.tripId} sur la ligne ${this.lineName}…`);
             try {
                 const found = await this._loadTopoAndScan();
                 if (!found) throw new Error(
-                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
-                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                    'Ce tram est introuvable.\n' +
+                    'Soit le tram est déjà arrivé à son terminus.\n' +
+                    'Soit cet identifiant de voyage n\'existe pas.'
                 );
             } catch(e) {
                 this._showError(e.message || 'Erreur inconnue');
@@ -614,8 +665,9 @@ const suivi = {
             }
             if (!found) {
                 this._showError(
-                    'Cet identifiant de voyage est introuvable dans les horaires actuels.\n' +
-                    'Les identifiants de voyage changent chaque jour. Copiez-en un nouveau depuis la page Horaires.'
+                    'Ce tram est introuvable.\n' +
+                    'Soit le tram est déjà arrivé à son terminus.\n' +
+                    'Soit cet identifiant de voyage n\'existe pas.'
                 );
                 this._setSearching(false);
                 return;
@@ -933,15 +985,23 @@ const suivi = {
             .filter((s, i, arr) => arr.findIndex(x => x.cluster === s.cluster) === i)
             .map(s => `<option value="${s.cluster}">${s.name}</option>`).join('');
 
+        const shareSvg = `<svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M4 18 C4 11 9 8 15 8.5 L15 5.5 L21 11 L15 16.5 L15 13.5 C10 13 6.5 15 4 18z"/></svg>`;
+
+        document.body.classList.add('trip-active');
         document.getElementById('suivi-content').innerHTML = `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="refresh-arrow" onclick="window.location.href='suivi.html'" aria-label="Retour"><line x1="20" y1="12" x2="4" y2="12"/><line x1="4" y1="12" x2="10" y2="6"/><line x1="4" y1="12" x2="10" y2="18"/></svg>
+
             <div class="info-card">
                 <div class="card-body">
-                    <div class="trip-meta">
-                        <div class="line-badge-sm" style="background:${this.lineColor}">${this.lineName}</div>
-                        <div>
-                            <div class="trip-meta-dest">Destination : ${this.destination || 'Terminus'}</div>
-                            <div class="trip-meta-text">${this.tripId}</div>
+                    <div class="trip-meta-row">
+                        <div class="trip-meta">
+                            <div class="line-badge-sm" style="background:${this.lineColor}">${this.lineName}</div>
+                            <div>
+                                <div class="trip-meta-dest">Destination : ${this.destination || 'Terminus'}</div>
+                                <div class="trip-meta-text">${this.tripId}</div>
+                            </div>
                         </div>
+                        <button class="share-btn" id="share-btn" onclick="suivi.share()" title="Partager">${shareSvg}</button>
                     </div>
                 </div>
             </div>
@@ -977,7 +1037,68 @@ const suivi = {
                 </div>
             </div>
         `;
-        setTimeout(() => this._triggerRadar(), 100);
+
+        setTimeout(() => {
+            this._triggerRadar();
+            if (this._pendingStopCluster) {
+                const cluster = this._pendingStopCluster;
+                this._pendingStopCluster = null;
+                this._applySharedStop(cluster);
+            }
+        }, 100);
+    },
+
+    _applySharedStop(cluster) {
+        const entry = this.schedule.find(s => s.cluster === cluster);
+        if (!entry) return;
+        const upcoming = this._getUpcoming();
+        const isUpcoming = upcoming.some(s => s.cluster === cluster);
+
+        if (isUpcoming) {
+            const sel = document.getElementById('stop-selector');
+            if (sel) sel.value = cluster;
+            this.selectedStopCluster = cluster;
+            this.showArrival(cluster);
+        } else {
+            this.selectedStopCluster = cluster;
+            this._passedStopEntry = entry;
+            const sel = document.getElementById('stop-selector');
+            if (sel) {
+                const placeholder = sel.querySelector('option[disabled]');
+                if (placeholder) {
+                    placeholder.textContent = entry.name;
+                    placeholder.value = cluster;
+                    placeholder.selected = true;
+                }
+            }
+            this._showPassedArrival(entry);
+        }
+    },
+
+    _showPassedArrival(entry) {
+        const el = document.getElementById('arrival-result');
+        if (!el) return;
+        const now = this._getNow();
+        const estimatedPassSec = entry.scheduledSec + this._getDelay();
+        const diffMin = Math.floor((estimatedPassSec - now) / 60);
+        const absMin  = Math.abs(diffMin);
+        const clockTime = this._fmtTime(estimatedPassSec);
+        const qualityColor = 'var(--theoretical)';
+        const qualityLabel = '● Estimé';
+
+        let timeHtml;
+        if (absMin >= 60) {
+            timeHtml = `<span class="arrival-time" style="color:var(--text-muted)">−${Math.floor(absMin/60)}h${(absMin%60).toString().padStart(2,'0')}</span>`;
+        } else {
+            timeHtml = `<span class="arrival-time" style="color:var(--text-muted)">−${absMin}</span><span class="arrival-unit">min</span>`;
+        }
+
+        el.innerHTML = `
+            <div class="arrival-display">${timeHtml}</div>
+            <div class="arrival-clock">
+                Passé à <b>${clockTime}</b>
+                <span style="margin-left:8px;font-size:.78rem;color:${qualityColor}">${qualityLabel}</span>
+            </div>`;
     },
 
     _updateCards() {
@@ -1012,19 +1133,33 @@ const suivi = {
                 if (stillUpcoming) {
                     sel.value = currentVal;
                     this._refreshArrivalDisplay(currentVal);
+                } else if (this._passedStopEntry && this._passedStopEntry.cluster === currentVal) {
+                    const placeholder = sel.querySelector('option[disabled]');
+                    if (placeholder) {
+                        placeholder.textContent = this._passedStopEntry.name;
+                        placeholder.value = this._passedStopEntry.cluster;
+                        placeholder.selected = true;
+                    }
+                    this._showPassedArrival(this._passedStopEntry);
                 } else {
                     sel.value = '';
                     this.selectedStopCluster = null;
+                    this._passedStopEntry = null;
                     const ar = document.getElementById('arrival-result');
                     if (ar) ar.innerHTML = '';
                 }
+            } else if (this._passedStopEntry) {
+                this._showPassedArrival(this._passedStopEntry);
             }
+        } else if (this._passedStopEntry) {
+            this._showPassedArrival(this._passedStopEntry);
         }
     },
 
     onStopChange(cluster) {
         if (!cluster || cluster === '') return;
         this.selectedStopCluster = cluster;
+        this._passedStopEntry = null;
         this.showArrival(cluster);
     },
 
@@ -1405,6 +1540,61 @@ const suivi = {
         }
     },
 
+    refresh() {
+        if (!this.tripId) return;
+        if (this._interval) { clearInterval(this._interval); this._interval = null; }
+        const savedTrip   = this.tripId;
+        const savedLine   = this.lineName;
+        const savedLineId = this.lineId;
+        const savedColor  = this.lineColor;
+        const savedStop   = this.selectedStopCluster || (this._passedStopEntry && this._passedStopEntry.cluster) || null;
+        this._reset();
+        this.tripId    = savedTrip;
+        this.lineName  = savedLine;
+        this.lineId    = savedLineId;
+        this.lineColor = savedColor;
+        if (savedStop) this._pendingStopCluster = savedStop;
+        this._begin();
+    },
+
+    backToInput() {
+        if (this._interval) { clearInterval(this._interval); this._interval = null; }
+        this._reset();
+        document.body.classList.remove('trip-active');
+        document.getElementById('suivi-content').innerHTML = '';
+        document.getElementById('trip-input').value = '';
+        document.getElementById('track-btn').disabled = false;
+        document.getElementById('track-btn').textContent = 'Trouver';
+        document.getElementById('trip-input').disabled = false;
+    },
+
+    share() {
+        const params = new URLSearchParams();
+        params.set('trip', this.tripId);
+        if (this.lineName && this.lineName !== '?') params.set('line', this.lineName);
+        if (this.selectedStopCluster) params.set('stop', this.selectedStopCluster);
+        const url = 'https://lechomeurdudimanche.github.io/ouestmontram/suivi.html?' + params.toString();
+        const title = `Tram ${this.lineName} direction ${this.destination || 'Terminus'}`;
+
+        const btn = document.getElementById('share-btn');
+        const shareSvg = `<svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M4 18 C4 11 9 8 15 8.5 L15 5.5 L21 11 L15 16.5 L15 13.5 C10 13 6.5 15 4 18z"/></svg>`;
+        const reset = () => {
+            if (!btn) return;
+            btn.classList.remove('shared');
+            btn.innerHTML = shareSvg;
+        };
+
+        if (navigator.share) {
+            navigator.share({ title, url }).then(() => {
+                if (btn) { btn.classList.add('shared'); btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`; setTimeout(reset, 2500); }
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                if (btn) { btn.classList.add('shared'); btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`; setTimeout(reset, 2500); }
+            }).catch(() => { prompt('Copie ce lien :', url); });
+        }
+    },
+
     _triggerRadar() {
         const { nextStop } = this._getPosition();
         if (!nextStop) return;
@@ -1423,7 +1613,7 @@ const suivi = {
     },
     _showError(msg) {
         document.getElementById('suivi-content').innerHTML =
-            `<div class="error-msg">⚠️ ${msg.replace(/\n/g, '<br>')}</div>`;
+            `<div class="error-msg">${msg.replace(/\n/g, '<br>')}</div>`;
     }
 };
 

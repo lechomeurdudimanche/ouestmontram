@@ -6,15 +6,7 @@
     <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script>
-        function setAppHeight() {
-            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-        }
-        setAppHeight();
-        window.addEventListener('resize', setAppHeight);
-
         async function sendWebhookMessage() {
             const messageInput = document.getElementById('webhook-message');
             const message = messageInput.value.trim();
@@ -69,7 +61,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'DM Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
             tap-highlight-color: transparent;
         }
@@ -88,47 +80,32 @@
         }
 
         #header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            gap: 15px;
+            gap: 5px;
+            padding: 15px 8px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .back-btn {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 1.2rem;
+            background: none; border: none;
+            color: var(--text-muted);
+            padding: 8px 10px;
             cursor: pointer;
-            transition: background 0.2s;
+            display: inline-flex; align-items: center;
+            transition: opacity .15s;
+            text-decoration: none;
             flex-shrink: 0;
         }
 
-        .back-btn:active { background: var(--bg-hover); }
-
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
+        .back-btn:active { opacity: .5; }
 
         .content {
             padding: 20px;
-            max-width: 600px;
             margin: 0 auto;
             width: 100%;
             padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
@@ -248,8 +225,8 @@
 </head>
 <body>
     <div id="header">
-        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
-        <div class="header-title">Contact</div>
+        <a href="index.html" class="back-btn" aria-label="Retour"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></a>
+        <h2>Contact</h2>
     </div>
 
     <div class="content">
@@ -267,7 +244,7 @@
 
         <div class="card">
             <div class="card-title">Message rapide</div>
-            <p>Envoyez une suggestion ou un signalement anonyme instantanément.</p>
+            <p>Envoyez une suggestion ou un signalement instantanément.</p>
             <textarea id="webhook-message" rows="3" placeholder="Votre message..."></textarea>
             <button id="send-btn" class="send-btn" onclick="sendWebhookMessage()">Envoyer le message</button>
             <div id="send-status"></div>

@@ -6,8 +6,6 @@
     <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script>
         function setAppHeight() {
             document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
@@ -31,7 +29,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'DM Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
             tap-highlight-color: transparent;
         }
@@ -50,47 +48,31 @@
         }
 
         #header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            gap: 15px;
+            gap: 5px;
+            padding: 15px 8px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .back-btn {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 1.2rem;
+            background: none; border: none;
+            color: var(--text-muted);
+            padding: 8px 10px;
             cursor: pointer;
-            transition: background 0.2s;
-            flex-shrink: 0;
+            display: inline-flex; align-items: center;
+            transition: opacity .15s;
+            text-decoration: none;
         }
 
-        .back-btn:active { background: var(--bg-hover); }
-
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
+        .back-btn:active { opacity: .5; background: none; }
 
         .content {
             padding: 20px;
-            max-width: 600px;
             margin: 0 auto;
             width: 100%;
             padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
@@ -141,9 +123,10 @@
 
         .plan-arrow {
             color: var(--radar-color);
-            font-size: 1rem;
             flex-shrink: 0;
-            opacity: 0.8;
+            opacity: 0.85;
+            display: flex;
+            align-items: center;
         }
 
         .map-viewer {
@@ -188,19 +171,124 @@
             margin-top: 7px;
             opacity: 0.7;
         }
+
+        .fullscreen-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: rgba(18, 18, 18, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .fullscreen-btn:active { background: rgba(45,45,45,0.9); }
+
+        #mapOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #000;
+            flex-direction: column;
+        }
+        #mapOverlay.active { display: flex; }
+
+        #mapOverlay .overlay-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+
+        .overlay-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(45,45,45,0.85);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            pointer-events: all;
+            transition: background 0.2s;
+        }
+        .close-btn:active { background: rgba(70,70,70,0.9); }
+
+        #mapOverlay .overlay-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #mapOverlay .overlay-container:active { cursor: grabbing; }
+
+        #mapOverlay .overlay-img {
+            position: absolute;
+            transform-origin: 0 0;
+            will-change: transform;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
     </style>
 </head>
 <body>
     <div id="header">
-        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
-        <div class="header-title">Plans du réseau</div>
+        <a href="index.html" class="back-btn" aria-label="Retour"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></a>
+        <h2>Plans du réseau</h2>
     </div>
 
     <div class="map-viewer">
         <div class="map-container" id="mapContainer">
             <img src="plan_grenoble.png" id="mapImg" alt="Plan du réseau Grenoble" draggable="false">
+            <button class="fullscreen-btn" id="fullscreenBtn" aria-label="Plein écran">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1h4M1 1v4M15 1h-4M15 1v4M1 15h4M1 15v-4M15 15h-4M15 15v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+            </button>
         </div>
         <div class="map-hint">Pincez pour zoomer · Glissez pour naviguer</div>
+    </div>
+
+    <div id="mapOverlay">
+        <div class="overlay-header">
+            <span class="overlay-title">Plan du réseau</span>
+            <button class="close-btn" id="closeOverlay" aria-label="Fermer">✕</button>
+        </div>
+        <div class="overlay-container" id="overlayContainer">
+            <img src="plan_grenoble.png" id="overlayImg" alt="Plan du réseau Grenoble" draggable="false" class="overlay-img">
+        </div>
     </div>
 
     <div class="content">
@@ -211,7 +299,7 @@
                 <div class="plan-name">Grenoble et zone urbaine</div>
                 <div class="plan-sub">PDF (2 Mo)</div>
             </div>
-            <span class="plan-arrow">↓</span>
+            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
 
         <a class="plan-btn"
@@ -221,7 +309,7 @@
                 <div class="plan-name">Grand Sud</div>
                 <div class="plan-sub">PDF (1.7 Mo)</div>
             </div>
-            <span class="plan-arrow">↓</span>
+            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
 
         <a class="plan-btn"
@@ -231,7 +319,7 @@
                 <div class="plan-name">Secteur Grésivaudan</div>
                 <div class="plan-sub">PDF (0.7 Mo)</div>
             </div>
-            <span class="plan-arrow">↓</span>
+            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
 
         <a class="plan-btn"
@@ -241,7 +329,7 @@
                 <div class="plan-name">Secteur Voironnais</div>
                 <div class="plan-sub">PDF (0.6 Mo)</div>
             </div>
-            <span class="plan-arrow">↓</span>
+            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
 
         <a class="plan-btn"
@@ -251,41 +339,75 @@
                 <div class="plan-name">Voiron, zone urbaine</div>
                 <div class="plan-sub">PDF (0.9 Mo)</div>
             </div>
-            <span class="plan-arrow">↓</span>
+            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
 
     </div>
     <script>
-        (function () {
-            const container = document.getElementById('mapContainer');
-            const img = document.getElementById('mapImg');
-
+        function makeMapInteraction(container, img, containMode) {
             let scale = 1, minScale = 1, maxScale = 5;
             let tx = 0, ty = 0;
-            let lastTouchDist = null;
-            let lastMidX = 0, lastMidY = 0;
+            let baseW = 0, baseH = 0, baseLeft = 0, baseTop = 0;
+
+            let lastTouchDist = null, lastMidX = 0, lastMidY = 0;
             let isDragging = false, startX = 0, startY = 0;
 
             function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
 
-            function apply() {
+            function computeBase() {
+                if (!containMode) return;
                 const cw = container.offsetWidth, ch = container.offsetHeight;
-                const iw = cw * scale, ih = ch * scale;
-                tx = clamp(tx, cw - iw, 0);
-                ty = clamp(ty, ch - ih, 0);
-                img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+                const nw = img.naturalWidth || cw, nh = img.naturalHeight || ch;
+                const ratio = Math.min(cw / nw, ch / nh);
+                baseW = nw * ratio;
+                baseH = nh * ratio;
+                baseLeft = (cw - baseW) / 2;
+                baseTop  = (ch - baseH) / 2;
+            }
+
+            function apply() {
+                if (containMode) {
+                    const cw = container.offsetWidth, ch = container.offsetHeight;
+                    const rw = baseW * scale, rh = baseH * scale;
+                    const minTx = rw > cw ? cw - rw : (cw - rw) / 2;
+                    const maxTx = rw > cw ? 0       : (cw - rw) / 2;
+                    const minTy = rh > ch ? ch - rh : (ch - rh) / 2;
+                    const maxTy = rh > ch ? 0       : (ch - rh) / 2;
+                    tx = clamp(tx, minTx, maxTx);
+                    ty = clamp(ty, minTy, maxTy);
+                    img.style.left = '0';
+                    img.style.top  = '0';
+                    img.style.width  = baseW + 'px';
+                    img.style.height = baseH + 'px';
+                    img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+                } else {
+                    const cw = container.offsetWidth, ch = container.offsetHeight;
+                    const iw = cw * scale, ih = ch * scale;
+                    tx = clamp(tx, cw - iw, 0);
+                    ty = clamp(ty, ch - ih, 0);
+                    img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+                }
+            }
+
+            function reset() {
+                scale = 1; 
+                computeBase();
+                if (containMode) {
+                    tx = baseLeft;
+                    ty = baseTop;
+                } else {
+                    tx = 0; ty = 0;
+                    img.style.transform = '';
+                    return;
+                }
+                apply();
             }
 
             function dist(t) {
-                const dx = t[0].clientX - t[1].clientX;
-                const dy = t[0].clientY - t[1].clientY;
-                return Math.hypot(dx, dy);
+                return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
             }
             function mid(t) {
-                return {
-                    x: (t[0].clientX + t[1].clientX) / 2,
-                    y: (t[0].clientY + t[1].clientY) / 2
-                };
+                return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 };
             }
 
             container.addEventListener('touchstart', e => {
@@ -296,6 +418,7 @@
                     const r = container.getBoundingClientRect();
                     lastMidX = m.x - r.left;
                     lastMidY = m.y - r.top;
+                    isDragging = false;
                 } else if (e.touches.length === 1) {
                     isDragging = true;
                     startX = e.touches[0].clientX - tx;
@@ -310,20 +433,12 @@
                     const m = mid(e.touches);
                     const r = container.getBoundingClientRect();
                     const mx = m.x - r.left, my = m.y - r.top;
-
-                    const ratio = d / lastTouchDist;
-                    const newScale = clamp(scale * ratio, minScale, maxScale);
-
-                    tx = mx - (mx - tx) * (newScale / scale);
-                    ty = my - (my - ty) * (newScale / scale);
-
-                    tx += mx - lastMidX;
-                    ty += my - lastMidY;
-
+                    const newScale = clamp(scale * (d / lastTouchDist), minScale, maxScale);
+                    tx = mx - (mx - tx) * (newScale / scale) + (mx - lastMidX);
+                    ty = my - (my - ty) * (newScale / scale) + (my - lastMidY);
                     scale = newScale;
                     lastTouchDist = d;
-                    lastMidX = mx;
-                    lastMidY = my;
+                    lastMidX = mx; lastMidY = my;
                     apply();
                 } else if (e.touches.length === 1 && isDragging) {
                     tx = e.touches[0].clientX - startX;
@@ -332,10 +447,11 @@
                 }
             }, { passive: false });
 
-            container.addEventListener('touchend', e => {
+            window.addEventListener('touchend', e => {
                 if (e.touches.length < 2) lastTouchDist = null;
                 if (e.touches.length === 0) isDragging = false;
             });
+            window.addEventListener('touchcancel', () => { isDragging = false; lastTouchDist = null; });
 
             container.addEventListener('mousedown', e => {
                 isDragging = true;
@@ -348,7 +464,8 @@
                 ty = e.clientY - startY;
                 apply();
             });
-            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
             container.addEventListener('wheel', e => {
                 e.preventDefault();
                 const r = container.getBoundingClientRect();
@@ -360,7 +477,31 @@
                 scale = newScale;
                 apply();
             }, { passive: false });
-        })();
+
+            return { reset };
+        }
+
+        makeMapInteraction(
+            document.getElementById('mapContainer'),
+            document.getElementById('mapImg'),
+            false
+        );
+
+        const overlay        = document.getElementById('mapOverlay');
+        const overlayContainer = document.getElementById('overlayContainer');
+        const overlayImg     = document.getElementById('overlayImg');
+        const { reset: resetOverlay } = makeMapInteraction(overlayContainer, overlayImg, true);
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => resetOverlay());
+        });
+
+        document.getElementById('closeOverlay').addEventListener('click', () => {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
     </script>
 </body>
 </html>

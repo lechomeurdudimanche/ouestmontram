@@ -6,8 +6,7 @@
     <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
     <script>
         function setAppHeight() {
             document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
@@ -15,560 +14,388 @@
         setAppHeight();
         window.addEventListener('resize', setAppHeight);
     </script>
-    <title>Infotrafic - Où est mon tram ?</title>
     <style>
         :root {
-            --bg-dark:      #0d0d0f;
-            --bg-panel:     #18181c;
-            --bg-hover:     #232328;
-            --bg-card:      #1c1c22;
-            --text-main:    #f0f0f5;
-            --text-muted:   #888899;
-            --border:       #2a2a35;
-            --radar-color:  #00d2ff;
-            --accent-cur:   #ff7043;
-            --accent-fut:   #448aff;
-            --color-a: #006eb7;
-            --color-b: #00a459;
-            --color-c: #e2007a;
-            --color-d: #f29400;
-            --color-e: #5c2a90;
+            --bg-dark:    #121212;
+            --bg-panel:   #1e1e1e;
+            --bg-hover:   #2d2d2d;
+            --bg-card:    #1e1e1e;
+            --text-main:  #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border:     #333;
+            --accent:     #00d2ff;
+            --nav-h:      60px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;}
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         html { overscroll-behavior: none; }
 
         body {
-            background-color: var(--bg-dark);
+            background: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             height: var(--app-height, 100vh);
-            width: 100vw;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            overscroll-behavior: none;
         }
 
-        #content {
+        #vc {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: var(--nav-h);
+            display: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .view::-webkit-scrollbar { width: 0; }
+
+        @keyframes slideInRight  { from { transform: translateX(60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOutLeft   { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-30%); opacity: 0; } }
+        @keyframes slideOutRight  { from { transform: translateX(0); opacity: 1; } to { transform: translateX(60%); opacity: 0; } }
+        @keyframes slideInLeft   { from { transform: translateX(-30%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--nav-h); background: var(--bg-panel);
+            border-top: 1px solid var(--border); z-index: 1000;
+        }
+        .nav-buttons { display: flex; height: 100%; }
+        .nav-link {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px; text-decoration: none;
+            color: var(--text-muted); font-size: .9rem;
+            transition: all .2s; position: relative;
+        }
+        .nav-link.active { color: var(--accent); }
+        .nav-link.active::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 0px; background: var(--accent);
+        }
+        .nav-icon { display: flex; align-items: center; justify-content: center; }
+
+        .tabs-wrap { padding: 0 16px 14px; }
+        .tabs {
+            display: flex; background: var(--bg-panel);
+            border-radius: 100px; padding: 3px; position: relative;
+        }
+        .tab-pill {
+            position: absolute; top: 3px; left: 3px;
+            width: calc(50% - 3px); height: calc(100% - 6px);
+            background: var(--text-main);
+            border-radius: 100px;
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+            pointer-events: none;
+        }
+        .tabs[data-tab="upcoming"] .tab-pill { transform: translateX(100%); }
+        .tab-btn {
+            flex: 1; border: none; background: none;
+            padding: 10px 0;
+            font-size: 0.86rem; font-weight: 600;
+            border-radius: 100px; cursor: pointer;
+            position: relative; z-index: 1;
+            transition: color .25s; letter-spacing: -0.01em;
+        }
+        .tab-btn.is-active { color: var(--bg-dark); }
+        .tab-btn:not(.is-active) { color: var(--text-muted); }
+
+        .back-row {
+            position: sticky; top: 0; z-index: 20;
+            background: var(--bg-dark);
+            padding: 4px 6px 0;
+        }
+        .back-btn {
+            background: none; border: none;
+            color: var(--text-muted);
+            padding: 12px 14px;
+            cursor: pointer;
+            display: inline-flex; align-items: center;
+            transition: opacity .15s;
+        }
+        .back-btn:active { opacity: .5; }
+
+        #view-line {
+            overflow: hidden;
+            flex-direction: column;
+        }
+        #line-header { flex-shrink: 0; }
+        #line-scroll {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-bottom: 72px;
+            -webkit-overflow-scrolling: touch;
         }
-        #content::-webkit-scrollbar { width: 4px; }
-        #content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        #line-scroll::-webkit-scrollbar { width: 0; }
 
-        .page-header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 16px 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-cur), var(--radar-color), var(--accent-fut));
-        }
-
-        .page-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 1.2rem;
-            letter-spacing: -0.02em;
-            color: var(--text-main);
-        }
-
-        .page-title-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #ff7043, #ff9800);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-            box-shadow: 0 2px 10px rgba(255,112,67,0.35);
-        }
-
-        .last-update {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-        .last-update-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            flex-shrink: 0;
-            transition: background 0.3s;
-        }
-        .last-update-dot.fresh {
-            background: #4caf50;
-            box-shadow: 0 0 5px rgba(76,175,80,0.5);
-        }
-        .last-update-dot.refreshing {
-            background: var(--radar-color);
-            box-shadow: 0 0 6px rgba(0,210,255,0.6);
-            animation: pulse-dot 0.8s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.6; }
-        }
-        
-
-        .filter-toggle-btn {
-            background: var(--bg-hover);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            padding: 7px 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            letter-spacing: 0.01em;
-        }
-        .filter-toggle-btn:active { transform: scale(0.95); }
-        .filter-toggle-btn.has-filter {
-            color: var(--radar-color);
-            border-color: var(--radar-color);
-            background: rgba(0,210,255,0.08);
-        }
-        .filter-toggle-btn .filter-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            transition: background 0.2s;
-        }
-        .filter-toggle-btn.has-filter .filter-dot { background: var(--radar-color); }
-
-        .filter-panel {
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 16px 14px;
-            overflow: hidden;
-            transform-origin: top;
-            animation: slideDown 0.22s ease forwards;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .filter-panel-title {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .filter-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .filter-chip {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            background: var(--bg-hover);
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.18s;
-            user-select: none;
-        }
-        .filter-chip.active {
-            border-color: rgba(255,255,255,0.25);
-            color: var(--text-main);
-            background: rgba(255,255,255,0.07);
-        }
-        .filter-chip-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .content-inner {
-            padding: 16px 14px 6px;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
-            margin-top: 4px;
-        }
-
-        .section-header + .section-header { margin-top: 28px; }
-
-        .section-label {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: -0.01em;
-        }
-
-        .section-badge {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 20px;
-            letter-spacing: 0.04em;
-        }
-
-        .section-line {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .section-cur .section-label { color: var(--accent-cur); }
-        .section-cur .section-badge { background: rgba(255,112,67,0.15); color: var(--accent-cur); }
-
-        .section-fut .section-label { color: var(--accent-fut); }
-        .section-fut .section-badge { background: rgba(68,138,255,0.15); color: var(--accent-fut); }
-
-        .disruption-card {
-            background: var(--bg-card);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-            overflow: hidden;
-            transition: transform 0.15s;
-            animation: fadeUp 0.3s ease both;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .disruption-card:active { transform: scale(0.99); }
-
-        .card-top {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px 10px;
-        }
-
-        .line-badge {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: white;
-            flex-shrink: 0;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-        }
-
-        .card-meta {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .card-title {
-            font-weight: 600;
-            font-size: 0.92rem;
-            color: var(--text-main);
-            line-height: 1.4;
-            margin-bottom: 4px;
-        }
-
-        .card-dates {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .date-pill {
-            background: rgba(0,210,255,0.1);
-            color: var(--radar-color);
+        .skel {
+            background: linear-gradient(90deg, var(--bg-hover) 25%, #252530 50%, var(--bg-hover) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
             border-radius: 6px;
-            padding: 2px 7px;
-            font-size: 0.7rem;
-            font-weight: 600;
         }
-
-        .date-pill.unknown {
-            background: rgba(255,152,0,0.12);
-            color: #ff9800;
-        }
-
-        .card-divider {
-            height: 1px;
-            background: var(--border);
-            margin: 0 14px;
-        }
-
-        .card-body {
-            padding: 10px 14px 12px;
-            font-size: 0.84rem;
-            line-height: 1.65;
-            color: var(--text-muted);
-            word-wrap: break-word;
-        }
-
-        .card-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 8px;
-            color: var(--radar-color);
-            font-size: 0.78rem;
-            font-weight: 600;
-            text-decoration: none;
-            background: rgba(0,210,255,0.08);
-            border-radius: 8px;
-            padding: 5px 10px;
-            transition: background 0.2s;
-        }
-        .card-link:active { background: rgba(0,210,255,0.16); }
+        .skel-circle { border-radius: 50%; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
 
         .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 30px;
-            text-align: center;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 56px 30px; text-align: center; gap: 7px;
+        }
+        .empty-state-title { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+        .empty-state-sub { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
+
+        .dis-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin: 0 16px 10px;
+            overflow: hidden;
+            animation: fadeUp .3s ease both;
+        }
+        .dis-card-top { padding: 14px 16px 12px; }
+        .dis-card-title { font-weight: 600; font-size: 0.9rem; color: var(--text-main); line-height: 1.4; margin-bottom: 6px; }
+        .dis-card-dates { font-size: 0.7rem; font-weight: 600; color: var(--accent); line-height: 1.5; }
+        .dis-card-divider { height: 1px; background: var(--border); margin: 0 16px; }
+        .dis-card-body {
+            padding: 10px 16px 13px;
+            font-size: 0.83rem; line-height: 1.65;
+            color: var(--text-muted); word-wrap: break-word;
+        }
+        .dis-card-link {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin-top: 8px; color: var(--accent);
+            font-size: 0.78rem; font-weight: 600; text-decoration: none;
+            background: rgba(0,210,255,.08); border-radius: 8px; padding: 5px 10px;
+        }
+
+        .section-lbl {
+            padding: 20px 16px 10px;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
             color: var(--text-muted);
-            gap: 10px;
+        }
+        .section-lbl:first-child { padding-top: 14px; }
+
+        .main-title {
+            padding: 28px 16px 20px;
+            font-size: 2.2rem; font-weight: 800;
+            letter-spacing: -0.02em; color: var(--text-main);
         }
 
-        .empty-state-icon {
-            font-size: 2.5rem;
-            opacity: 0.6;
+        .delay-entry {
+            margin: 0 16px 0;
+            background: linear-gradient(120deg, #7b2ff7 0%, #4a90d9 50%, #00c9a7 100%);
+            border-radius: 22px;
+            padding: 0;
+            display: flex; align-items: stretch;
+            cursor: pointer;
+            transition: transform .18s, box-shadow .18s;
+            animation: fadeUp .3s ease;
+            position: relative; overflow: hidden;
+            min-height: 90px;
+            box-shadow: 0 8px 32px rgba(123,47,247,0.25);
         }
+        .delay-entry:active { transform: scale(0.98); }
+        .delay-entry-body {
+            flex: 1; min-width: 0;
+            padding: 22px 20px;
+            display: flex; align-items: center;
+            position: relative; z-index: 1;
+        }
+        .delay-entry-title {
+            font-size: 1.1rem; font-weight: 800;
+            color: #fff;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+        .delay-entry-right {
+            width: 130px; flex-shrink: 0;
+            position: relative; overflow: hidden;
+        }
+        .delay-entry-deco {
+            position: absolute; inset: 0; pointer-events: none;
+        }
+        .delay-entry-deco svg {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+        }
+        .delay-entry-arr {
+            position: absolute;
+            right: 18px; top: 50%; transform: translateY(-50%);
+            width: 44px; height: 44px; border-radius: 50%;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+        .delay-entry-arr svg { color: #4a90d9; }
 
-        .empty-state-title {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
+        .net-title {
+            padding: 24px 16px 14px;
+            font-size: 1.35rem; font-weight: 800;
+            letter-spacing: -0.03em;
             color: var(--text-main);
         }
-
-        .empty-state-sub {
-            font-size: 0.87rem;
-            color: var(--text-muted);
-        }
-
-        .sections-separator {
-            height: 1px;
-            background: var(--border);
-            margin: 24px 0 20px;
-        }
-
-        #bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: 60px;
-            background: var(--bg-panel);
-            border-top: 1px solid var(--border);
-            z-index: 1000;
-        }
-
-        .nav-buttons { display: flex; height: 100%; }
-
-        .nav-link {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            position: relative;
-        }
-        .nav-link.active { color: var(--radar-color); }
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--radar-color);
-        }
-        .nav-icon { font-size: 1.3rem; }
-
-        .skeleton-card {
-            background: var(--bg-card);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-            padding: 14px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-        .skel {
-            background: linear-gradient(90deg, var(--bg-hover) 25%, #29293a 50%, var(--bg-hover) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.4s infinite;
-            border-radius: 6px;
-        }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        .skel-circle { border-radius: 50%; width: 42px; height: 42px; flex-shrink: 0; }
-        .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-        .skel-line { height: 12px; }
-
-        .ponct-sep {
-            height: 1px;
-            background: var(--border);
-            margin: 4px 0 0;
-        }
-        .ponct-section-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 16px 10px;
-        }
-        .ponct-section-title {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 1.1rem;
-            letter-spacing: -0.02em;
-            flex: 1;
-        }
-        .ponct-refresh-btn {
-            background: var(--bg-hover);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            padding: 7px 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .ponct-refresh-btn:active { transform: scale(0.95); }
-        .ponct-refresh-btn.loading { color: var(--radar-color); border-color: var(--radar-color); background: rgba(0,210,255,0.08); }
-
-        .ponct-cards { padding: 0 14px; }
-        .ponct-line-card {
-            background: var(--bg-card);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-            overflow: hidden;
-            animation: fadeUp 0.3s ease both;
-        }
-        .ponct-card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: background 0.15s;
-            user-select: none;
-        }
-        .ponct-card-header:active { background: rgba(255,255,255,0.03); }
-        .ponct-line-badge {
-            width: 42px; height: 42px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 1.1rem; color: white;
-            flex-shrink: 0;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-        }
-        .ponct-card-info { flex: 1; min-width: 0; }
-        .ponct-card-name {
-            font-weight: 600; font-size: 0.88rem;
-            color: var(--text-muted); margin-bottom: 5px;
-        }
-        .ponct-stats-mini { display: flex; gap: 12px; flex-wrap: wrap; }
-        .ponct-stat-chip {
-            font-size: 0.73rem; color: var(--text-muted);
-            display: flex; align-items: center; gap: 3px;
-        }
-        .ponct-stat-chip b { font-weight: 700; font-size: 0.8rem; }
-        .ponct-score-dot {
-            width: 11px; height: 11px;
-            border-radius: 50%; flex-shrink: 0;
-        }
-        .ponct-expand-icon {
-            color: var(--text-muted); font-size: 1rem;
-            transition: transform 0.2s; flex-shrink: 0;
-        }
-        .ponct-line-card.expanded .ponct-expand-icon { transform: rotate(180deg); }
-
-        .delay-ok        { color: #4caf50; }
-        .delay-slight    { color: #ffc107; }
-        .delay-moderate  { color: #ff9800; }
-        .delay-heavy     { color: #f44336; }
-        .dot-ok          { background: #4caf50; box-shadow: 0 0 6px rgba(76,175,80,0.5); }
-        .dot-slight      { background: #ffc107; }
-        .dot-moderate    { background: #ff9800; }
-        .dot-heavy       { background: #f44336; box-shadow: 0 0 6px rgba(244,67,54,0.45); }
-
-        .ponct-details { display: none; border-top: 1px solid var(--border); }
-        .ponct-line-card.expanded .ponct-details { display: block; }
-
-        .ponct-direction { border-bottom: 1px solid var(--border); }
-        .ponct-direction:last-child { border-bottom: none; }
-        .ponct-dir-header {
+        .badge-group { margin-bottom: 24px; }
+        .badge-group-lbl {
+            padding: 0 16px 12px;
+            font-size: 1rem; font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
             display: flex; align-items: center; gap: 8px;
-            padding: 10px 14px;
-            background: var(--bg-hover);
-            cursor: pointer; user-select: none;
-            transition: background 0.15s;
         }
-        .ponct-dir-header:active { background: rgba(255,255,255,0.04); }
-        .ponct-dir-arrow { font-size: 0.65rem; color: var(--text-muted); transition: transform 0.2s; }
-        .ponct-direction.dir-expanded .ponct-dir-arrow { transform: rotate(90deg); }
-        .ponct-dir-name { flex: 1; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
-        .ponct-dir-count { font-size: 0.72rem; color: var(--text-muted); }
-        .ponct-dir-avg { font-size: 0.8rem; font-weight: 700; margin-left: 6px; }
+        .badge-group-lbl svg { flex-shrink: 0; }
+        .badge-row { padding: 0 16px; display: flex; flex-wrap: wrap; gap: 12px; }
+        .line-badge {
+            min-width: 46px; height: 46px;
+            padding: 0 10px;
+            border-radius: 23px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; border: none;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,.4);
+            opacity: 0.92;
+            transition: transform .15s, opacity .15s, box-shadow .15s;
+            animation: fadeUp .3s ease both;
+            flex-shrink: 0; position: relative;
+        }
+        .line-badge:active { transform: scale(.92); opacity: 1; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+        .line-badge.is-tram {
+            border-radius: 50%;
+            width: 46px; height: 46px; min-width: 46px; padding: 0;
+            font-size: 1rem; font-weight: 800;
+        }
 
-        .ponct-trips { display: none; }
-        .ponct-direction.dir-expanded .ponct-trips { display: block; }
+        .badge-skel-wrap { padding: 0 12px; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+
+        .line-hero {
+            padding: 6px 16px 18px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            text-align: center;
+        }
+        .line-hero-badge {
+            width: 64px; height: 64px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.5rem; color: white;
+            box-shadow: 0 4px 18px rgba(0,0,0,.5);
+        }
+        .line-hero-name {
+            font-size: 1.35rem; font-weight: 700;
+            letter-spacing: -0.03em; color: var(--text-main);
+        }
+
+        .line-update {
+            margin: 14px 16px 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            font-size: 0.7rem; color: var(--text-muted);
+        }
+
+        .delay-situation {
+            padding: 4px 16px 18px;
+            font-size: 0.72rem; color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .delay-view-title {
+            padding: 18px 16px 4px;
+            font-size: 1.4rem; font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .delay-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            margin: 0 16px 14px;
+            overflow: hidden;
+            animation: fadeUp .35s ease both;
+        }
+        .delay-card-head {
+            padding: 18px 18px 16px;
+            display: flex; gap: 14px; align-items: flex-start;
+        }
+        .delay-badge {
+            width: 54px; height: 54px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.15rem; color: white;
+            box-shadow: 0 3px 12px rgba(0,0,0,.45);
+            flex-shrink: 0; margin-top: 2px;
+        }
+        .delay-card-info { flex: 1; min-width: 0; }
+        .delay-diag {
+            font-size: 1.05rem; font-weight: 700;
+            line-height: 1.38; letter-spacing: -0.015em;
+        }
+        .delay-diag.diag-ok       { color: #4caf50; }
+        .delay-diag.diag-slight   { color: #ffc107; }
+        .delay-diag.diag-moderate { color: #ff9800; }
+        .delay-diag.diag-critical { color: #f44336; }
+        .delay-diag.diag-loading  { color: var(--text-muted); font-weight: 500; font-style: italic; }
+        .delay-extra-msgs {
+            margin-top: 8px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .delay-extra-msg { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+        .delay-tram-count { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; }
+
+        .delay-toggle {
+            width: 100%; border: none;
+            border-top: 1px solid var(--border);
+            background: var(--bg-hover);
+            padding: 13px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.83rem; font-weight: 600;
+            color: var(--text-muted); cursor: pointer;
+            transition: background .15s;
+        }
+        .delay-toggle:active { background: var(--border); }
+        .delay-toggle-arrow { transition: transform .25s ease; flex-shrink: 0; }
+        .delay-card.is-open .delay-toggle-arrow { transform: rotate(180deg); }
+
+        .delay-details {
+            max-height: 0; overflow: hidden;
+            transition: max-height .35s cubic-bezier(.4,0,.2,1);
+            border-top: 0 solid var(--border);
+        }
+        .delay-card.is-open .delay-details {
+            max-height: 9999px;
+            border-top: 1px solid var(--border);
+        }
+
+        .delay-stats {
+            padding: 16px 18px 12px;
+            display: flex; flex-direction: column; gap: 11px;
+        }
+        .delay-stat-row {
+            display: flex; align-items: baseline;
+            justify-content: space-between; gap: 10px;
+        }
+        .delay-stat-lbl { font-size: 0.8rem; color: var(--text-muted); flex: 1; }
+        .delay-stat-val { font-size: 0.92rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+        .delay-dir {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            border-top: 1px solid var(--border);
+        }
+        .delay-dir:last-child { border-bottom: none; }
+        .delay-dir-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 7px; color: var(--text-main); }
+        .delay-dir-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+        .delay-dir-stat { font-size: 0.8rem; color: var(--text-muted); }
+        .delay-dir-stat b { font-weight: 700; color: var(--text-main); }
+
+        .delay-nodata { padding: 14px 18px; font-size: 0.82rem; color: var(--text-muted); }
 
         .ponct-trip {
             display: flex; flex-direction: column;
@@ -580,1117 +407,1170 @@
         .ponct-trip-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
         .ponct-trip-delay { font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
         .ponct-trip-id { font-size: 0.65rem; color: #444; font-family: monospace; margin-left: auto; flex-shrink: 0; }
-        .ponct-trip-pos {
-            overflow: hidden;
-        }
+        .ponct-trip-pos { overflow: hidden; }
         .ponct-trip-pos .radar-info {
-            font-size: .85rem;
-            color: var(--radar-color);
-            background: rgba(0, 210, 255, 0.1);
-            padding: 6px 10px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-            flex-wrap: wrap;
-        }
-        .ponct-trip-pos .radar-info b {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-size: .82rem; color: var(--accent);
+            background: rgba(0,210,255,0.1);
+            padding: 6px 10px; border-radius: 6px;
+            display: flex; align-items: center; gap: 6px;
             min-width: 0;
         }
-        .ponct-trip-pos .radar-info.at-stop {
-            color: #ffd700;
-            background: rgba(255, 215, 0, 0.1);
-        }
-        .ponct-trip-pos .radar-icon {
-            width: 12px; height: 12px;
-            border: 2px solid var(--radar-color);
-            border-radius: 50%; flex-shrink: 0;
-            animation: radar-pulse 2s infinite;
-        }
-        .ponct-trip-pos .radar-info.at-stop .radar-icon { border-color: #ffd700; }
-        .ponct-trip-pos .radar-static {
-            width: 8px; height: 8px;
-            background: var(--radar-color);
-            border-radius: 50%; flex-shrink: 0;
-        }
-        .ponct-trip-pos .radar-info.at-stop .radar-static { background: #ffd700; }
-        .ponct-trip-id { font-size: 0.65rem; color: #444; font-family: monospace; }
+        .ponct-trip-pos .radar-info b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-weight: 600; }
 
-        .ponct-no-rt {
-            padding: 28px 16px; text-align: center;
-            font-size: 0.83rem; color: var(--text-muted);
-        }
-        .ponct-last-upd {
-            font-size: 0.68rem; color: var(--text-muted);
-            display: flex; align-items: center; gap: 5px;
-        }
+        .delay-ok     { color: #4caf50; }
+        .delay-slight { color: #ffc107; }
+        .delay-moderate { color: #ff9800; }
+        .delay-heavy  { color: #f44336; }
 
-        .ponct-line-timestamp {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 4px;
-        }
-        .ponct-line-timestamp .ts-dot {
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        #line-view {
-            display: none;
-            flex-direction: column;
-            height: 100%;
-        }
-        body.line-mode #line-view { display: flex; }
-        body.line-mode #content   { display: none; }
-
-        #line-view-content {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-bottom: 72px;
-        }
-        #line-view-content::-webkit-scrollbar { width: 4px; }
-        #line-view-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-
-        .line-view-header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 16px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .line-view-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: var(--line-accent, var(--accent-cur));
-        }
-
-        .back-btn {
-            font-family: 'DM Sans', sans-serif;
-            width: 30px;
-            height: 30px;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            line-height: 1;
-            padding: 0;
-            opacity: 0.6;
-            transition: opacity 0.2s, background 0.2s;
-            flex-shrink: 0;
-        }
-        .back-btn:active { transform: scale(0.95); background: var(--bg-card); }
-
-        .line-view-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            letter-spacing: -0.02em;
-            color: var(--text-main);
-            flex: 1;
-            min-width: 0;
-        }
-        .line-view-badge {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1rem;
-            color: white;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        }
-        .line-view-subtitle {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 400;
-            letter-spacing: 0;
-            white-space: nowrap;
-        }
-
-        .line-view-update {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .guide-card {
-            background: var(--bg-panel);
-            border: 1px solid rgba(0, 210, 255, 0.25);
-            border-radius: 14px; overflow: hidden;
-            margin: 0px 15px 15px 15px;
-        }
-        .guide-card-header {
-            padding: 10px 16px;
-            background: rgba(0, 210, 255, 0.06);
-            border-bottom: 1px solid rgba(0, 210, 255, 0.15);
-            font-size: .78rem; color: var(--radar-color);
-            text-transform: uppercase; letter-spacing: .07em;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .guide-card-body {
-            padding: 16px; display: flex; flex-direction: column; gap: 12px;
-        }
     </style>
 </head>
 <body>
-    <div id="content">
-        <div class="page-header">
-            <div class="page-title">
-                <div class="page-title-icon">⚠️</div>
-                Infotrafic
+
+<div id="vc">
+    <div id="view-main" class="view" style="display:block">
+        <div class="main-title">Infotrafic</div>
+
+        <div class="tabs-wrap">
+            <div class="tabs" id="main-tabs" data-tab="today">
+                <div class="tab-pill"></div>
+                <button class="tab-btn is-active" data-tab-target="today" onclick="app.setMainTab('today')">Aujourd'hui</button>
+                <button class="tab-btn" data-tab-target="upcoming" onclick="app.setMainTab('upcoming')">À venir</button>
             </div>
-            <div class="last-update" id="last-update" style="display:none;">
-                <span class="last-update-dot" id="last-update-dot"></span>
-                <span id="last-update-text"></span>
+        </div>
+
+        <div id="delay-entry-wrap">
+            <div class="delay-entry" onclick="app.goToDelay()">
+                <div class="delay-entry-body">
+                    <div class="delay-entry-title">Retards des trams<br>en temps réel</div>
+                </div>
+                <div class="delay-entry-right">
+                    <div class="delay-entry-deco">
+                        <svg viewBox="0 0 130 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                            <g transform="translate(18,22) rotate(-8)">
+                                <rect x="0" y="0" width="70" height="22" rx="7" fill="rgba(255,255,255,0.15)"/>
+                                <g transform="translate(10,11)">
+                                    <polygon points="0,-6 5.5,4 -5.5,4" fill="none" stroke="rgba(255,200,60,0.9)" stroke-width="1.5" stroke-linejoin="round"/>
+                                    <line x1="0" y1="-2" x2="0" y2="1" stroke="rgba(255,200,60,0.9)" stroke-width="1.5" stroke-linecap="round"/>
+                                    <circle cx="0" cy="3" r="0.8" fill="rgba(255,200,60,0.9)"/>
+                                </g>
+                                <rect x="22" y="7" width="38" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
+                                <rect x="22" y="14" width="25" height="3" rx="1.5" fill="rgba(255,255,255,0.18)"/>
+                            </g>
+                            <g transform="translate(10,55) rotate(5)">
+                                <rect x="0" y="0" width="58" height="20" rx="6" fill="rgba(255,255,255,0.12)"/>
+                                <g transform="translate(10,10)">
+                                    <circle cx="0" cy="0" r="5.5" fill="none" stroke="rgba(100,230,150,0.9)" stroke-width="1.5"/>
+                                    <polyline points="-2.5,0 -0.5,2 3,-2" fill="none" stroke="rgba(100,230,150,0.9)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </g>
+                                <rect x="20" y="6" width="30" height="3.5" rx="1.75" fill="rgba(255,255,255,0.25)"/>
+                                <rect x="20" y="12" width="20" height="3" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="delay-entry-arr">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                </div>
             </div>
-            <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="app.toggleFilterPanel()">
-                <span class="filter-dot"></span>
-                Filtres
+        </div>
+
+        <div class="net-title">Infotrafic du réseau</div>
+        <div id="main-badges"></div>
+    </div>
+
+    <div id="view-line" class="view">
+        <div id="line-header">
+            <div class="back-row">
+                <button class="back-btn" onclick="app.goBack()">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                </button>
+            </div>
+
+            <div class="line-hero">
+                <div class="line-hero-badge" id="lv-badge"></div>
+                <div class="line-hero-name" id="lv-name"></div>
+            </div>
+
+            <div class="tabs-wrap">
+                <div class="tabs" id="line-tabs" data-tab="today">
+                    <div class="tab-pill"></div>
+                    <button class="tab-btn is-active" data-tab-target="today" onclick="app.setLineTab('today')">Aujourd'hui</button>
+                    <button class="tab-btn" data-tab-target="upcoming" onclick="app.setLineTab('upcoming')">À venir</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="line-scroll">
+            <div id="lv-content"></div>
+            <div id="lv-update" style="display:none" class="line-update"></div>
+        </div>
+    </div>
+
+    <div id="view-delay" class="view">
+        <div class="back-row">
+            <button class="back-btn" onclick="app.goBack()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
             </button>
         </div>
-
-        <div id="filter-panel" style="display:none;" class="filter-panel">
-            <div class="filter-panel-title">Afficher les perturbations de :</div>
-            <div class="filter-chips" id="filter-chips"></div>
-        </div>
-
-        <div id="disruptions-content">
-            <div class="content-inner">
-                <div style="margin-bottom:10px;margin-top:2px;">
-                    <div class="skeleton-card">
-                        <div class="skel skel-circle"></div>
-                        <div class="skel-lines"><div class="skel skel-line" style="width:65%"></div><div class="skel skel-line" style="width:45%"></div><div class="skel skel-line" style="width:90%"></div></div>
-                    </div>
-                    <div class="skeleton-card">
-                        <div class="skel skel-circle"></div>
-                        <div class="skel-lines"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:50%"></div><div class="skel skel-line" style="width:70%"></div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="ponct-sep"></div>
-
-        <div class="ponct-section-header">
-            <div class="ponct-section-title">Retards</div>
-            <button class="ponct-refresh-btn" id="ponct-refresh-btn" onclick="app.loadPonctualite()">↻ Actualiser</button>
-        </div>
-            <div class="guide-card">
-                <div class="guide-card-header">
-                    <span>●</span> A quoi sert cette zone ?
-                </div>
-                <div class="guide-card-body">
-                        <div style="font-size: 0.8em;" class="guide-step-text">Cette zone affiche le détail des retards sur le réseau de tramway. Il est possible d'y voir la moyenne des retards par ligne et par direction, ainsi que le retard maximal pour chaque ligne.
-                    </div>
-                </div>
-            </div>
-        <div class="ponct-cards" id="ponctualite-content"></div>
+        <div class="delay-view-title">Retards des trams</div>
+        <div class="delay-situation" id="delay-situation" style="display:none"></div>
+        <div id="delay-content"></div>
     </div>
 
-    <div id="line-view">
-        <div class="line-view-header" id="line-view-header">
-            <button class="back-btn" onclick="app.exitLineView()">‹</button>
-            <div class="line-view-title">
-                <div class="line-view-badge" id="line-view-badge"></div>
-                <div>
-                    <div id="line-view-name"></div>
-                    <div class="line-view-subtitle">Perturbations en cours et à venir</div>
-                </div>
-            </div>
-            <div class="line-view-update" id="line-view-update" style="display:none;">
-                <span class="last-update-dot" id="line-view-dot"></span>
-                <span id="line-view-update-text"></span>
-            </div>
-        </div>
-        <div id="line-view-content">
-            <div class="content-inner" id="line-view-disruptions"></div>
-        </div>
+</div>
+
+<div id="bottom-nav">
+    <div class="nav-buttons">
+        <a href="index.html" class="nav-link">
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Horaires</span>
+        </a>
+        <a href="suivi.html" class="nav-link">
+            <span class="nav-icon"><svg width="19" height="22" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3,16 L3,7 Q3,1 10,1 Q17,1 17,7 L17,16 Q17,19 14,19.5 Q10,20 6,19.5 Q3,19 3,16 Z"/><line x1="4" y1="5" x2="16" y2="5"/><path d="M3,14 Q10,17 17,14"/><circle cx="10" cy="17.5" r="0.9" fill="currentColor" stroke="none"/><line x1="7.5" y1="20" x2="4" y2="24"/><line x1="12.5" y1="20" x2="16" y2="24"/></svg></span><span>Infos tram</span>
+        </a>
+        <a href="itineraire.html" class="nav-link">
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>Itinéraire</span>
+        </a>
+        <a href="infotrafic.html" class="nav-link active">
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span>Infotrafic</span>
+        </a>
     </div>
+</div>
 
-    <div id="bottom-nav">
-        <div class="nav-buttons">
-            <a href="index.html" class="nav-link">
-                <span class="nav-icon">🕐</span>
-                <span>Horaires</span>
-            </a>
-            <a href="suivi.html" class="nav-link">
-                <span class="nav-icon">🚋</span>
-                <span>Suivi tram</span>
-            </a>
-            <a href="itineraire.html" class="nav-link">
-                <span class="nav-icon">🗺️</span>
-                <span>Itinéraire</span>
-            </a>
-            <a href="infotrafic.html" class="nav-link active">
-                <span class="nav-icon">⚠️</span>
-                <span>Infotrafic</span>
-            </a>
-        </div>
-    </div>
+<script>
+const LINES_TRAM = [
+    { id:"SEM:A", name:"A", color:"#006eb7", category:"tram", textColor:"#fff" },
+    { id:"SEM:B", name:"B", color:"#00a459", category:"tram", textColor:"#fff" },
+    { id:"SEM:C", name:"C", color:"#e2007a", category:"tram", textColor:"#fff" },
+    { id:"SEM:D", name:"D", color:"#f29400", category:"tram", textColor:"#fff" },
+    { id:"SEM:E", name:"E", color:"#5c2a90", category:"tram", textColor:"#fff" },
+];
+const LINES_CHRONO = [
+    { id:"SEM:C1",  name:"C1",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C2",  name:"C2",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C3",  name:"C3",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C4",  name:"C4",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C5",  name:"C5",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C6",  name:"C6",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C7",  name:"C7",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"SEM:C8",  name:"C8",  color:"rgb(245,210,77)",  category:"chrono", textColor:"#000" },
+    { id:"GSV:C9",  name:"C9",  color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+    { id:"SEM:C10", name:"C10", color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+    { id:"SE2:C11", name:"C11", color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+    { id:"SE2:C12", name:"C12", color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+    { id:"SE2:C13", name:"C13", color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+    { id:"SEM:C14", name:"C14", color:"rgb(239,124,0)",   category:"chrono_peri", textColor:"#fff" },
+];
+const LINES_PROXIMO = [
+    { id:"SEM:15",  name:"15",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SEM:16",  name:"16",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:17",  name:"17",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:18",  name:"18",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:19",  name:"19",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:20",  name:"20",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SEM:21",  name:"21",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SEM:22",  name:"22",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:23",  name:"23",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SEM:24",  name:"24",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"SEM:25",  name:"25",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"TPV:30",  name:"30",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"TPV:31",  name:"31",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"TPV:32",  name:"32",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"TPV:33",  name:"33",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"TPV:34",  name:"34",  color:"rgb(51,164,87)",   category:"proximo", textColor:"#fff" },
+    { id:"GSV:35",  name:"35",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"GSV:36",  name:"36",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"GSV:37",  name:"37",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:80",  name:"80",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:82",  name:"82",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:84",  name:"84",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:85",  name:"85",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:86",  name:"86",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:88",  name:"88",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"GSV:89",  name:"89",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"SE2:90",  name:"90",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"GSV:91",  name:"91",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+    { id:"GSV:92",  name:"92",  color:"rgb(30,113,184)",  category:"proximo", textColor:"#fff" },
+];
+const LINES_FLEXO = [
+    { id:"TPV:38", name:"38", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:39", name:"39", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:41", name:"41", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:42", name:"42", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:44", name:"44", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:45", name:"45", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:46", name:"46", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:47", name:"47", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:48", name:"48", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:49", name:"49", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:50", name:"50", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:51", name:"51", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:52", name:"52", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:53", name:"53", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:54", name:"54", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:55", name:"55", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:56", name:"56", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:58", name:"58", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:59", name:"59", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:60", name:"60", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:61", name:"61", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:63", name:"63", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:64", name:"64", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:65", name:"65", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:66", name:"66", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:67", name:"67", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:68", name:"68", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SE2:69", name:"69", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:70", name:"70", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:71", name:"71", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"SEM:73", name:"73", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:74", name:"74", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:75", name:"75", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:76", name:"76", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:77", name:"77", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:78", name:"78", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"GSV:79", name:"79", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:81", name:"81", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+    { id:"TPV:83", name:"83", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
+];
+const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO];
 
-    <script>
-        const LINES_TRAM = [
-            { id: "SEM:A",   name: "A",   color: "#006eb7", category: "tram" },
-            { id: "SEM:B",   name: "B",   color: "#00a459", category: "tram" },
-            { id: "SEM:C",   name: "C",   color: "#e2007a", category: "tram" },
-            { id: "SEM:D",   name: "D",   color: "#f29400", category: "tram" },
-            { id: "SEM:E",   name: "E",   color: "#5c2a90", category: "tram" },
-        ];
-        const LINES_CHRONO = [
-            { id: "SEM:C1",  name: "C1",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C2",  name: "C2",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C3",  name: "C3",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C4",  name: "C4",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C5",  name: "C5",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C6",  name: "C6",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C7",  name: "C7",  color: "rgb(245,210,77)",  category: "chrono" },
-            { id: "SEM:C8",  name: "C8",  color: "rgb(245,210,77)",  category: "chrono" },
-        ];
-        const LINES_CHRONO_PERI = [
-            { id: "GSV:C9",  name: "C9",  color: "rgb(239,124,0)",   category: "chrono_peri" },
-            { id: "SEM:C10", name: "C10", color: "rgb(239,124,0)",   category: "chrono_peri" },
-            { id: "SE2:C11", name: "C11", color: "rgb(239,124,0)",   category: "chrono_peri" },
-            { id: "SE2:C12", name: "C12", color: "rgb(239,124,0)",   category: "chrono_peri" },
-            { id: "SE2:C13", name: "C13", color: "rgb(239,124,0)",   category: "chrono_peri" },
-            { id: "SEM:C14", name: "C14", color: "rgb(239,124,0)",   category: "chrono_peri" },
-        ];
-        const LINES_PROXIMO = [
-            { id: "SEM:15",  name: "15",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SEM:16",  name: "16",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:17",  name: "17",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:18",  name: "18",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:19",  name: "19",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:20",  name: "20",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SEM:21",  name: "21",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SEM:22",  name: "22",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:23",  name: "23",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SEM:24",  name: "24",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "SEM:25",  name: "25",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "TPV:30",  name: "30",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "TPV:31",  name: "31",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "TPV:32",  name: "32",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "TPV:33",  name: "33",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "TPV:34",  name: "34",  color: "rgb(51,164,87)",   category: "proximo" },
-            { id: "GSV:35",  name: "35",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "GSV:36",  name: "36",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "GSV:37",  name: "37",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:80",  name: "80",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:82",  name: "82",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:84",  name: "84",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:85",  name: "85",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:86",  name: "86",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:88",  name: "88",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "GSV:89",  name: "89",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "SE2:90",  name: "90",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "GSV:91",  name: "91",  color: "rgb(30,113,184)",  category: "proximo" },
-            { id: "GSV:92",  name: "92",  color: "rgb(30,113,184)",  category: "proximo" },
-        ];
-        const LINES_FLEXO = [
-            { id: "SEM:59",  name: "59",  color: "rgb(213, 114, 168)",  category: "flexo" },
-            { id: "SEM:68",  name: "68",  color: "rgb(213, 114, 168)",  category: "flexo" },
-        ];
+const LINE_GROUPS = [
+    { key:'tram', label:'Tram', lines: LINES_TRAM },
+    { key:'bus',  label:'Bus',  lines: [...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO] },
+];
 
-        const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_CHRONO_PERI, ...LINES_PROXIMO, ...LINES_FLEXO];
+function normalizeId(raw) { return (raw || '').replace('_', ':'); }
 
-        const FILTER_CATEGORIES = [
-            { key: 'tram',        label: 'Trams',                  dot: '#006eb7' },
-            { key: 'chrono',      label: 'Bus Chrono',             dot: 'rgb(245,210,77)' },
-            { key: 'chrono_peri', label: 'Bus Chrono Périurbain',  dot: 'rgb(239,124,0)' },
-            { key: 'proximo',     label: 'Bus Proximo',            dot: 'rgb(51,164,87)' },
-        ];
+function getLineInfo(raw) {
+    const id = normalizeId(raw);
+    return ALL_LINES.find(l => l.id === id) || null;
+}
 
-        const FILTERS_LS_KEY = 'infotrafic_filters';
+function parseDate(s) {
+    if (!s) return null;
+    try {
+        const [date, time] = s.split(' ');
+        const [d, m, y] = date.split('/');
+        const [h, min] = (time || '00:00').split(':');
+        return new Date(+y, +m-1, +d, +h, +min);
+    } catch(e) { return null; }
+}
 
-        function normalizeId(listeLigne) {
-            return (listeLigne || '').replace('_', ':');
-        }
+function isToday(dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return false;
+    const n = new Date();
+    return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
+}
 
-        function getLineInfo(listeLigne) {
-            const norm = normalizeId(listeLigne);
-            return ALL_LINES.find(l => l.id === norm) || null;
-        }
+function isUnknownEnd(dateFin) { return !dateFin || dateFin.includes('2050'); }
 
-        function parseDate(dateStr) {
-            if (!dateStr) return null;
-            try {
-                const [date, time] = dateStr.split(' ');
-                const [day, month, year] = date.split('/');
-                const [hour, minute] = (time || '00:00').split(':');
-                return new Date(+year, +month - 1, +day, +hour, +minute);
-            } catch (e) { return null; }
-        }
+function fmtDateLabel(s) {
+    try {
+        const [date, time] = s.split(' ');
+        const [d, m, y] = date.split('/');
+        const dt = new Date(+y, +m-1, +d);
+        const dayName = dt.toLocaleDateString('fr-FR', { weekday: 'long' });
+        const dayCapital = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+        return `${dayCapital} ${d}/${m}/${y} ${time}`;
+    } catch(e) { return s; }
+}
 
-        function isUnknownEnd(dateFin) {
-            return !dateFin || dateFin.includes('2050');
-        }
+function cleanText(text) {
+    if (!text) return '';
+    let t = text.replace(/<[^>]*>/g, '');
+    t = t.replace(/\r\n|\r|\n/g,' ').trim();
+    t = t.replace(/^[àÀa]\s+partir\s+du\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*\|\s*[Jj]usqu['\u2019']au\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*/gi,'');
+    t = t.replace(/^[Jj]usqu['\u2019']au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g,'');
+    t = t.replace(/^[AÀa]\s+partir\s+du\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/gi,'');
+    t = t.replace(/^[Dd]u\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s+au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g,'');
+    t = t.replace(/^\s*\|+\s*/g,'').replace(/\s*\|+\s*$/g,'').replace(/\|/g,'');
+    t = t.replace(/\s+/g,' ').trim();
+    if (!t) return '';
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    t = t.replace(/\.\s+([A-Z])/g,'.<br>$1');
+    return t;
+}
 
-        function formatDateLabel(dateStr) {
-            try {
-                const [date, time] = dateStr.split(' ');
-                const [day, month, year] = date.split('/');
-                return `${day}/${month}/${year} ${time}`;
-            } catch (e) { return dateStr; }
-        }
+function lineSortIndex(raw) {
+    const id = normalizeId(raw);
+    const i = ALL_LINES.findIndex(l => l.id === id);
+    return i === -1 ? 9999 : i;
+}
 
-        function cleanText(text) {
-            if (!text) return '';
-            let t = text.replace(/<[^>]*>/g, '');
-            t = t.replace(/\r\n|\r|\n/g, ' ');
-            t = t.trim();
-            t = t.replace(/^[àÀa]\s+partir\s+du\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*\|\s*[Jj]usqu['\u2019']au\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s*/gi, '');
-            t = t.replace(/^[Jj]usqu['\u2019']au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g, '');
-            t = t.replace(/^[AÀa]\s+partir\s+du\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/gi, '');
-            t = t.replace(/^[Dd]u\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s+au\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\s+\d{1,2}:\d{2}\s*/g, '');
-            t = t.replace(/^\s*\|+\s*/g, '').replace(/\s*\|+\s*$/g, '').replace(/\|/g, '');
-            t = t.replace(/\s+/g, ' ').trim();
-            if (!t) return '';
-            t = t.charAt(0).toUpperCase() + t.slice(1);
-            t = t.replace(/\.\s+([A-Z])/g, '.<br>$1');
-            return t;
-        }
+function sortByLine(a, b) {
+    return lineSortIndex(a.listeLigne) - lineSortIndex(b.listeLigne);
+}
+function sortCurrent(a, b) {
+    const li = sortByLine(a, b); if (li !== 0) return li;
+    const ea = parseDate(a.dateFin), eb = parseDate(b.dateFin);
+    if (ea && eb) return ea - eb; if (ea) return -1; if (eb) return 1; return 0;
+}
+function sortUpcoming(a, b) {
+    const li = sortByLine(a, b); if (li !== 0) return li;
+    const sa = parseDate(a.dateDebut), sb = parseDate(b.dateDebut);
+    if (sa && sb) return sa - sb; if (sa) return -1; if (sb) return 1; return 0;
+}
 
-        function getLineSortIndex(listeLigne) {
-            const norm = normalizeId(listeLigne);
-            const idx = ALL_LINES.findIndex(l => l.id === norm);
-            return idx === -1 ? 9999 : idx;
-        }
+function analyzeLine(directions, nowSec, clusters, lineShort, allStoptimes) {
+    const dirEntries = Object.entries(directions).filter(([, trips]) => trips.length > 0);
+    const totalTrips = dirEntries.reduce((s, [, t]) => s + t.length, 0);
+    if (totalTrips === 0) return null;
 
-        function sortCurrent(a, b) {
-            const lineA = getLineSortIndex(a.listeLigne);
-            const lineB = getLineSortIndex(b.listeLigne);
-            if (lineA !== lineB) return lineA - lineB;
-            const endA = parseDate(a.dateFin);
-            const endB = parseDate(b.dateFin);
-            if (endA && endB) return endA - endB;
-            if (endA) return -1;
-            if (endB) return  1;
-            return 0;
-        }
-
-        function sortUpcoming(a, b) {
-            const lineA = getLineSortIndex(a.listeLigne);
-            const lineB = getLineSortIndex(b.listeLigne);
-            if (lineA !== lineB) return lineA - lineB;
-            const startA = parseDate(a.dateDebut);
-            const startB = parseDate(b.dateDebut);
-            if (startA && startB) return startA - startB;
-            if (startA) return -1;
-            if (startB) return  1;
-            return 0;
-        }
-
-        function renderCard(d, index) {
-            const lineInfo = getLineInfo(d.listeLigne);
-            const lineName = lineInfo ? lineInfo.name : (normalizeId(d.listeLigne).split(':')[1] || '?');
-            const lineColor = lineInfo ? lineInfo.color : '#888';
-            const textColor = lineInfo && lineInfo.category === 'chrono' ? '#000' : '#fff';
-
-            let titre = d.titre || 'Perturbation';
-            titre = titre.charAt(0).toUpperCase() + titre.slice(1);
-
-            const description = cleanText(d.description || d.texte || '');
-            const dateDebut   = formatDateLabel(d.dateDebut);
-            const unknownEnd  = isUnknownEnd(d.dateFin);
-            const dateFin     = unknownEnd ? null : formatDateLabel(d.dateFin);
-
-            const dateHtml = unknownEnd
-                ? `<span class="date-pill">Depuis le ${dateDebut}</span><span class="date-pill unknown">Fin imprévue</span>`
-                : `<span class="date-pill">Du ${dateDebut}</span><span style="color:var(--border);"></span><span class="date-pill">au ${dateFin}</span>`;
-
-            const delay = index * 45;
-
-            return `
-            <div class="disruption-card" style="animation-delay:${delay}ms">
-                <div class="card-top">
-                    <div class="line-badge" style="background-color:${lineColor}; color:${textColor}; cursor:pointer;" onclick="event.stopPropagation(); app.goToLineView('${normalizeId(d.listeLigne)}')">${lineName}</div>
-                    <div class="card-meta">
-                        <div class="card-title">${titre}</div>
-                        <div class="card-dates">${dateHtml}</div>
-                    </div>
-                </div>
-                ${description ? `
-                <div class="card-divider"></div>
-                <div class="card-body">
-                    ${description}
-                    ${d.plan ? `<br><a href="${d.plan}" class="card-link">📄 Plus d'infos</a>` : ''}
-                </div>` : (d.plan ? `<div class="card-divider"></div><div class="card-body"><a href="${d.plan}" target="_blank" class="card-link">📄 Plus d'infos</a></div>` : '')}
-            </div>`;
-        }
-
-        const app = {
-            filters: { tram: true, chrono: true, chrono_peri: true, proximo: true },
-            allCurrent: [],
-            allFuture: [],
-            filterPanelOpen: false,
-            _refreshTimer: null,
-            REFRESH_INTERVAL_MS: 30 * 60 * 1000,
-
-            lineViewLineId: null,
-
-            init() {
-                const saved = localStorage.getItem(FILTERS_LS_KEY);
-                if (saved) {
-                    try { this.filters = { ...this.filters, ...JSON.parse(saved) }; } catch(e) {}
-                }
-                this.renderFilterChips();
-                this.updateFilterBtn();
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const lineParam = urlParams.get('line');
-                if (lineParam) {
-                    this._enterLineView(lineParam);
-                }
-
-                this.loadDisruptions();
-                if (!lineParam) this.loadPonctualite();
-                this._startAutoRefresh();
-            },
-
-            _enterLineView(lineId) {
-                const normalizedId = lineId.replace('-', ':');
-                const lineInfo = ALL_LINES.find(l => l.id === normalizedId) || null;
-                this.lineViewLineId = normalizedId;
-
-                const badge = document.getElementById('line-view-badge');
-                const nameEl = document.getElementById('line-view-name');
-                const header = document.getElementById('line-view-header');
-
-                if (lineInfo) {
-                    const textColor = lineInfo.category === 'chrono' ? '#000' : '#fff';
-                    badge.style.background = lineInfo.color;
-                    badge.style.color = textColor;
-                    badge.textContent = lineInfo.name;
-                    nameEl.textContent = 'Ligne ' + lineInfo.name;
-                    header.style.setProperty('--line-accent', lineInfo.color);
-                } else {
-                    badge.style.background = '#888';
-                    badge.textContent = normalizedId.split(':')[1] || '?';
-                    nameEl.textContent = 'Ligne ' + (normalizedId.split(':')[1] || lineId);
-                    header.style.setProperty('--line-accent', 'var(--accent-cur)');
-                }
-
-                document.body.classList.add('line-mode');
-            },
-
-            goToLineView(lineId) {
-                this._enterLineView(lineId);
-                this._renderLineViewDisruptions();
-                document.getElementById('line-view-content').scrollTop = 0;
-                const isTram = LINES_TRAM.some(l => l.id === lineId);
-                if (isTram && Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
-                    this.loadPonctualite();
-                }
-            },
-
-            exitLineView() {
-                const url = new URL(window.location.href);
-                url.searchParams.delete('line');
-                window.history.replaceState({}, '', url.toString());
-                document.body.classList.remove('line-mode');
-                this.lineViewLineId = null;
-                if (Object.keys(this.ponctClusters).length === 0 && !this.ponctualiteLoading) {
-                    this.loadPonctualite();
-                }
-            },
-
-            _renderLineViewDisruptions() {
-                if (!this.lineViewLineId) return;
-                const lid = this.lineViewLineId;
-
-                const current = this.allCurrent.filter(d => normalizeId(d.listeLigne) === lid);
-                const future  = this.allFuture.filter(d => normalizeId(d.listeLigne) === lid);
-
-                const dot = document.getElementById('line-view-dot');
-                const updateEl = document.getElementById('line-view-update');
-                const updateText = document.getElementById('line-view-update-text');
-                if (updateEl && updateText) {
-                    const now = new Date();
-                    updateText.textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-                        + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                    updateEl.style.display = 'flex';
-                    if (dot) { dot.classList.add('fresh'); setTimeout(() => dot.classList.remove('fresh'), 3000); }
-                }
-
-                const el = document.getElementById('line-view-disruptions');
-                if (!el) return;
-
-                if (current.length === 0 && future.length === 0) {
-                    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">checkmark</div><div class="empty-state-title">Trafic normal</div><div class="empty-state-sub">Aucune perturbation pour cette ligne.</div></div>';
-                    el.querySelector('.empty-state-icon').textContent = '\u2705';
-                    return;
-                }
-
-                let html = '';
-                if (current.length > 0) {
-                    html += '<div class="section-header section-cur" style="margin-top:16px;"><span class="section-label">\u26a0 En cours</span><span class="section-badge">' + current.length + '</span><span class="section-line"></span></div>';
-                    current.forEach((d, i) => { html += renderCard(d, i); });
-                }
-                if (future.length > 0) {
-                    if (current.length > 0) html += '<div class="sections-separator"></div>';
-                    html += '<div class="section-header section-fut"><span class="section-label">\ud83d\udcc5 A venir</span><span class="section-badge">' + future.length + '</span><span class="section-line"></span></div>';
-                    future.forEach((d, i) => { html += renderCard(d, i); });
-                }
-                el.innerHTML = html;
-            },
-
-            _startAutoRefresh() {
-                if (this._refreshTimer) clearInterval(this._refreshTimer);
-                this._scheduleNextRefresh();
-            },
-
-            _scheduleNextRefresh() {
-                if (this._refreshTimer) clearTimeout(this._refreshTimer);
-                this._refreshTimer = setTimeout(() => {
-                    this.loadDisruptions();
-                    this._scheduleNextRefresh();
-                }, this.REFRESH_INTERVAL_MS);
-            },
-
-            renderFilterChips() {
-                const el = document.getElementById('filter-chips');
-                if (!el) return;
-                el.innerHTML = FILTER_CATEGORIES.map(cat => `
-                    <div class="filter-chip ${this.filters[cat.key] ? 'active' : ''}"
-                         onclick="app.toggleFilter('${cat.key}')">
-                        <span class="filter-chip-dot" style="background:${cat.dot};"></span>
-                        ${cat.label}
-                    </div>`).join('');
-            },
-
-            toggleFilter(key) {
-                this.filters[key] = !this.filters[key];
-                localStorage.setItem(FILTERS_LS_KEY, JSON.stringify(this.filters));
-                this.renderFilterChips();
-                this.updateFilterBtn();
-                this.renderDisruptions();
-            },
-
-            toggleFilterPanel() {
-                this.filterPanelOpen = !this.filterPanelOpen;
-                const panel = document.getElementById('filter-panel');
-                if (!panel) return;
-                if (this.filterPanelOpen) {
-                    panel.style.display = '';
-                    panel.style.animation = 'none';
-                    requestAnimationFrame(() => {
-                        panel.style.animation = '';
-                    });
-                document.getElementById('content').scrollTop = 0;
-                } else {
-                    panel.style.display = 'none';
-                }
-            },
-
-            updateFilterBtn() {
-                const btn = document.getElementById('filter-toggle-btn');
-                if (!btn) return;
-                const allOn = Object.values(this.filters).every(v => v);
-                btn.classList.toggle('has-filter', !allOn);
-            },
-
-            async loadDisruptions() {
-                const dot = document.getElementById('last-update-dot');
-                if (dot) dot.classList.add('refreshing');
-                try {
-                    const response = await fetch('https://data.mobilites-m.fr/api/dyn/evtTC/json');
-                    const data = await response.json();
-
-                    if (!data || Object.keys(data).length === 0) {
-                        this.showEmpty('Trafic normal', 'Aucune perturbation signalée');
-                        return;
-                    }
-
-                    const now = new Date();
-
-                    const allDisruptions = Object.values(data).filter(d => {
-                        const lineInfo = getLineInfo(d.listeLigne);
-                        if (!lineInfo) return false;
-                        if (!d.visibleTC) return false;
-                        if (!isUnknownEnd(d.dateFin)) {
-                            const end = parseDate(d.dateFin);
-                            if (end && now > end) return false;
-                        }
-                        return true;
-                    });
-
-                    this.allCurrent = [];
-                    this.allFuture  = [];
-
-                    allDisruptions.forEach(d => {
-                        const start = parseDate(d.dateDebut);
-                        if (!start || now >= start) {
-                            this.allCurrent.push(d);
-                        } else {
-                            this.allFuture.push(d);
-                        }
-                    });
-
-                    this.allCurrent.sort(sortCurrent);
-                    this.allFuture.sort(sortUpcoming);
-
-                    this.renderDisruptions();
-                    this._renderLineViewDisruptions();
-                    this.updateLastUpdate();
-                    if (dot) dot.classList.remove('refreshing');
-
-                } catch (error) {
-                    if (dot) dot.classList.remove('refreshing');
-                    console.error('Erreur:', error);
-                    document.getElementById('disruptions-content').innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">⚡</div>
-                            <div class="empty-state-title">Erreur de chargement</div>
-                            <div class="empty-state-sub">Vérifiez votre connexion et réessayez.</div>
-                        </div>`;
-                }
-            },
-
-            renderDisruptions() {
-                const current = this.allCurrent.filter(d => {
-                    const info = getLineInfo(d.listeLigne);
-                    return info && this.filters[info.category];
+    const clusterTripIndex = [];
+    for (let ci = 0; ci < allStoptimes.length; ci++) {
+        const tripMap = new Map();
+        for (const pattern of (allStoptimes[ci] || [])) {
+            if (pattern.pattern.id.split(':')[1] !== lineShort) continue;
+            for (const t of pattern.times) {
+                if (!t.tripId) continue;
+                tripMap.set(t.tripId, {
+                    sched: t.scheduledDeparture ?? t.scheduledArrival,
+                    rt:    t.realtimeDeparture  ?? t.realtimeArrival
+                         ?? t.scheduledDeparture ?? t.scheduledArrival,
+                    dirDesc: pattern.pattern.desc || ''
                 });
-                const future = this.allFuture.filter(d => {
-                    const info = getLineInfo(d.listeLigne);
-                    return info && this.filters[info.category];
-                });
-
-                if (current.length === 0 && future.length === 0) {
-                    const allOn = Object.values(this.filters).every(v => v);
-                    const msg = allOn
-                        ? 'Aucune perturbation signalée'
-                        : 'Aucune perturbation pour les lignes sélectionnées';
-                    this.showEmpty('Trafic normal', msg);
-                    return;
-                }
-
-                let html = '<div class="content-inner">';
-
-                if (current.length > 0) {
-                    html += `
-                    <div class="section-header section-cur">
-                        <span class="section-label">⚠ En cours</span>
-                        <span class="section-badge">${current.length}</span>
-                        <span class="section-line"></span>
-                    </div>`;
-                    current.forEach((d, i) => { html += renderCard(d, i); });
-                }
-
-                if (future.length > 0) {
-                    if (current.length > 0) html += '<div class="sections-separator"></div>';
-                    html += `
-                    <div class="section-header section-fut">
-                        <span class="section-label">📅 À venir</span>
-                        <span class="section-badge">${future.length}</span>
-                        <span class="section-line"></span>
-                    </div>`;
-                    future.forEach((d, i) => { html += renderCard(d, i); });
-                }
-
-                html += `</div>`;
-
-                document.getElementById('disruptions-content').innerHTML = html;
-            },
-
-            updateLastUpdate() {
-                const now = new Date();
-                const text = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-                    + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                const el = document.getElementById('last-update');
-                const textEl = document.getElementById('last-update-text');
-                const dot = document.getElementById('last-update-dot');
-                if (el && textEl) {
-                    textEl.textContent = text;
-                    el.style.display = 'flex';
-                    dot.classList.add('fresh');
-                    setTimeout(() => dot.classList.remove('fresh'), 3000);
-                }
-            },
-
-            showEmpty(title, sub) {
-                document.getElementById('disruptions-content').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">✅</div>
-                        <div class="empty-state-title">${title}</div>
-                        <div class="empty-state-sub">${sub}</div>
-                    </div>`;
-            },
-
-            ponctualiteData: {},
-            ponctClusters: {},
-            ponctLineLoading: new Set(),
-            ponctualiteLoading: false,
-
-            async loadPonctualite() {
-                if (this.ponctualiteLoading) return;
-                this.ponctualiteLoading = true;
-                const btn = document.getElementById('ponct-refresh-btn');
-                if (btn) btn.classList.add('loading');
-                this._renderPonctSkeleton();
-                this.ponctualiteData = {};
-                this.ponctClusters   = {};
-
-                await Promise.all(LINES_TRAM.map(async (line) => {
-                    try {
-                        const res = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${line.id}/clusters`);
-                        const clusters = await res.json();
-                        this.ponctClusters[line.id] = Array.isArray(clusters) ? clusters : [];
-                    } catch (e) {
-                        console.warn(`Clusters ${line.id}:`, e);
-                        this.ponctClusters[line.id] = [];
-                    }
-                }));
-
-                this.ponctualiteLoading = false;
-                if (btn) btn.classList.remove('loading');
-
-                this._renderPonct();
-            },
-
-            async _loadLineDetail(lineId) {
-                if (this.ponctLineLoading.has(lineId)) return;
-                const clusters = this.ponctClusters[lineId];
-                if (!clusters || clusters.length === 0) return;
-
-                this.ponctLineLoading.add(lineId);
-                const line     = LINES_TRAM.find(l => l.id === lineId);
-                const lineShort = lineId.split(':')[1];
-                const nowSec   = this._getNowSec();
-                const safe     = lineId.replace(':', '-');
-
-                const detailEl = document.getElementById(`ponct-details-${safe}`);
-                if (detailEl) detailEl.innerHTML = `<div style="padding:14px 16px;color:var(--text-muted);font-size:0.8rem;display:flex;align-items:center;gap:8px;"><span class="last-update-dot refreshing" style="flex-shrink:0"></span> Chargement des données…</div>`;
-
-                try {
-                    const allStoptimes = await Promise.all(
-                        clusters.map(c =>
-                            fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${c.code}/stoptimes`)
-                                .then(r => r.ok ? r.json() : []).catch(() => [])
-                        )
-                    );
-
-                    let serviceDay = 0;
-                    outer: for (const stops of allStoptimes) {
-                        for (const pattern of stops) {
-                            for (const t of pattern.times) {
-                                if (t.serviceDay) { serviceDay = t.serviceDay; break outer; }
-                            }
-                        }
-                    }
-                    const nowSec = this._getNowSec(serviceDay);
-
-                    const tripMap = new Map();
-
-                    for (let ci = 0; ci < allStoptimes.length; ci++) {
-                        const stopName = clusters[ci].name;
-                        for (const pattern of allStoptimes[ci]) {
-                            if (pattern.pattern.id.split(':')[1] !== lineShort) continue;
-                            const rawDesc = pattern.pattern.desc || '';
-                            const direction = rawDesc.includes(' > ')
-                                ? rawDesc.split(' > ').slice(1).join(' > ').trim()
-                                : rawDesc;
-
-                            for (const t of pattern.times) {
-                                if (!t.tripId || t.realtimeState !== 'UPDATED') continue;
-                                const scheduledSec = t.scheduledDeparture ?? t.scheduledArrival;
-                                const realtimeSec  = t.realtimeDeparture  ?? t.realtimeArrival ?? scheduledSec;
-
-                                if (!tripMap.has(t.tripId)) {
-                                    tripMap.set(t.tripId, { tripId: t.tripId, direction, schedule: [] });
-                                }
-                                tripMap.get(t.tripId).schedule.push({ stopName, clusterIdx: ci, scheduledSec, realtimeSec,
-                                    serviceDay: t.serviceDay || serviceDay,
-                                    delay: t.departureDelay ?? t.arrivalDelay ?? (realtimeSec - scheduledSec) });
-                            }
-                        }
-                    }
-
-                    for (const [tripId, trip] of tripMap) {
-                        trip.schedule.sort((a, b) => a.scheduledSec - b.scheduledSec);
-                        const hasPast   = trip.schedule.some(s => s.scheduledSec <= nowSec);
-                        const hasFuture = trip.schedule.some(s => s.scheduledSec > nowSec && s.scheduledSec <= nowSec + 7200);
-                        if (!hasPast && !hasFuture) { tripMap.delete(tripId); continue; }
-
-
-                        const firstFuture = trip.schedule.find(s => s.scheduledSec > nowSec);
-                        const lastPassed  = [...trip.schedule].reverse().find(s => s.scheduledSec <= nowSec);
-                        const refStop     = firstFuture ?? lastPassed;
-                        trip.delay = refStop ? refStop.delay : 0;
-
-                        const nextStop = trip.schedule.find(s => s.realtimeSec > nowSec);
-                        trip.positionIdx = nextStop
-                            ? nextStop.clusterIdx
-                            : (trip.schedule[trip.schedule.length - 1]?.clusterIdx ?? 9999);
-                    }
-
-                    const directions = {};
-                    for (const trip of tripMap.values()) {
-                        if (!directions[trip.direction]) directions[trip.direction] = [];
-                        directions[trip.direction].push(trip);
-                    }
-                    for (const arr of Object.values(directions)) {
-                        const sample = arr.find(t => t.schedule.length >= 2);
-                        const isReverse = sample
-                            ? sample.schedule[sample.schedule.length - 1].clusterIdx < sample.schedule[0].clusterIdx
-                            : false;
-                        arr.sort((a, b) => isReverse ? b.positionIdx - a.positionIdx : a.positionIdx - b.positionIdx);
-
-                        if (arr.length > 1) {
-                            const firstPosIdx = arr[0].positionIdx;
-                            const atFirst = arr.filter(t => t.positionIdx === firstPosIdx);
-                            if (atFirst.length > 1) {
-                                atFirst.sort((a, b) => a.schedule[0].scheduledSec - b.schedule[0].scheduledSec);
-                                const toRemove = new Set(atFirst.slice(1).map(t => t.tripId));
-                                arr.splice(0, arr.length, ...arr.filter(t => !toRemove.has(t.tripId)));
-                            }
-                        }
-                    }
-
-                    this.ponctualiteData[lineId] = { line, directions, total: tripMap.size, loadedAt: Date.now() };
-                } catch (e) {
-                    console.warn(`Détail ${lineId}:`, e);
-                    this.ponctualiteData[lineId] = { line, directions: {}, total: 0, loadedAt: Date.now() };
-                }
-
-                this.ponctLineLoading.delete(lineId);
-                this._renderPonctCard(lineId);
-            },
-
-            _getNowSec(serviceDay = 0) {
-                if (serviceDay) return Math.floor(Date.now() / 1000) - serviceDay;
-                const n = new Date();
-                let s = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
-                if (n.getHours() < 4) s += 86400;
-                return s;
-            },
-
-            _getPonctPositionHtml(schedule) {
-                if (!schedule || schedule.length === 0)
-                    return `<div class="ponct-trip-pos"><div class="radar-info">Position inconnue</div></div>`;
-                const serviceDay = schedule[0]?.serviceDay || 0;
-                const now = this._getNowSec(serviceDay);
-                let lastPassed = null, nextStop = null;
-                for (const s of schedule) {
-                    if (s.realtimeSec <= now) lastPassed = s;
-                    else if (!nextStop)       nextStop   = s;
-                }
-                if (nextStop) {
-                    const displayStop = (lastPassed && (now - lastPassed.realtimeSec) < 10) ? lastPassed : nextStop;
-                    return `<div class="ponct-trip-pos"><div class="radar-info">Tram vers <b>${displayStop.stopName}</b></div></div>`;
-                }
-                if (lastPassed)
-                    return `<div class="ponct-trip-pos"><div class="radar-info">Tram vers <b>${lastPassed.stopName}</b></div></div>`;
-                return `<div class="ponct-trip-pos"><div class="radar-info">Position inconnue</div></div>`;
-            },
-
-            _ponctStats(trips) {
-                if (!trips.length) return null;
-                const delays = trips.map(t => t.delay);
-                const sorted = [...delays].sort((a, b) => a - b);
-                const mean  = Math.round(delays.reduce((s, d) => s + d, 0) / delays.length);
-                const worst = sorted[sorted.length - 1];
-                return { mean, worst, count: delays.length };
-            },
-
-            _delayCls(s) {
-                if (s <= 30)  return 'delay-ok';
-                if (s <= 60)  return 'delay-slight';
-                if (s <= 180) return 'delay-moderate';
-                return 'delay-heavy';
-            },
-
-            _dotCls(s) {
-                if (s <= 30)  return 'dot-ok';
-                if (s <= 60)  return 'dot-slight';
-                if (s <= 180) return 'dot-moderate';
-                return 'dot-heavy';
-            },
-
-            _fmtDelay(s) {
-                if (s > -30 && s <= 30) return `<span class="delay-ok">À l'heure</span>`;
-                const abs = Math.abs(s);
-                const m   = Math.floor(abs / 60);
-                const sec = abs % 60;
-                const sign = s < 0 ? '-' : '+';
-                const str  = m > 0
-                    ? `${sign}${m} min${sec > 0 ? ' ' + String(sec).padStart(2, '0') : ''}`
-                    : `${sign}${sec}s`;
-                return `<span class="${this._delayCls(s)}">${str}</span>`;
-            },
-
-            togglePonctLine(safeId) {
-                const card = document.getElementById(`ponct-card-${safeId}`);
-                if (!card) return;
-                const wasExpanded = card.classList.contains('expanded');
-                card.classList.toggle('expanded');
-                if (!wasExpanded) {
-                    const lineId = safeId.replace('-', ':');
-                    if (!this.ponctualiteData[lineId]) this._loadLineDetail(lineId);
-                }
-            },
-
-            togglePonctDir(safeId, idx) {
-                document.getElementById(`ponct-dir-${safeId}-${idx}`)?.classList.toggle('dir-expanded');
-            },
-
-            _renderPonctSkeleton() {
-                const el = document.getElementById('ponctualite-content');
-                if (!el) return;
-                el.innerHTML = LINES_TRAM.map(() => `
-                    <div class="ponct-line-card">
-                        <div class="ponct-card-header">
-                            <div class="skel skel-circle"></div>
-                            <div class="skel-lines">
-                                <div class="skel skel-line" style="width:35%;height:10px;"></div>
-                                <div class="skel skel-line" style="width:65%;height:10px;margin-top:5px;"></div>
-                            </div>
-                        </div>
-                    </div>`).join('');
-            },
-
-            _renderPonct() {
-                const el = document.getElementById('ponctualite-content');
-                if (!el) return;
-
-                el.innerHTML = LINES_TRAM.map((line, li) => {
-                    const safe = line.id.replace(':', '-');
-                    return `<div class="ponct-line-card" id="ponct-card-${safe}" style="animation-delay:${li*60}ms">
-                        <div class="ponct-card-header" onclick="app.togglePonctLine('${safe}')">
-                            <div class="ponct-line-badge" style="background:${line.color}">${line.name}</div>
-                            <div class="ponct-card-info">
-                                <div class="ponct-card-name">Ligne ${line.name}</div>
-                                <div class="ponct-stats-mini">
-                                    <span style="font-size:0.72rem;color:var(--text-muted);">Appuyer pour charger</span>
-                                </div>
-                            </div>
-                            <div class="ponct-score-dot" style="background:var(--border)"></div>
-                            <span class="ponct-expand-icon">▾</span>
-                        </div>
-                        <div class="ponct-details" id="ponct-details-${safe}"></div>
-                    </div>`;
-                }).join('');
-            },
-
-            _renderPonctCard(lineId) {
-                const safe = lineId.replace(':', '-');
-                const card = document.getElementById(`ponct-card-${safe}`);
-                if (!card) return;
-
-                const data  = this.ponctualiteData[lineId];
-                const line  = LINES_TRAM.find(l => l.id === lineId);
-                if (!line) return;
-
-                const trips = data ? Object.values(data.directions).flat() : [];
-
-                const header = card.querySelector('.ponct-card-header');
-                const gs = trips.length ? this._ponctStats(trips) : null;
-
-                const loadedAt = data && data.loadedAt
-                    ? new Date(data.loadedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                    : null;
-                const timestampHtml = loadedAt
-                    ? `<div class="ponct-line-timestamp"><span class="ts-dot"></span>Actualisé à ${loadedAt}</div>`
-                    : '';
-
-                if (header) {
-                    header.querySelector('.ponct-card-info').innerHTML = trips.length === 0
-                        ? `<div class="ponct-card-name">Ligne ${line.name}</div>
-                           <div style="font-size:0.73rem;color:var(--text-muted);">Pas de données temps réel</div>
-                           ${timestampHtml}`
-                        : `<div class="ponct-card-name">Ligne ${line.name} &nbsp;·&nbsp; ${trips.length} tram${trips.length>1?'s':''}</div>
-                           <div class="ponct-stats-mini">
-                               ${gs ? `<span class="ponct-stat-chip">Moyenne : <b class="${this._delayCls(gs.mean)}">${this._fmtDelay(gs.mean)}</b></span>
-                               <span class="ponct-stat-chip">Max : <b class="${this._delayCls(gs.worst)}">${this._fmtDelay(gs.worst)}</b></span>` : ''}
-                           </div>
-                           ${timestampHtml}`;
-                    const dot = header.querySelector('.ponct-score-dot');
-                    if (dot) { dot.className = `ponct-score-dot ${gs ? this._dotCls(gs.mean) : 'dot-ok'}`; dot.style.background = ''; }
-                }
-
-                const detailEl = document.getElementById(`ponct-details-${safe}`);
-                if (!detailEl) return;
-
-                if (trips.length === 0) {
-                    detailEl.innerHTML = `<div style="padding:12px 16px;font-size:0.8rem;color:var(--text-muted);">Aucun tram en circulation avec données temps réel.</div>`;
-                    return;
-                }
-
-                const maxDelay = Math.max(60, ...trips.map(t => Math.abs(t.delay)));
-
-                detailEl.innerHTML = Object.entries(data.directions).map(([dir, dtrips], di) => {
-                    const ds = this._ponctStats(dtrips);
-                    const tripsHtml = dtrips.map(trip => `
-                        <div class="ponct-trip">
-                            <div class="ponct-trip-top">
-                                <span class="ponct-trip-delay">${this._fmtDelay(trip.delay)}</span>
-                                <span class="ponct-trip-id">${trip.tripId}</span>
-                            </div>
-                            ${this._getPonctPositionHtml(trip.schedule)}
-                        </div>`).join('');
-
-                    return `<div class="ponct-direction" id="ponct-dir-${safe}-${di}">
-                        <div class="ponct-dir-header" onclick="app.togglePonctDir('${safe}',${di})">
-                            <span class="ponct-dir-arrow">▶</span>
-                            <span class="ponct-dir-name">Vers ${dir}</span>
-                            <span class="ponct-dir-count">${dtrips.length} tram${dtrips.length>1?'s':''}</span>
-                            <span class="ponct-dir-avg ${ds ? this._delayCls(ds.mean) : ''}">${ds ? this._fmtDelay(ds.mean) : ''}</span>
-                        </div>
-                        <div class="ponct-trips">${tripsHtml}</div>
-                    </div>`;
-                }).join('');
             }
-        };
-
-        document.addEventListener("DOMContentLoaded", () => {
-            app.init();
-            history.pushState({ infoApp: 'app' }, '');
-            let handling = false;
-            window.addEventListener('popstate', () => {
-                if (handling) return;
-                handling = true;
-                history.go(1);
-                setTimeout(() => {
-                    handling = false;
-                    if (document.body.classList.contains('line-mode')) {
-                        app.exitLineView();
-                    }
-                }, 50);
-            });
-        });
-    </script>
-
-    <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/ouestmontram/sw.js")
-                .then(() => console.log("Service Worker enregistré"));
         }
-    </script>
+        clusterTripIndex.push(tripMap);
+    }
+
+    let sumG        = 0;
+    let pairCount   = 0;
+    let maxRealHwSec = 0;
+    let blockageBonus = 0;
+    const blockageAlerts = [];
+    const _devPairs = [];
+
+    for (const [dirName, trips] of dirEntries) {
+        const sorted = trips
+            .filter(t => t.positionIdx != null)
+            .sort((a, b) => b.positionIdx - a.positionIdx);
+
+        if (sorted.length < 2) continue;
+
+        const seenPairs = new Set();
+
+        for (let i = 0; i < sorted.length - 1; i++) {
+            const frontTrip = sorted[i];
+            const rearTrip  = sorted[i + 1];
+
+            if (!rearTrip) { _devPairs.push({ skipped: true, dir: dirName, reason: 'pas de tram derrière' }); continue; }
+
+            const pairKey = `${frontTrip.tripId}|${rearTrip.tripId}`;
+            if (seenPairs.has(pairKey)) { _devPairs.push({ skipped: true, dir: dirName, reason: `doublon ${pairKey}` }); continue; }
+
+            const frontFuture = frontTrip.schedule
+                .filter(s => s.hasRealtime && s.realtimeSec > nowSec)
+                .sort((a, b) => a.realtimeSec - b.realtimeSec);
+
+            let frontTime = null, rearTime = null, refStopName = null;
+
+            for (const stop of frontFuture) {
+                const ci = stop.clusterIdx;
+                if (ci == null || !clusterTripIndex[ci]) continue;
+                const idx = clusterTripIndex[ci];
+                const ft  = idx.get(frontTrip.tripId);
+                const rt  = idx.get(rearTrip.tripId);
+                if (ft && rt && ft.sched != null && rt.sched != null) {
+                    frontTime = ft; rearTime = rt; refStopName = stop.stopName; break;
+                }
+            }
+
+            if (!frontTime || !rearTime) {
+                _devPairs.push({ skipped: true, dir: dirName, reason: `aucun arrêt commun trouvé pour ${pairKey}` });
+                continue;
+            }
+
+            seenPairs.add(pairKey);
+
+            const schedHwMin = (rearTime.sched - frontTime.sched) / 60;
+            const realHwMin  = (rearTime.rt    - frontTime.rt)    / 60;
+
+            if (schedHwMin <= 0 || realHwMin < 0) {
+                _devPairs.push({ skipped: true, dir: dirName, reason: `headway invalide sched=${schedHwMin.toFixed(2)} real=${realHwMin.toFixed(2)}` });
+                continue;
+            }
+
+            const ratio = Math.min(realHwMin / schedHwMin, 10);
+            const diff  = realHwMin - schedHwMin;
+            let G       = Math.round(ratio * diff * 100) / 100;
+
+            const frontDelayMin = (frontTrip.delay ?? 0) / 60;
+            if (frontDelayMin >= 10 && G < 13) G = 13;
+
+            sumG += G;
+            pairCount++;
+            _devPairs.push({ dir: dirName, stop: refStopName, realHwMin, schedHwMin, ratio, diff, G });
+
+            if (realHwMin * 60 > maxRealHwSec) maxRealHwSec = realHwMin * 60;
+        }
+
+        for (let i = 0; i < sorted.length; i++) {
+            const headDelayMin = (sorted[i].delay ?? 0) / 60;
+            if (headDelayMin < 10) continue;
+
+            const behind = sorted.slice(i + 1);
+            if (behind.length < 2) continue;
+
+            let consecutive = 0;
+            let prevDelay = headDelayMin;
+            for (let j = 0; j < behind.length; j++) {
+                const d = (behind[j].delay ?? 0) / 60;
+                if (d < prevDelay) { consecutive++; prevDelay = d; }
+                else break;
+            }
+
+            if (consecutive >= 2) {
+                const nextStop = sorted[i].schedule.find(s => s.hasRealtime && s.realtimeSec > nowSec);
+                if (nextStop) {
+                    blockageAlerts.push(
+                        `Un potentiel blocage de la circulation a lieu vers ${nextStop.stopName} en direction de ${dirName}.`
+                    );
+                    blockageBonus += 5;
+                }
+            }
+        }
+    }
+
+    if (pairCount === 0) return null;
+
+    const avgG = sumG / pairCount + blockageBonus;
+    const totalG = Math.round(avgG * 100) / 100;
+
+    const maxWaitMin = Math.round(maxRealHwSec / 60);
+    const waitMin  = `Temps d'attente maximum\u00a0: ${maxWaitMin} minute${maxWaitMin > 1 ? 's' : ''}.`;
+    const waitWarn = `Temps d'attente maximum\u00a0: ${maxWaitMin} minute${maxWaitMin > 1 ? 's' : ''} (durée susceptible de s'allonger).`;
+
+    let mainMsg, severity;
+    if (totalG < 2) {
+        mainMsg  = 'La circulation est fluide sur la ligne. Bon voyage\u00a0;)';
+        severity = 'ok';
+    } else if (totalG < 4) {
+        mainMsg  = 'La circulation est fluide sur la ligne.';
+        severity = 'ok';
+    } else if (totalG < 7) {
+        mainMsg  = 'La ligne est légèrement retardée.';
+        severity = 'slight';
+    } else if (totalG < 10) {
+        mainMsg  = 'La ligne est retardée.';
+        severity = 'moderate';
+    } else if (totalG < 12) {
+        mainMsg  = 'La ligne est retardée. Prévoyez du temps supplémentaire pour vos déplacements.';
+        severity = 'moderate';
+    } else if (totalG < 15) {
+        mainMsg  = 'La ligne est fortement retardée. Prévoyez du temps supplémentaire pour vos déplacements.';
+        severity = 'critical';
+    } else {
+        mainMsg  = 'La ligne est très fortement retardée. Privilégiez une autre ligne pour vos déplacements.';
+        severity = 'critical';
+    }
+
+    const messages = [mainMsg, ...blockageAlerts];
+    if (totalG >= 30) {
+        messages.push(totalG < 35 ? waitMin : waitWarn);
+    }
+
+    return { messages, severity, totalTrips, _totalG: totalG, _devPairs };
+}
+
+const app = {
+    currentView: 'view-main',
+    mainTab: 'today',
+    lineTab: 'today',
+    currentLineId: null,
+    allCurrent: [],
+    allFuture: [],
+    lastUpdate: null,
+
+    ponctData: {},
+    ponctClusters: {},
+    ponctLineLoading: new Set(),
+    ponctLoading: false,
+    ponctLoadedAt: null,
+
+    _navigate(toId, dir = 'fwd') {
+        const fromEl = document.getElementById(this.currentView);
+        const toEl   = document.getElementById(toId);
+        if (!toEl || fromEl === toEl) return;
+
+        const enterAnim = dir === 'fwd' ? 'slideInRight' : 'slideInLeft';
+        const exitAnim  = dir === 'fwd' ? 'slideOutLeft' : 'slideOutRight';
+
+        toEl.style.display = (toId === 'view-line') ? 'flex' : 'block';
+        if (toId === 'view-line') {
+            const ls = document.getElementById('line-scroll');
+            if (ls) ls.scrollTop = 0;
+        } else { toEl.scrollTop = 0; }
+        toEl.style.animation = `${enterAnim} .32s cubic-bezier(.4,0,.2,1) both`;
+        fromEl.style.animation = `${exitAnim} .32s cubic-bezier(.4,0,.2,1) both`;
+
+        setTimeout(() => {
+            fromEl.style.display = 'none';
+            fromEl.style.animation = '';
+            toEl.style.animation = '';
+            this.currentView = toId;
+        }, 330);
+    },
+
+    goBack() { this._navigate('view-main', 'back'); },
+
+    init() {
+        const params = new URLSearchParams(window.location.search);
+        const lineParam = params.get('line');
+
+        this._renderBadgeSkeleton();
+
+        this.loadDisruptions().then(() => {
+            if (lineParam) {
+                const lid = lineParam.replace('-', ':');
+                this._openLineView(lid, 'today');
+                const main = document.getElementById('view-main');
+                const line = document.getElementById('view-line');
+                if (main) main.style.display = 'none';
+                if (line) { line.style.display = 'flex'; line.style.animation = 'none'; }
+                this.currentView = 'view-line';
+            }
+        });
+    },
+
+    setMainTab(tab) {
+        if (this.mainTab === tab) return;
+        this.mainTab = tab;
+        this._updateTabs('main-tabs', tab);
+        this.renderMainBadges();
+        document.getElementById('delay-entry-wrap').style.display = tab === 'today' ? '' : 'none';
+    },
+
+    setLineTab(tab) {
+        if (this.lineTab === tab) return;
+        this.lineTab = tab;
+        this._updateTabs('line-tabs', tab);
+        this.renderLineContent();
+    },
+
+    _updateTabs(tabsId, tab) {
+        const tabs = document.getElementById(tabsId);
+        if (!tabs) return;
+        tabs.dataset.tab = tab;
+        tabs.querySelectorAll('.tab-btn').forEach(btn => {
+            const isActive = btn.dataset.tabTarget === tab;
+            btn.classList.toggle('is-active', isActive);
+        });
+    },
+
+    _updateDelaySituation() {
+        const el = document.getElementById('delay-situation');
+        if (!el || !this.ponctLoadedAt) return;
+        const d = this.ponctLoadedAt;
+        const date = d.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'});
+        const time = d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}).replace(':', 'h');
+        el.textContent = `Situation au ${date} à ${time}`;
+        el.style.display = '';
+    },
+
+    goToDelay() {
+        this._navigate('view-delay', 'fwd');
+        this._updateDelaySituation();
+        this._initDelayView();
+    },
+
+    openLineView(lineId, fromTab) {
+        this._openLineView(lineId, fromTab);
+        this._navigate('view-line', 'fwd');
+    },
+
+    _openLineView(lineId, fromTab) {
+        this.currentLineId = lineId;
+        this.lineTab = fromTab || 'today';
+        this._updateTabs('line-tabs', this.lineTab);
+
+        const info = getLineInfo(lineId);
+        const badge = document.getElementById('lv-badge');
+        const nameEl = document.getElementById('lv-name');
+
+        if (info) {
+            badge.style.background = info.color;
+            badge.style.color = info.textColor;
+            badge.textContent = info.name;
+            nameEl.textContent = 'Ligne ' + info.name;
+        } else {
+            badge.style.background = '#888';
+            badge.style.color = '#fff';
+            badge.textContent = lineId.split(':')[1] || '?';
+            nameEl.textContent = 'Ligne ' + (lineId.split(':')[1] || lineId);
+        }
+
+        this.renderLineContent();
+        this._updateLineTimestamp();
+    },
+
+    async loadDisruptions() {
+        try {
+            const res = await fetch('https://data.mobilites-m.fr/api/dyn/evtTC/json');
+            const data = await res.json();
+            const now = new Date();
+
+            if (!data || Object.keys(data).length === 0) {
+                this.allCurrent = []; this.allFuture = [];
+                this.renderMainBadges();
+                return;
+            }
+
+            const all = Object.values(data).filter(d => {
+                const info = getLineInfo(d.listeLigne);
+                if (!info || !d.visibleTC) return false;
+                if (!isUnknownEnd(d.dateFin)) {
+                    const end = parseDate(d.dateFin);
+                    if (end && now > end) return false;
+                }
+                return true;
+            });
+
+            this.allCurrent = [];
+            this.allFuture  = [];
+            all.forEach(d => {
+                const start = parseDate(d.dateDebut);
+                if (!start || now >= start) this.allCurrent.push(d);
+                else                         this.allFuture.push(d);
+            });
+            this.allCurrent.sort(sortCurrent);
+            this.allFuture.sort(sortUpcoming);
+            this.lastUpdate = new Date();
+            this.renderMainBadges();
+            if (this.currentView === 'view-line' && this.currentLineId) {
+                this.renderLineContent();
+                this._updateLineTimestamp();
+            }
+        } catch(e) {
+            console.error('Infotrafic load error:', e);
+            document.getElementById('main-badges').innerHTML =
+                '<div class="empty-state"><div class="empty-state-title">Erreur de chargement</div><div class="empty-state-sub">Vérifiez votre connexion.</div></div>';
+        }
+    },
+
+    _renderBadgeSkeleton() {
+        const el = document.getElementById('main-badges');
+        el.innerHTML = `<div class="badge-skel-wrap">${[...Array(8)].map(() =>
+            `<div class="skel skel-circle" style="width:44px;height:44px;"></div>`
+        ).join('')}</div>`;
+    },
+
+    renderMainBadges() {
+        const el = document.getElementById('main-badges');
+        const tab = this.mainTab;
+
+        let relevant;
+        if (tab === 'today') {
+            relevant = [
+                ...this.allCurrent,
+                ...this.allFuture.filter(d => isToday(d.dateDebut))
+            ];
+        } else {
+            const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+            const ongoingMultiDay = this.allCurrent.filter(d => {
+                if (isUnknownEnd(d.dateFin)) return true;
+                const end = parseDate(d.dateFin);
+                return end && end > todayEnd;
+            });
+            relevant = [
+                ...ongoingMultiDay,
+                ...this.allFuture.filter(d => !isToday(d.dateDebut))
+            ];
+        }
+
+        const linesWithDis = new Set(relevant.map(d => normalizeId(d.listeLigne)));
+
+        if (linesWithDis.size === 0) {
+            el.innerHTML = `<div class="empty-state">
+                <div class="empty-state-title">Trafic normal</div>
+                <div class="empty-state-sub">Aucune perturbation ${tab === 'today' ? "aujourd'hui" : 'à venir'}.</div>
+            </div>`;
+            return;
+        }
+
+        const TRAM_ICON = '<svg width="22" height="26" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3,16 L3,7 Q3,1 10,1 Q17,1 17,7 L17,16 Q17,19 14,19.5 Q10,20 6,19.5 Q3,19 3,16 Z"/><line x1="4" y1="5" x2="16" y2="5"/><path d="M3,14 Q10,17 17,14"/><circle cx="10" cy="17.5" r="0.9" fill="currentColor" stroke="none"/><line x1="7.5" y1="20" x2="4" y2="24"/><line x1="12.5" y1="20" x2="16" y2="24"/></svg>';
+        const BUS_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 2 7"/><path d="M10 6h4"/><path d="m22 7-2-1"/><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="M6 19v2"/><path d="M18 21v-2"/></svg>';
+        let html = '';
+        let delay = 0;
+        LINE_GROUPS.forEach(group => {
+            const groupLines = group.lines.filter(l => linesWithDis.has(l.id));
+            if (!groupLines.length) return;
+            const icon = group.key === 'tram' ? TRAM_ICON : BUS_ICON;
+            html += `<div class="badge-group">
+                <div class="badge-group-lbl">${icon}${group.label}</div>
+                <div class="badge-row">`;
+            groupLines.forEach(line => {
+                const isTram = group.key === 'tram';
+                html += `<button class="line-badge${isTram ? ' is-tram' : ''}"
+                    style="background:${line.color}; color:${line.textColor}; animation-delay:${delay}ms"
+                    onclick="app.openLineView('${line.id}', '${tab}')">${line.name}</button>`;
+                delay += 20;
+            });
+            html += `</div></div>`;
+        });
+
+        el.innerHTML = html;
+    },
+
+    renderLineContent() {
+        const el = document.getElementById('lv-content');
+        const lid = this.currentLineId;
+        const tab = this.lineTab;
+        if (!lid || !el) return;
+
+        const curLine        = this.allCurrent.filter(d => normalizeId(d.listeLigne) === lid);
+        const futureToday    = this.allFuture.filter(d => normalizeId(d.listeLigne) === lid && isToday(d.dateDebut));
+        const futureUpcoming = this.allFuture.filter(d => normalizeId(d.listeLigne) === lid && !isToday(d.dateDebut));
+
+        const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+        const ongoingMultiDay = curLine.filter(d => {
+            if (isUnknownEnd(d.dateFin)) return true;
+            const end = parseDate(d.dateFin);
+            return end && end > todayEnd;
+        });
+
+        let html = '';
+
+        if (tab === 'today') {
+            const enCours = curLine;
+            const plusTard = futureToday;
+            if (!enCours.length && !plusTard.length) {
+                html = `<div class="empty-state">
+                    <div class="empty-state-title">Trafic normal</div>
+                    <div class="empty-state-sub">Aucune perturbation aujourd'hui sur cette ligne.</div>
+                </div>`;
+            } else {
+                if (enCours.length) {
+                    html += `<div class="section-lbl">En cours</div>`;
+                    enCours.forEach((d, i) => { html += this._renderDisCard(d, i); });
+                }
+                if (plusTard.length) {
+                    html += `<div class="section-lbl">Plus tard dans la journée</div>`;
+                    plusTard.forEach((d, i) => { html += this._renderDisCard(d, i); });
+                }
+            }
+        } else {
+            const upcomingAll = [...ongoingMultiDay, ...futureUpcoming];
+            if (!upcomingAll.length) {
+                html = `<div class="empty-state">
+                    <div class="empty-state-title">Aucune perturbation à venir</div>
+                    <div class="empty-state-sub">Aucune perturbation programmée sur les prochains jours.</div>
+                </div>`;
+            } else {
+                html += `<div class="section-lbl">Prochainement</div>`;
+                upcomingAll.forEach((d, i) => { html += this._renderDisCard(d, i); });
+            }
+        }
+
+        el.innerHTML = html;
+    },
+
+    _renderDisCard(d, i) {
+        const info = getLineInfo(d.listeLigne);
+        let titre = (d.titre || 'Perturbation');
+        titre = titre.charAt(0).toUpperCase() + titre.slice(1);
+        const desc = cleanText(d.description || d.texte || '');
+        const ddebut = fmtDateLabel(d.dateDebut);
+        const unknownEnd = isUnknownEnd(d.dateFin);
+        const dfin = unknownEnd ? null : fmtDateLabel(d.dateFin);
+
+        const sameDay = !unknownEnd && d.dateDebut && d.dateFin &&
+            d.dateDebut.split(' ')[0] === d.dateFin.split(' ')[0];
+
+        let datesHtml;
+        if (unknownEnd) {
+            datesHtml = `Depuis le ${ddebut}`;
+        } else if (sameDay) {
+            const timeDebut = d.dateDebut.split(' ')[1];
+            const timeFin = d.dateFin.split(' ')[1];
+            const datePart = ddebut.substring(0, ddebut.lastIndexOf(' '));
+            datesHtml = `${datePart} de ${timeDebut} à ${timeFin}`;
+        } else {
+            datesHtml = `Du ${ddebut} au ${dfin}`;
+        }
+
+        return `<div class="dis-card" style="animation-delay:${i*45}ms">
+            <div class="dis-card-top">
+                <div class="dis-card-title">${titre}</div>
+                <div class="dis-card-dates">${datesHtml}</div>
+            </div>
+            ${desc ? `<div class="dis-card-divider"></div>
+            <div class="dis-card-body">${desc}${d.plan ? `<br><a href="${d.plan}" class="dis-card-link">EN SAVOIR +</a>` : ''}</div>` : ''}
+        </div>`;
+    },
+
+    _updateLineTimestamp() {
+        const el = document.getElementById('lv-update');
+        if (!el || !this.lastUpdate) return;
+        const d = this.lastUpdate;
+        const txt = d.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric'})
+            + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}).replace(':', 'h');
+        el.textContent = 'Mis à jour le ' + txt;
+        el.style.display = '';
+    },
+
+    _initDelayView() {
+        const el = document.getElementById('delay-content');
+        if (!el) return;
+
+        el.innerHTML = LINES_TRAM.map((line, i) => {
+            const safe = line.id.replace(':', '-');
+            return `<div class="delay-card" id="dc-${safe}" style="animation-delay:${i*55}ms">
+                <div class="delay-card-head">
+                    <div class="delay-badge" style="background:${line.color}; color:${line.textColor}">${line.name}</div>
+                    <div class="delay-card-info">
+                        <div class="delay-line-lbl">Ligne ${line.name}</div>
+                        <div class="delay-diag diag-loading" id="dc-diag-${safe}">Chargement des données...</div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        if (!this.ponctLoading && Object.keys(this.ponctClusters).length === 0) {
+            this._loadPonctAll();
+        } else if (Object.keys(this.ponctClusters).length > 0) {
+            LINES_TRAM.forEach(line => {
+                if (!this.ponctData[line.id]) this._loadLineDetail(line.id);
+                else this._renderDelayCard(line.id);
+            });
+        }
+    },
+
+    async _loadPonctAll() {
+        this.ponctLoading = true;
+        this.ponctClusters = {};
+
+        await Promise.all(LINES_TRAM.map(async line => {
+            try {
+                const res = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/routes/${line.id}/clusters`);
+                this.ponctClusters[line.id] = await res.json().then(c => Array.isArray(c) ? c : []);
+            } catch(e) {
+                this.ponctClusters[line.id] = [];
+            }
+        }));
+
+        this.ponctLoading = false;
+        this.ponctLoadedAt = new Date();
+        this._updateDelaySituation();
+
+        LINES_TRAM.forEach(line => this._loadLineDetail(line.id));
+    },
+
+    async _loadLineDetail(lineId) {
+        if (this.ponctLineLoading.has(lineId)) return;
+        const clusters = this.ponctClusters[lineId];
+        if (!clusters || clusters.length === 0) {
+            this.ponctData[lineId] = { directions: {}, total: 0, loadedAt: Date.now() };
+            this._renderDelayCard(lineId);
+            return;
+        }
+
+        this.ponctLineLoading.add(lineId);
+        const lineShort = lineId.split(':')[1];
+
+        try {
+            const allStoptimes = await Promise.all(
+                clusters.map(c =>
+                    fetch(`https://data.mobilites-m.fr/api/routers/default/index/clusters/${c.code}/stoptimes`)
+                        .then(r => r.ok ? r.json() : []).catch(() => [])
+                )
+            );
+
+            let serviceDay = 0;
+            outer: for (const stops of allStoptimes) {
+                for (const pattern of stops) {
+                    for (const t of pattern.times) {
+                        if (t.serviceDay) { serviceDay = t.serviceDay; break outer; }
+                    }
+                }
+            }
+            const nowSec = this._getNowSec(serviceDay);
+            const tripMap = new Map();
+
+            for (let ci = 0; ci < allStoptimes.length; ci++) {
+                const stopName = clusters[ci].name;
+                for (const pattern of allStoptimes[ci]) {
+                    if (pattern.pattern.id.split(':')[1] !== lineShort) continue;
+                    const rawDesc = pattern.pattern.desc || '';
+                    const direction = rawDesc.includes(' > ')
+                        ? rawDesc.split(' > ').slice(1).join(' > ').trim()
+                        : rawDesc;
+                    for (const t of pattern.times) {
+                        if (!t.tripId || t.realtimeState !== 'UPDATED') continue;
+                        const scheduledSec = t.scheduledDeparture ?? t.scheduledArrival;
+                        const hasRealtime  = t.realtimeDeparture != null || t.realtimeArrival != null;
+                        const realtimeSec  = t.realtimeDeparture  ?? t.realtimeArrival ?? scheduledSec;
+                        if (!tripMap.has(t.tripId)) {
+                            tripMap.set(t.tripId, { tripId: t.tripId, direction, schedule: [] });
+                        }
+                        tripMap.get(t.tripId).schedule.push({
+                            stopName, clusterIdx: ci, scheduledSec, realtimeSec, hasRealtime,
+                            serviceDay: t.serviceDay || serviceDay,
+                            delay: t.departureDelay ?? t.arrivalDelay ?? (realtimeSec - scheduledSec)
+                        });
+                    }
+                }
+            }
+
+            for (const [tid, trip] of tripMap) {
+                trip.schedule.sort((a,b) => a.scheduledSec - b.scheduledSec);
+                const hasPast   = trip.schedule.some(s => s.scheduledSec <= nowSec);
+                const hasFuture = trip.schedule.some(s => s.scheduledSec > nowSec && s.scheduledSec <= nowSec + 7200);
+                if (!hasPast && !hasFuture) { tripMap.delete(tid); continue; }
+                const firstFuture = trip.schedule.find(s => s.scheduledSec > nowSec);
+                const lastPassed  = [...trip.schedule].reverse().find(s => s.scheduledSec <= nowSec);
+                const refStop     = firstFuture ?? lastPassed;
+                trip.delay        = refStop ? refStop.delay : 0;
+                const nextStop    = trip.schedule.find(s => s.realtimeSec > nowSec);
+                trip.positionIdx  = nextStop
+                    ? nextStop.clusterIdx
+                    : (trip.schedule[trip.schedule.length-1]?.clusterIdx ?? 9999);
+            }
+
+            const directions = {};
+            for (const trip of tripMap.values()) {
+                if (!directions[trip.direction]) directions[trip.direction] = [];
+                directions[trip.direction].push(trip);
+            }
+            for (const arr of Object.values(directions)) {
+                const sample = arr.find(t => t.schedule.length >= 2);
+                const isReverse = sample
+                    ? sample.schedule[sample.schedule.length-1].clusterIdx < sample.schedule[0].clusterIdx
+                    : false;
+                arr.sort((a,b) => isReverse ? b.positionIdx - a.positionIdx : a.positionIdx - b.positionIdx);
+            }
+
+            this.ponctData[lineId] = { directions, total: tripMap.size, loadedAt: Date.now(), allStoptimes };
+        } catch(e) {
+            console.warn('Ponct error', lineId, e);
+            this.ponctData[lineId] = { directions: {}, total: 0, loadedAt: Date.now(), allStoptimes: [] };
+        }
+
+        this.ponctLineLoading.delete(lineId);
+        this._renderDelayCard(lineId);
+    },
+
+    _renderDelayCard(lineId) {
+        const safe = lineId.replace(':', '-');
+        const card = document.getElementById(`dc-${safe}`);
+        if (!card) return;
+
+        const data = this.ponctData[lineId];
+        const line = LINES_TRAM.find(l => l.id === lineId);
+        if (!line) return;
+
+        if (!data) {
+            card.querySelector(`#dc-diag-${safe}`).textContent = 'Données indisponibles.';
+            return;
+        }
+
+        const trips = Object.values(data.directions).flat();
+        const nowSec = this._getNowSec(trips[0]?.schedule?.[0]?.serviceDay || 0);
+        const lineShort = lineId.split(':')[1];
+        const clusters  = this.ponctClusters[lineId] || [];
+        const allStoptimes = data.allStoptimes || [];
+        const analysis = trips.length ? analyzeLine(data.directions, nowSec, clusters, lineShort, allStoptimes) : null;
+        const gs = trips.length ? this._ponctStats(trips) : null;
+
+        const _noDataMsg = (() => {
+            const now = new Date();
+            const hour = parseInt(now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', hour: 'numeric', hour12: false }), 10);
+            return (hour >= 2 && hour < 4)
+                ? 'Aucun tram ne circule sur le réseau à cette heure.'
+                : 'L\'application ne reçoit pas de données temps réel.';
+        })();
+        const mainMsg   = analysis ? analysis.messages[0]
+                        : trips.length > 0 ? 'L\'application reçoit trop peu de données temps réel.'
+                        : _noDataMsg;
+        const severity  = analysis ? analysis.severity : 'loading';
+        const extraMsgs = analysis ? analysis.messages.slice(1) : [];
+
+        let extraHtml = '';
+        if (extraMsgs.length) {
+            extraHtml = `<div class="delay-extra-msgs">${extraMsgs.map(m =>
+                `<div class="delay-extra-msg">${m}</div>`
+            ).join('')}</div>`;
+        }
+
+        const tramCountHtml = trips.length
+            ? `<div class="delay-tram-count">${trips.length} tram${trips.length>1?'s':''} en circulation</div>`
+            : '';
+
+        let dirsHtml = '';
+        Object.entries(data.directions).forEach(([dir, dtrips]) => {
+            if (!dtrips.length) return;
+            const ds = this._ponctStats(dtrips);
+            const tripsHtml = dtrips.map(trip => `
+                <div class="ponct-trip">
+                    <div class="ponct-trip-top">
+                        <span class="ponct-trip-delay ${this._delayCls(trip.delay)}">${this._fmtDelay(trip.delay)}</span>
+                        <span class="ponct-trip-id">${trip.tripId}</span>
+                    </div>
+                    ${this._getPonctPositionHtml(trip.schedule)}
+                </div>`).join('');
+            dirsHtml += `<div class="delay-dir">
+                <div class="delay-dir-name">Vers ${dir}</div>
+                ${ds ? `<div class="delay-dir-stats">
+                    <div class="delay-dir-stat">${dtrips.length} tram${dtrips.length>1?'s':''}</div>
+                    <div class="delay-dir-stat">Moyenne : <span class="${this._delayCls(ds.mean)}">${this._fmtDelayPlain(ds.mean)}</span></div>
+                    <div class="delay-dir-stat">Retard max : <span class="${this._delayCls(ds.worst)}">${this._fmtDelayPlain(ds.worst)}</span></div>
+                </div>` : ''}
+            </div>
+            <div class="ponct-trips" style="display:block">${tripsHtml}</div>`;
+        });
+
+        const detailsHtml = gs ? `
+            <div class="delay-stats">
+                <div class="delay-stat-row">
+                    <span class="delay-stat-lbl">Moyenne des retards de la ligne</span>
+                    <span class="delay-stat-val ${this._delayCls(gs.mean)}">${this._fmtDelayPlain(gs.mean)}</span>
+                </div>
+                <div class="delay-stat-row">
+                    <span class="delay-stat-lbl">Retard maximum de la ligne</span>
+                    <span class="delay-stat-val ${this._delayCls(gs.worst)}">${this._fmtDelayPlain(gs.worst)}</span>
+                </div>
+            </div>
+            <div class="delay-directions">${dirsHtml || '<div class="delay-nodata">Pas de détail par direction disponible.</div>'}</div>
+        ` : `<div class="delay-nodata">Pas de données temps réel disponibles.</div>`;
+
+        this._devG = this._devG || {};
+        this._devG[safe] = analysis ? analysis._totalG : null;
+        this._devPairs = this._devPairs || {};
+        this._devPairs[safe] = analysis ? analysis._devPairs : [];
+        this._badgeClicks = this._badgeClicks || {};
+        this._badgeClicks[safe] = { count: 0, timer: null };
+
+        card.innerHTML = `
+            <div class="delay-card-head">
+                <div class="delay-badge" style="background:${line.color}; color:${line.textColor}; cursor:pointer;" onclick="app._devBadgeClick('${safe}')">${line.name}</div>
+                <div class="delay-card-info">
+                    <div class="delay-diag diag-${severity}">${mainMsg}</div>
+                    ${tramCountHtml}
+                    ${extraHtml}
+                </div>
+            </div>
+            <button class="delay-toggle" onclick="app.toggleDelayCard('${safe}')">
+                <span>Afficher les détails</span>
+                <svg class="delay-toggle-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="delay-details" id="dc-det-${safe}">
+                ${detailsHtml}
+            </div>`;
+    },
+
+    toggleDelayCard(safe) {
+        const card = document.getElementById(`dc-${safe}`);
+        if (!card) return;
+        const isOpen = card.classList.toggle('is-open');
+        const btn = card.querySelector('.delay-toggle span');
+        if (btn) btn.textContent = isOpen ? 'Masquer les détails' : 'Afficher les détails';
+    },
+
+    _devBadgeClick(safe) {
+        this._badgeClicks = this._badgeClicks || {};
+        if (!this._badgeClicks[safe]) this._badgeClicks[safe] = { count: 0, timer: null };
+        const state = this._badgeClicks[safe];
+        clearTimeout(state.timer);
+        state.count++;
+        if (state.count >= 10) {
+            state.count = 0;
+            const G = this._devG?.[safe];
+            const pairs = this._devPairs?.[safe] || [];
+            const lineId = safe.replace('-', ':');
+            let msg = `[DEV] Ligne ${lineId}\nG moyen = ${G !== null && G !== undefined ? G.toFixed(4) : 'N/A'}\n`;
+            msg += `\nDétail paires (${pairs.length}) :\n`;
+            pairs.forEach((p, i) => {
+                if (p.skipped) {
+                    msg += `#${i+1} [${p.dir}] IGNORÉE — ${p.reason}\n`;
+                } else {
+                    msg += `#${i+1} [${p.dir}@${p.stop ?? '?'}] realHw=${p.realHwMin.toFixed(2)} schedHw=${p.schedHwMin.toFixed(2)} ratio=${p.ratio.toFixed(3)} diff=${p.diff.toFixed(2)} G=${p.G.toFixed(2)}\n`;
+                }
+            });
+            alert(msg);
+        } else {
+            state.timer = setTimeout(() => { state.count = 0; }, 2000);
+        }
+    },
+
+    _getNowSec(serviceDay = 0) {
+        if (serviceDay) return Math.floor(Date.now() / 1000) - serviceDay;
+        const n = new Date();
+        let s = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+        if (n.getHours() < 4) s += 86400;
+        return s;
+    },
+
+    _getPonctPositionHtml(schedule) {
+        if (!schedule || schedule.length === 0)
+            return `<div class="ponct-trip-pos"><div class="radar-info">Position inconnue</div></div>`;
+        const serviceDay = schedule[0]?.serviceDay || 0;
+        const now = this._getNowSec(serviceDay);
+        let lastPassed = null, nextStop = null;
+        for (const s of schedule) {
+            if (s.realtimeSec <= now) lastPassed = s;
+            else if (!nextStop) nextStop = s;
+        }
+        const display = nextStop || lastPassed;
+        if (display)
+            return `<div class="ponct-trip-pos"><div class="radar-info">Tram vers <b>${display.stopName}</b></div></div>`;
+        return `<div class="ponct-trip-pos"><div class="radar-info">Position inconnue</div></div>`;
+    },
+
+    _ponctStats(trips) {
+        if (!trips.length) return null;
+        const delays = trips.map(t => t.delay);
+        const mean  = Math.round(delays.reduce((s,d) => s+d, 0) / delays.length);
+        const worst = [...delays].sort((a,b) => a-b)[delays.length-1];
+        return { mean, worst, count: delays.length };
+    },
+
+    _delayCls(s) {
+        if (s <= 30)  return 'delay-ok';
+        if (s <= 60)  return 'delay-slight';
+        if (s <= 180) return 'delay-moderate';
+        return 'delay-heavy';
+    },
+
+    _fmtDelay(s) {
+        if (s > -30 && s <= 30) return `<span class="delay-ok">À l'heure</span>`;
+        const abs = Math.abs(s), m = Math.floor(abs/60), sec = abs%60, sign = s<0?'-':'+';
+        const str = m>0 ? `${sign}${m} min${sec>0?' '+String(sec).padStart(2,'0'):''}` : `${sign}${sec}s`;
+        return `<span class="${this._delayCls(s)}">${str}</span>`;
+    },
+
+    _fmtDelayPlain(s) {
+        if (s > -30 && s <= 30) return 'À l\'heure';
+        const abs = Math.abs(s);
+        const m   = Math.floor(abs / 60);
+        const sec = abs % 60;
+        const sign = s < 0 ? '-' : '+';
+        if (m > 0) return `${sign}${m} min${sec > 0 ? ' ' + String(sec).padStart(2,'0') : ''}`;
+        return `${sign}${sec}s`;
+    },
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+
+    history.pushState({ it: 'app' }, '');
+    let handling = false;
+    window.addEventListener('popstate', () => {
+        if (handling) return; handling = true;
+        history.go(1);
+        setTimeout(() => {
+            handling = false;
+            if (app.currentView !== 'view-main') app.goBack();
+        }, 50);
+    });
+});
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/ouestmontram/sw.js")
+        .then(() => console.log("Service Worker enregistré"));
+}
+</script>
 </body>
 </html>

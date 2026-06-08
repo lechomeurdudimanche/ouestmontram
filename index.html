@@ -219,7 +219,6 @@
             transition: color 0.2s, background 0.2s;
             flex-shrink: 0;
         }
-        .trip-copy-btn:hover { color: var(--radar-color); background: rgba(0,210,255,0.1); }
         .trip-copy-btn.copied { color: var(--realtime); }
 
         .radar-icon {
@@ -300,7 +299,6 @@
             color: #666;
             vertical-align: middle;
         }
-        .fav-toggle-btn:hover { background: rgba(255,255,255,0.07); transform: scale(1.15); }
         .fav-toggle-btn.is-fav { color: #ffd700; }
 
         .fav-stop-item {
@@ -483,7 +481,7 @@
             height: 30px;
             align-items: center;
             justify-content: center;
-            background: rgba(255,255,255,0.04);
+            background: rgba(255,255,255,0.08);
             border: 1px solid var(--border);
             border-radius: 10px;
             cursor: pointer;
@@ -491,7 +489,7 @@
             font-size: 1.5rem;
             line-height: 1;
             padding: 0;
-            opacity: 0.6;
+            opacity: 0.9;
             transition: opacity 0.2s, background 0.2s;
             flex-shrink: 0;
         }
@@ -503,25 +501,47 @@
         }
 
         .mobile-tabs-bar {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-panel);
+            padding: 0;
         }
+        .header:has(.mobile-tabs-bar) {
+            padding-bottom: 10px;
+        }
+        .mobile-tabs-bar .tabs {
+            display: flex;
+            background: var(--bg-hover);
+            border-radius: 100px;
+            padding: 3px;
+            position: relative;
+        }
+        .mobile-tabs-bar .tab-pill {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: calc(33.333% - 2px);
+            height: calc(100% - 6px);
+            background: var(--text-main);
+            border-radius: 100px;
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+            pointer-events: none;
+        }
+        .mobile-tabs-bar .tabs[data-tab="arrets"] .tab-pill  { transform: translateX(100%); }
+        .mobile-tabs-bar .tabs[data-tab="favoris"] .tab-pill { transform: translateX(200%); }
         .mobile-tab {
             flex: 1;
-            padding: 10px 6px;
-            background: none;
             border: none;
-            color: var(--text-muted);
-            font-size: 0.88rem;
+            background: none;
+            padding: 10px 0;
+            font-size: 0.86rem;
+            font-weight: 600;
+            border-radius: 100px;
             cursor: pointer;
-            transition: color 0.2s, border-bottom 0.2s;
-            border-bottom: 3px solid transparent;
+            position: relative;
+            z-index: 1;
+            transition: color .25s;
+            letter-spacing: -0.01em;
         }
-        .mobile-tab.active {
-            color: var(--radar-color);
-            border-bottom: 3px solid var(--radar-color);
-        }
+        .mobile-tab.active  { color: var(--bg-dark); }
+        .mobile-tab:not(.active) { color: var(--text-muted); }
 
         .filter-btn {
             background: var(--bg-hover);
@@ -659,13 +679,11 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 0px;
             background: var(--radar-color);
         }
 
-        .nav-icon {
-            font-size: 1.3rem;
-        }
+        .nav-icon { display: flex; align-items: center; justify-content: center; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; position: relative; }
@@ -774,8 +792,8 @@
         .install-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 16px 18px;
+            gap: 5px;
+            padding: 15px 8px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-panel);
             position: sticky;
@@ -783,26 +801,15 @@
             z-index: 10;
         }
         .install-back-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
+            background: none;
+            border: none;
             color: var(--text-muted);
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 8px 10px;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
             flex-shrink: 0;
-            transition: background 0.2s;
-            line-height: 1;
-        }
-        .install-back-btn:hover { background: rgba(255,255,255,0.09); }
-        .install-header h2 {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: var(--text-main);
+            transition: opacity .15s;
         }
 
         .install-body {
@@ -1245,6 +1252,9 @@
         .btn-menu:active {
             transform: scale(0.97);
         }
+        .radius {
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
@@ -1283,17 +1293,17 @@
             <p onclick="window.location.href='mentions.html';" class="btn-menu">Mentions légales</p>
         </div>
         <div class="side-menu-item">
-            <p onclick="window.location.href='contact.html';" class="btn-menu">Contact</p>
+            <p onclick="window.location.href='contact.html';" class="btn-menu">Contact / Suggestions</p>
         </div>
 </div>
         </nav>
-        <div id="side-menu-credit">Où est mon tram ? - Version 1.0</div>
+        <div id="side-menu-credit">Où est mon tram ? - Version 1.1</div>
     </div>
 
     <div id="install-overlay">
         <div class="install-header">
-            <button class="install-back-btn" onclick="closeInstallOverlay()">‹</button>
-            <h2>Partager &amp; Installer</h2>
+            <button class="install-back-btn" onclick="closeInstallOverlay()" aria-label="Retour"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+            <h2>Partager</h2>
         </div>
         <div class="install-body">
             <div class="install-qr-block">
@@ -1357,9 +1367,9 @@
     </div>
 
     <div id="col-times" class="col">
-        <div class="header">
+        <div class="header radius">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                <button id="back-btn" class="back-chevron" onclick="app.showMobileStops()" title="Retour">‹</button>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" color="var(--text-muted)" onclick="app.backFromTimes()" title="Retour"><line x1="20" y1="12" x2="4" y2="12"/><line x1="4" y1="12" x2="10" y2="6"/><line x1="4" y1="12" x2="10" y2="18"/></svg>
                 <h2 id="stop-title" style="flex: 1; display:flex; align-items:center; font-size:1.2em; gap:8px;">...</h2>
                 <button id="fav-toggle-btn" class="fav-toggle-btn" onclick="app.toggleFavorite()" title="Ajouter aux favoris" style="display:none;">☆</button>
             </div>
@@ -1433,8 +1443,45 @@
         ];
 
         const BUS_FLEXO = [
+            { id: "TPV:38", name: "38", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:39", name: "39", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:41", name: "41", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:42", name: "42", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:44", name: "44", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:45", name: "45", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:46", name: "46", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:47", name: "47", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:48", name: "48", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:49", name: "49", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:50", name: "50", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:51", name: "51", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:52", name: "52", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:53", name: "53", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:54", name: "54", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:55", name: "55", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:56", name: "56", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:58", name: "58", color: "rgb(213, 114, 168)", category: "flexo" },
             { id: "SEM:59", name: "59", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:60", name: "60", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:61", name: "61", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:63", name: "63", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:64", name: "64", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:65", name: "65", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:66", name: "66", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:67", name: "67", color: "rgb(213, 114, 168)", category: "flexo" },
             { id: "SEM:68", name: "68", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SE2:69", name: "69", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:70", name: "70", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:71", name: "71", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "SEM:73", name: "73", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:74", name: "74", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:75", name: "75", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:76", name: "76", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:77", name: "77", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:78", name: "78", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "GSV:79", name: "79", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:81", name: "81", color: "rgb(213, 114, 168)", category: "flexo" },
+            { id: "TPV:83", name: "83", color: "rgb(213, 114, 168)", category: "flexo" },
         ];
 
         const BUS_NAV_RELAIS = [
@@ -1555,8 +1602,8 @@
             'SEM:A:1:-1554408538':['SEM:GENLAPOYA','SEM:GENCHARLMIC','SEM:GENFONTAHDV','SEM:GENMAISONNA','SEM:GENFOVOG','SEM:GENBER','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
             'SEM:A:1:77378402':   ['SEM:GENLAPOYA','SEM:GENCHARLMIC','SEM:GENFONTAHDV','SEM:GENMAISONNA','SEM:GENFOVOG','SEM:GENBER','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
 
-            'SEM:B:1:1768382833': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
-            'SEM:B:1:-1809559566':['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
+            'SEM:B:1:-975427951': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
+            'SEM:B:1:231135571':['SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENVERDUN','SEM:GENCHAVANT','SEM:GENALB','SEM:GENMOUNIER','SEM:GENMC2','SEM:GENMALHERBE','SEM:GENBRUYERE','SEM:GENARLEQUIN','SEM:GENGP'],
             'SEM:B:1:-763789647': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENIL','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO','SEM:GENTA','SEM:GENGABFAURE','SEM:GENBIBLIUNI','SEM:GENCONDIUNI','SEM:GENMAYENCIN','SEM:GENGIERGARE','SEM:GENPLAINEDS'],
             'SEM:B:1:1605123276': ['SEM:GENOXF','SEM:GENCEACAMB','SEM:GENCITEINTE','SEM:GENPALJUSTI','SEM:GENSTBRUNO','SEM:GENGARES','SEM:GENALSACELO','SEM:GENVICTHUGO','SEM:GENDUBEDOUT','SEM:GENSTECLAIR','SEM:GENNOTREDAM','SEM:GENIL','SEM:GENTRONCHOP','SEM:GENMICHALLO','SEM:GENGRDSABLO'],
             'SEM:B:0:-115220173': ['SEM:GENPLAINEDS','SEM:GENGIERGARE','SEM:GENMAYENCIN','SEM:GENCONDIUNI','SEM:GENBIBLIUNI','SEM:GENGABFAURE','SEM:GENTA','SEM:GENGRDSABLO','SEM:GENMICHALLO','SEM:GENTRONCHOP','SEM:GENIL','SEM:GENNOTREDAM','SEM:GENSTECLAIR','SEM:GENDUBEDOUT','SEM:GENVICTHUGO','SEM:GENALSACELO','SEM:GENGARES','SEM:GENSTBRUNO','SEM:GENPALJUSTI','SEM:GENCITEINTE','SEM:GENCEACAMB','SEM:GENOXF'],
@@ -1651,9 +1698,10 @@ const BUS_RADAR_STOPS = {
     ]},
 
     "SEM:15": { directions: [
-           { keywords: ["verdun"], stops: ["SEM:GENARN", "SEM:GENRENECASS", "SEM:GENCHENEVIE", "SEM:GENVERNES", "SEM:GENPRIEURE", "SEM:GENDOMENEMA", "SEM:GENCOUBERTI", "SEM:GENORATOIRE", "SEM:GENMORTES", "SEM:GENRIVETS", "SEM:GENBRIOT", "SEM:GENBOURG", "SEM:GENPERRIERE", "SEM:GENLEJAPIN", "SEM:GENCHAMPRON", "SEM:GENPIEDGIER", "SEM:GENPLREPUBL", "SEM:GENEDELWEIS", "SEM:GENSONNANT", "SEM:GENPORTGRES", "SEM:GENCHAMPROM", "SEM:GENCLINBELD", "SEM:GENNEYRBELL", "SEM:GENPERIBROS", "SEM:GENVALMY", "SEM:GENBIRHAKEI", "SEM:GENVERDUN"] },
+           { keywords: ["verdun"], stops: ["SEM:GENBOISFRAN", "SEM:GENARN", "SEM:GENRENECASS", "SEM:GENCHENEVIE", "SEM:GENVERNES", "SEM:GENPRIEURE", "SEM:GENDOMENEMA", "SEM:GENCOUBERTI", "SEM:GENORATOIRE", "SEM:GENMORTES", "SEM:GENRIVETS", "SEM:GENBRIOT", "SEM:GENBOURG", "SEM:GENPERRIERE", "SEM:GENLEJAPIN", "SEM:GENCHAMPRON", "SEM:GENPIEDGIER", "SEM:GENPLREPUBL", "SEM:GENEDELWEIS", "SEM:GENSONNANT", "SEM:GENPORTGRES", "SEM:GENCHAMPROM", "SEM:GENCLINBELD", "SEM:GENNEYRBELL", "SEM:GENPERIBROS", "SEM:GENVALMY", "SEM:GENBIRHAKEI", "SEM:GENVERDUN"] },
            { keywords: ["chenevières"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENPERIBROS", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPORTGRES", "SEM:GENSONNANT", "SEM:GENEDELWEIS", "SEM:GENPLREPUBL", "SEM:GENPIEDGIER", "SEM:GENCHAMPRON", "SEM:GENLEJAPIN", "SEM:GENPERRIERE", "SEM:GENBOURG", "SEM:GENBRIOT", "SEM:GENRIVETS", "SEM:GENMORTES", "SEM:GENORATOIRE", "SEM:GENCOUBERTI", "SEM:GENDOMENEMA", "SEM:GENPRIEURE", "SEM:GENVERNES", "SEM:GENCHENEVIE"] },
            { keywords: ["arnauds"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENPERIBROS", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPORTGRES", "SEM:GENSONNANT", "SEM:GENEDELWEIS", "SEM:GENPLREPUBL", "SEM:GENPIEDGIER", "SEM:GENCHAMPRON", "SEM:GENLEJAPIN", "SEM:GENPERRIERE", "SEM:GENBOURG", "SEM:GENBRIOT", "SEM:GENRIVETS", "SEM:GENMORTES", "SEM:GENORATOIRE", "SEM:GENCOUBERTI", "SEM:GENDOMENEMA", "SEM:GENRENECASS", "SEM:GENARN"] },
+           { keywords: ["bois"], stops: ["SEM:GENVERDUN", "SEM:GENBIRHAKEI", "SEM:GENVALMY", "SEM:GENPERIBROS", "SEM:GENNEYRBELL", "SEM:GENCLINBELD", "SEM:GENCHAMPROM", "SEM:GENPORTGRES", "SEM:GENSONNANT", "SEM:GENEDELWEIS", "SEM:GENPLREPUBL", "SEM:GENPIEDGIER", "SEM:GENCHAMPRON", "SEM:GENLEJAPIN", "SEM:GENPERRIERE", "SEM:GENBOURG", "SEM:GENBRIOT", "SEM:GENRIVETS", "SEM:GENMORTES", "SEM:GENORATOIRE", "SEM:GENCOUBERTI", "SEM:GENDOMENEMA", "SEM:GENPRIEURE", "SEM:GENVERNES", "SEM:GENCHENEVIE", "SEM:GENRENECASS", "SEM:GENARN", "SEM:GENBOISFRAN"] },
     ]},
 
     "SEM:16": { directions: [
@@ -1768,6 +1816,15 @@ const BUS_RADAR_STOPS = {
                     return;
                 }
                 if (window.innerWidth <= 768 && document.body.classList.contains('view-times')) {
+                    if (this._searchStopId && this._searchStopName) {
+                        const stopId = this._searchStopId;
+                        const stopName = this._searchStopName;
+                        this._searchStopId = null;
+                        this._searchStopName = null;
+                        if (this.refreshInterval) { clearInterval(this.refreshInterval); this.refreshInterval = null; }
+                        this.selectStopFromSearch(stopId, stopName);
+                        return;
+                    }
                     this.showMobileStops();
                     return;
                 }
@@ -1779,6 +1836,9 @@ const BUS_RADAR_STOPS = {
                         this.searchRefreshInterval = null;
                     }
                     this.showSearchBar().then(() => this.showTab('arrets'));
+                    return;
+                }
+                if (this.activeTab === 'favoris') {
                     return;
                 }
                 if (this.currentLine || this.searchMode || this.viewingFavorites) {
@@ -1801,10 +1861,22 @@ const BUS_RADAR_STOPS = {
                             <h2 id="line-title">Prochains passages</h2>
                         </div>
                         <div class="mobile-tabs-bar">
-                            <button class="mobile-tab active" id="tab-lignes" onclick="app.showTab('lignes')">🚌 Lignes</button>
-                            <button class="mobile-tab" id="tab-arrets" onclick="app.showTab('arrets')">🔍 Arrêts</button>
-                            <button class="mobile-tab" id="tab-favoris" onclick="app.showTab('favoris')">⭐ Favoris</button>
+                            <div class="tabs" id="mobile-tabs" data-tab="${this.activeTab}">
+                                <div class="tab-pill"></div>
+                                <button class="mobile-tab ${this.activeTab==='lignes'?'active':''}" id="tab-lignes" onclick="app.showTab('lignes')">Lignes</button>
+                                <button class="mobile-tab ${this.activeTab==='arrets'?'active':''}" id="tab-arrets" onclick="app.showTab('arrets')">Arrêts</button>
+                                <button class="mobile-tab ${this.activeTab==='favoris'?'active':''}" id="tab-favoris" onclick="app.showTab('favoris')">Favoris</button>
+                            </div>
                         </div>`;
+                }
+
+                const mobileTabs = document.getElementById('mobile-tabs');
+                if (mobileTabs) {
+                    mobileTabs.dataset.tab = this.activeTab;
+                    mobileTabs.querySelectorAll('.mobile-tab').forEach(btn => {
+                        const tabId = btn.id.replace('tab-', '');
+                        btn.classList.toggle('active', tabId === this.activeTab);
+                    });
                 }
 
                 document.getElementById('stops-list').innerHTML = `
@@ -1860,6 +1932,9 @@ const BUS_RADAR_STOPS = {
                 if (tab !== 'favoris' && this.reorderMode) {
                     this.reorderMode = false;
                 }
+                if (tab !== 'favoris') {
+                    this.viewingFavorites = false;
+                }
                 this.activeTab = tab;
                 const arrets = document.getElementById('tab-content-arrets');
                 const lignes = document.getElementById('tab-content-lignes');
@@ -1867,6 +1942,7 @@ const BUS_RADAR_STOPS = {
                 const btnArrets = document.getElementById('tab-arrets');
                 const btnLignes = document.getElementById('tab-lignes');
                 const btnFavoris = document.getElementById('tab-favoris');
+                const tabsEl = document.getElementById('mobile-tabs');
                 if (!arrets || !lignes) return;
 
                 arrets.style.display = 'none';
@@ -1875,6 +1951,7 @@ const BUS_RADAR_STOPS = {
                 btnArrets && btnArrets.classList.remove('active');
                 btnLignes && btnLignes.classList.remove('active');
                 btnFavoris && btnFavoris.classList.remove('active');
+                if (tabsEl) tabsEl.setAttribute('data-tab', tab);
 
                 if (tab === 'arrets') {
                     arrets.style.display = '';
@@ -2271,7 +2348,7 @@ const BUS_RADAR_STOPS = {
                                         <a href="#"
                                            onclick="app.switchToClassicMode('${group.lineId}', '${stopIdForLine}', '${stopName.replace(/'/g, "\'")}'); return false;"
                                            style="color: var(--radar-color); font-size: 0.85rem; text-decoration: none; margin-left: auto; white-space: nowrap;">
-                                            Voir plus →
+                                            Voir plus
                                         </a>
                                     </div>
                                     <div class="times-group-times" id="${cardId}-times">
@@ -2356,7 +2433,7 @@ const BUS_RADAR_STOPS = {
 
                 header.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px; width:100%;">
-                        <button class="back-chevron" onclick="app.backToSearch()" title="Retour">‹</button>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" color="var(--text-muted)" onclick="app.backToSearch()" title="Retour"><line x1="20" y1="12" x2="4" y2="12"/><line x1="4" y1="12" x2="10" y2="6"/><line x1="4" y1="12" x2="10" y2="18"/></svg>
                         <h2 id="line-title" style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</h2>
                         ${pdfBtn}
                     </div>
@@ -2378,9 +2455,11 @@ const BUS_RADAR_STOPS = {
                 const lineLabel = `Ligne ${lineInfo ? lineInfo.name : lineId}`;
                 this.resetHeader(lineLabel, lineId);
                 this.fetchDisruptionsForLine(lineId);
-                document.getElementById('stops-list').innerHTML = `<div class="empty">Chargement des arrêts...</div>`;
-                this.clearTimes();
-                this.showMobileStops();
+                if (!this._fromFavorites) {
+                    document.getElementById('stops-list').innerHTML = `<div class="empty">Chargement des arrêts...</div>`;
+                    this.clearTimes();
+                    this.showMobileStops();
+                }
 
                 try {
                     const resClusters = await fetch(`${API_BASE}/routes/${lineId}/clusters`);
@@ -3202,7 +3281,7 @@ const BUS_RADAR_STOPS = {
                 if (!list) return;
                 if (this.favorites.length === 0) {
                     this.reorderMode = false;
-                    list.innerHTML = `<div class="empty">Aucun favori.<br><span style="font-size:0.9rem;">Ajoutez un arrêt avec ★ en consultant ses horaires.</span></div>`;
+                    list.innerHTML = `<div class="empty">Aucun favori.<br><span style="font-size:0.9rem;">Ajoutez un arrêt en favori en appuyant sur ★ en consultant ses horaires.</span></div>`;
                     return;
                 }
 
@@ -3252,11 +3331,11 @@ const BUS_RADAR_STOPS = {
 
             toggleReorderMode() {
                 this.reorderMode = !this.reorderMode;
-                if (this.viewingFavorites) {
-                    this.renderFavoritesList();
-                } else if (this.activeTab === 'favoris') {
+                if (this.activeTab === 'favoris') {
                     const container = document.getElementById('tab-content-favoris');
                     if (container) this.renderFavoritesList(container);
+                } else {
+                    this.renderFavoritesList();
                 }
             },
 
@@ -3431,8 +3510,11 @@ const BUS_RADAR_STOPS = {
             async selectFavoriteStop(favIndex) {
                 const fav = this.favorites[favIndex];
                 if (!fav) return;
+                this._fromFavorites = true;
                 await this.selectLine(fav.lineId);
-                setTimeout(() => this.selectStop(fav.clusterCode, fav.stopName), 300);
+                this.viewingFavorites = true;
+                await this.selectStop(fav.clusterCode, fav.stopName);
+                this._fromFavorites = false;
             },
 
             removeFavorite(favIndex) {
@@ -3530,25 +3612,55 @@ const BUS_RADAR_STOPS = {
                 }
             },
 
+            backFromTimes() {
+                if (this._searchStopId && this._searchStopName) {
+                    const stopId = this._searchStopId;
+                    const stopName = this._searchStopName;
+                    this._searchStopId = null;
+                    this._searchStopName = null;
+                    if (this.refreshInterval) { clearInterval(this.refreshInterval); this.refreshInterval = null; }
+                    this.currentLine = null;
+                    this.currentStop = null;
+                    document.querySelectorAll('.line-badge').forEach(b => b.classList.remove('active'));
+                    const banner = document.getElementById('disruption-banner');
+                    if (banner) banner.style.display = 'none';
+                    this._disruptionHasEvents = false;
+                    this.selectStopFromSearch(stopId, stopName);
+                    this.syncShareBtn();
+                    return;
+                }
+                this.showMobileStops();
+            },
+
             showMobileStops() {
                 document.body.classList.remove('view-times');
                 const stopsList = document.getElementById('stops-list');
                 if (stopsList) stopsList.scrollTop = 0;
+                document.getElementById('times-content').innerHTML = '<div class="empty">Chargement...</div>';
 
                 if (this.refreshInterval) {
                     clearInterval(this.refreshInterval);
                     this.refreshInterval = null;
                 }
 
-                if (this.searchMode) {
-                    this.searchMode = false;
+                if (this.viewingFavorites) {
                     this.currentStop = null;
-                    
+                    this.currentStopName = null;
+                    this.currentLine = null;
+                    this.viewingFavorites = false;
+                    if (this.refreshInterval) { clearInterval(this.refreshInterval); this.refreshInterval = null; }
+                    this.showSearchBar().then(() => { this.showTab('favoris'); });
+                } else if (this.searchMode || this._fromSearch) {
+                    this.searchMode = false;
+                    this._fromSearch = false;
+                    this.currentStop = null;
+                    this.currentLine = null;
+
                     if (this.searchRefreshInterval) {
                         clearInterval(this.searchRefreshInterval);
                         this.searchRefreshInterval = null;
                     }
-                    
+
                     this.showSearchBar().then(() => {
                         this.showTab('arrets');
                     });
@@ -3558,6 +3670,24 @@ const BUS_RADAR_STOPS = {
 
             backToSearch() {
                 if (this.refreshInterval) { clearInterval(this.refreshInterval); this.refreshInterval = null; }
+
+                if (this._searchStopId && this._searchStopName) {
+                    const stopId = this._searchStopId;
+                    const stopName = this._searchStopName;
+                    this._searchStopId = null;
+                    this._searchStopName = null;
+                    this.currentLine = null;
+                    this.currentStop = null;
+                    document.querySelectorAll('.line-badge').forEach(b => b.classList.remove('active'));
+                    const banner2 = document.getElementById('disruption-banner');
+                    if (banner2) banner2.style.display = 'none';
+                    this._disruptionHasEvents = false;
+                    this.selectStopFromSearch(stopId, stopName);
+                    this.syncShareBtn();
+                    return;
+                }
+
+                const cameFromFavorites = this.viewingFavorites;
                 this.currentLine = null;
                 this.currentStop = null;
                 this.currentStopName = null;
@@ -3572,7 +3702,12 @@ const BUS_RADAR_STOPS = {
                 const banner = document.getElementById('disruption-banner');
                 if (banner) banner.style.display = 'none';
                 this._disruptionHasEvents = false;
-                this.showSearchBar();
+                const cameFromSearch = this._fromSearch;
+                this._fromSearch = false;
+                this.showSearchBar().then(() => {
+                    if (cameFromFavorites) this.showTab('favoris');
+                    else if (cameFromSearch) this.showTab('arrets');
+                });
                 this.syncShareBtn();
             },
 
@@ -3611,9 +3746,11 @@ const BUS_RADAR_STOPS = {
                 const btnArrets = document.getElementById('tab-arrets');
                 const btnLignes = document.getElementById('tab-lignes');
                 const btnFavoris = document.getElementById('tab-favoris');
+                const tabsEl = document.getElementById('mobile-tabs');
                 if (btnLignes) btnLignes.classList.add('active');
                 if (btnArrets) btnArrets.classList.remove('active');
                 if (btnFavoris) btnFavoris.classList.remove('active');
+                if (tabsEl) tabsEl.setAttribute('data-tab', 'lignes');
 
                 this.syncShareBtn();
                 return false;
@@ -3624,14 +3761,22 @@ const BUS_RADAR_STOPS = {
                     clearInterval(this.searchRefreshInterval);
                     this.searchRefreshInterval = null;
                 }
-                
+
+                this._searchStopId = this.currentStop && (typeof this.currentStop === 'object' ? this.currentStop.id : this.currentStop);
+                this._searchStopName = this.currentStop && (typeof this.currentStop === 'object' ? this.currentStop.name : this.currentStopName);
+
+                const timesContent = document.getElementById('times-content');
+                if (timesContent) timesContent.innerHTML = '<div class="empty">Chargement…</div>';
+
+                this._fromSearch = true;
+                this._fromFavorites = true;
                 this.searchMode = false;
-                
+
                 await this.selectLine(lineId);
-                
-                setTimeout(() => {
-                    this.selectStop(stopId, stopName);
-                }, 400);
+                this._fromFavorites = false;
+
+                await this.selectStop(stopId, stopName);
+                this._fromSearch = false;
             }
         };
 
@@ -3641,19 +3786,19 @@ const BUS_RADAR_STOPS = {
     <div id="bottom-nav">
         <div class="nav-buttons">
             <a href="index.html" class="nav-link active" id="nav-horaires" onclick="return app.resetToHome()">
-                <span class="nav-icon">🕐</span>
+                <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span>Horaires</span>
             </a>
             <a href="suivi.html" class="nav-link">
-                <span class="nav-icon">🚋</span>
-                <span>Suivi tram</span>
+                <span class="nav-icon"><svg width="19" height="22" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3,16 L3,7 Q3,1 10,1 Q17,1 17,7 L17,16 Q17,19 14,19.5 Q10,20 6,19.5 Q3,19 3,16 Z"/><line x1="4" y1="5" x2="16" y2="5"/><path d="M3,14 Q10,17 17,14"/><circle cx="10" cy="17.5" r="0.9" fill="currentColor" stroke="none"/><line x1="7.5" y1="20" x2="4" y2="24"/><line x1="12.5" y1="20" x2="16" y2="24"/></svg></span>
+                <span>Infos tram</span>
             </a>
             <a href="itineraire.html" class="nav-link">
-                <span class="nav-icon">🗺️</span>
+                <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
                 <span>Itinéraire</span>
             </a>
             <a href="infotrafic.html" class="nav-link">
-                <span class="nav-icon">⚠️</span>
+                <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                 <span>Infotrafic</span>
             </a>
         </div>

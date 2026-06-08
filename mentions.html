@@ -6,15 +6,6 @@
     <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <script>
-        function setAppHeight() {
-            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-        }
-        setAppHeight();
-        window.addEventListener('resize', setAppHeight);
-    </script>
     <title>Mentions Légales - Où est mon tram ?</title>
     <style>
         :root {
@@ -32,7 +23,7 @@
         html { overscroll-behavior: none; }
         
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
             height: var(--app-height);
@@ -44,48 +35,31 @@
         }
 
         #header {
-            position: sticky;
-            z-index: 100;
-            background: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            gap: 15px;
+            gap: 5px;
+            padding: 15px 8px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .back-btn {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 1.2rem;
+            background: none; border: none;
+            color: var(--text-muted);
+            padding: 8px 10px;
             cursor: pointer;
-            transition: background 0.2s;
+            display: inline-flex; align-items: center;
+            transition: opacity .15s;
+            text-decoration: none;
         }
 
-        .back-btn:active {
-            background: var(--bg-hover);
-        }
-
-        .header-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+        .back-btn:active { opacity: .5; }
 
         .content {
             padding: 20px;
-            max-width: 600px;
             margin: 0 auto;
             width: 100%;
             padding-bottom: env(safe-area-inset-bottom, 40px);
@@ -101,7 +75,7 @@
         }
 
         .mention-card h2 {
-            font-family: 'Syne', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-size: 1.1rem;
             color: var(--text-main);
             margin-bottom: 12px;
@@ -149,8 +123,8 @@
 </head>
 <body>
     <div id="header">
-        <a href="index.html" class="back-btn" aria-label="Retour">‹</a>
-        <div class="header-title">Mentions Légales</div>
+        <a href="index.html" class="back-btn" aria-label="Retour"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></a>
+        <h2>Mentions Légales</h2>
     </div>
 
     <div class="content">
@@ -179,6 +153,7 @@
             </ul>
             <p>Aucune donnée saisie dans la recherche n'est conservée par ces services au-delà du temps de la requête.</p>
             <p>Librairies open source : Leaflet, QRCode.js, Google Fonts</p>
+            <p>Logo de l'appli : Chagarou</p>
             <p>Hébergement : Github</p>
         </div>
 

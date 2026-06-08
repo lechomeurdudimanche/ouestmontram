@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.css"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css">
     <title>Itinéraire – Où est mon tram ?</title>
     <style>
         :root {
@@ -20,7 +22,7 @@
             --text-muted: #a0a0a0;
             --border: #333;
             --accent: #00d2ff;
-            --nav-h: 60px;
+            --nav-h: calc(60px + env(safe-area-inset-bottom, 0px));
             --app-height: 100vh;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;}
@@ -69,31 +71,40 @@
         .sf-fields { display: flex; align-items: stretch; }
         .sf-dots {
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; padding: 0 10px; gap: 3px; flex-shrink: 0;
-            border-right: 1px solid var(--border);
+            justify-content: center; padding: 0 12px; gap: 4px; flex-shrink: 0;
         }
-        .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-        .dot-from { background: #888; }
-        .dot-to   { background: #e53935; }
-        .dot-mid  { width: 1px; height: 15px; background: var(--border); }
+        .dot-from {
+            width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+            background: #888; border: 2px solid #555;
+            box-sizing: border-box;
+        }
+        .dot-to {
+            width: 13px; height: 18px; flex-shrink: 0;
+            background: none;
+        }
+        .dot-to svg { display: block; }
+        .dot-mid  { width: 1.5px; height: 14px; background: #444; flex-shrink: 0; }
         .sf-inputs { flex: 1; min-width: 0; }
         .sf-row {
             display: flex; align-items: center; padding: 10px 10px 10px 12px;
-            border-bottom: 1px solid var(--border); gap: 6px;
+            gap: 6px;
         }
-        .sf-row:last-child { border-bottom: none; }
+        .sf-row-sep {
+            height: 1px; background: var(--border);
+            margin-left: 12px; margin-right: 46px;
+        }
         .sf-row input {
             flex: 1; background: none; border: none; outline: none;
             color: var(--text-main); font-size: 0.87rem; font-family: inherit; min-width: 0;
         }
         .sf-row input::placeholder { color: var(--text-muted); }
         .swap-btn {
-            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+            width: 28px; height: 28px; flex-shrink: 0; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-            background: var(--bg-hover); border: 1px solid var(--border);
+            background: none; border: none; padding: 0;
+            opacity: 0.7; transition: opacity 0.15s;
         }
-        .swap-btn:active { background: #333; }
+        .swap-btn:active { opacity: 1; }
 
         #bottom-sheet {
             position: absolute;
@@ -610,22 +621,24 @@
     <style>
         #bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
-            height: 60px; background: var(--bg-panel);
+            height: var(--nav-h);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: var(--bg-panel);
             border-top: 1px solid var(--border); z-index: 1000; display: flex;
         }
         .nav-link {
             flex: 1; display: flex; flex-direction: column; align-items: center;
             justify-content: center; gap: 4px; text-decoration: none;
             color: var(--text-muted); font-size: 0.9rem; transition: color 0.2s;
-            position: relative; padding-bottom: env(safe-area-inset-bottom, 0);
+            position: relative;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         .nav-link.active { color: var(--accent); }
         .nav-link.active::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: var(--accent);
+            height: 0px; background: var(--accent);
         }
-        .nav-icon { font-size: 1.3rem; }
+        .nav-icon { display: flex; align-items: center; justify-content: center; }
 
         .gps-dot-wrap {
             position: relative;
@@ -695,21 +708,26 @@
         <div id="search-card">
             <div class="sf-fields">
                 <div class="sf-dots">
-                    <div class="dot dot-from"></div>
+                    <div class="dot-from"></div>
                     <div class="dot-mid"></div>
-                    <div class="dot dot-to"></div>
+                    <div class="dot-to">
+                        <svg width="13" height="18" viewBox="0 0 22 32" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 0C4.9 0 0 4.9 0 11c0 8.2 11 21 11 21s11-12.8 11-21C22 4.9 17.1 0 11 0z" fill="#e53935"/>
+                            <circle cx="11" cy="11" r="4" fill="white"/>
+                        </svg>
+                    </div>
                 </div>
                 <div class="sf-inputs">
                     <div class="sf-row">
                         <input type="text" id="input-from" placeholder="Départ" autocomplete="off" autocorrect="off" autocapitalize="off" readonly>
                     </div>
+                    <div class="sf-row-sep"></div>
                     <div class="sf-row">
                         <input type="text" id="input-to" placeholder="Destination" autocomplete="off" autocorrect="off" autocapitalize="off" readonly>
                         <button class="swap-btn" onclick="ITIN.swap()" title="Inverser">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <polyline points="7 9 12 4 17 9"/>
-                                <polyline points="7 15 12 20 17 15"/>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 11L8 1M8 1L5 5M8 1L11 5" stroke="#999" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M14 11L14 21M14 21L11 17M14 21L17 17" stroke="#999" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </button>
                     </div>
@@ -753,7 +771,7 @@
             </div>
             <div id="lp-edit-name-wrap" style="display:none; margin-bottom:10px;">
                 <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);display:block;margin-bottom:6px;">Nom du favori</label>
-                <input id="lp-edit-name-input" type="text" autocomplete="off" placeholder="Ex: Piscine, Chez Paul…" style="width:100%;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;color:var(--text-main);padding:10px 12px;font-size:0.88rem;font-family:inherit;outline:none;">
+                <input id="lp-edit-name-input" type="text" autocomplete="off" placeholder="Ex: Gare, Piscine…" style="width:100%;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;color:var(--text-main);padding:10px 12px;font-size:0.88rem;font-family:inherit;outline:none;">
             </div>
             <p id="lp-edit-hint">Entrez un nom de lieu ou une adresse</p>
             <div id="lp-edit-input-wrap">
@@ -803,7 +821,7 @@
                 <div class="opt-sep"></div>
 
                 <div class="opt-chip" id="chip-wheelchair" onclick="ITIN.toggleWheelchair()" title="Accessibilité PMR">
-                    <span>♿</span>
+                    <i class="ri-wheelchair-line" aria-hidden="true"></i>
                     <span id="chip-wheelchair-label">PMR</span>
                 </div>
             </div>
@@ -844,16 +862,16 @@
 
     <div id="bottom-nav">
         <a href="index.html" class="nav-link">
-            <span class="nav-icon">🕐</span><span>Horaires</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Horaires</span>
         </a>
         <a href="suivi.html" class="nav-link">
-            <span class="nav-icon">🚋</span><span>Suivi tram</span>
+            <span class="nav-icon"><svg width="19" height="22" viewBox="0 0 20 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3,16 L3,7 Q3,1 10,1 Q17,1 17,7 L17,16 Q17,19 14,19.5 Q10,20 6,19.5 Q3,19 3,16 Z"/><line x1="4" y1="5" x2="16" y2="5"/><path d="M3,14 Q10,17 17,14"/><circle cx="10" cy="17.5" r="0.9" fill="currentColor" stroke="none"/><line x1="7.5" y1="20" x2="4" y2="24"/><line x1="12.5" y1="20" x2="16" y2="24"/></svg></span><span>Infos tram</span>
         </a>
         <a href="itineraire.html" class="nav-link active">
-            <span class="nav-icon">🗺️</span><span>Itinéraire</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>Itinéraire</span>
         </a>
         <a href="infotrafic.html" class="nav-link">
-            <span class="nav-icon">⚠️</span><span>Infotrafic</span>
+            <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span>Infotrafic</span>
         </a>
     </div>
 
@@ -1412,14 +1430,25 @@
                 return false;
             };
 
-            const scoreStop = (sn) => {
+            const VH_LAT = 45.189388, VH_LON = 5.724834;
+            const distVH = (s) => {
+                if(s.lat == null || s.lon == null) return 9999;
+                const dLat = (s.lat - VH_LAT) * 111;
+                const dLon = (s.lon - VH_LON) * 111 * Math.cos(VH_LAT * Math.PI / 180);
+                return Math.sqrt(dLat*dLat + dLon*dLon);
+            };
+
+            const scoreStop = (s) => {
+                const sn = normalizeQuery(s.name);
                 let score = 0;
-                if(sn.includes(norm)) score -= 100;
+                if(sn === norm) score -= 100;
+                else if(sn.includes(norm)) score -= 80;
                 if(sn.startsWith(tokens[0])) score -= 50;
                 const snWords = sn.split(/\s+/);
                 if(snWords.some(w => w.startsWith(tokens[0]))) score -= 30;
                 score += sn.length * 0.5;
                 tokens.forEach(tok => { if(!sn.includes(tok)) score += 20; });
+                score -= (s.lines || []).length * 8;
                 return score;
             };
 
@@ -1428,7 +1457,12 @@
                     const sn = normalizeQuery(s.name);
                     return tokens.every(tok => tok.length >= 3 ? fuzzyIncludes(sn, tok) : sn.includes(tok));
                 })
-                .sort((a,b) => scoreStop(normalizeQuery(a.name)) - scoreStop(normalizeQuery(b.name)))
+                .sort((a,b) => {
+                    const sa = scoreStop(a);
+                    const sb = scoreStop(b);
+                    if(sa !== sb) return sa - sb;
+                    return distVH(a) - distVH(b);
+                })
                 .slice(0, 6);
 
             const searchQuery = q.trim();
@@ -1448,14 +1482,17 @@
                 const pn = normalizeQuery(p.name);
                 const qn = normalizeQuery(q);
                 let score = 0;
-                if(pn === qn) score -= 200;
-                else if(pn.startsWith(qn)) score -= 100;
+                if(pn === qn) score -= 100;
+                else if(pn.startsWith(qn)) score -= 90;
                 else if(pn.includes(qn)) score -= 50;
                 else {
                     const toks = qn.split(/\s+/).filter(Boolean);
                     toks.forEach(t => { if(pn.includes(t)) score -= 15; });
                 }
-                if(p.type === 'stop') score -= 5;
+                if(p.type === 'stop') {
+                    score -= 5;
+                    score -= (p.lines || []).length * 8;
+                }
                 score += pn.length * 0.3;
                 return score;
             };
@@ -1508,7 +1545,12 @@
                         seenAll.add(k);
                         return true;
                     })
-                    .sort((a, b) => scoreItem(a, searchQuery) - scoreItem(b, searchQuery))
+                    .sort((a, b) => {
+                        const sa = scoreItem(a, searchQuery);
+                        const sb = scoreItem(b, searchQuery);
+                        if(sa !== sb) return sa - sb;
+                        return distVH(a) - distVH(b);
+                    })
                     .slice(0, 8);
 
                 const html = sorted.map((p, i) => {
@@ -1770,7 +1812,7 @@
             this._lpEditKey = key;
             this._lpEditCustomIdx = null;
             const LABELS = { home:'Domicile', work:'Travail' };
-            document.getElementById('lp-edit-title').textContent = 'Modifier — '+LABELS[key];
+            document.getElementById('lp-edit-title').textContent = 'Modifier '+LABELS[key];
             document.getElementById('lp-edit-name-wrap').style.display = 'none';
             document.getElementById('lp-edit-input').value = '';
             document.getElementById('lp-edit-suggestions').innerHTML = '';
@@ -1798,7 +1840,7 @@
             if(!fav) return;
             this._lpEditKey = null;
             this._lpEditCustomIdx = idx;
-            document.getElementById('lp-edit-title').textContent = 'Modifier — '+fav.label;
+            document.getElementById('lp-edit-title').textContent = 'Modifier '+fav.label;
             document.getElementById('lp-edit-name-wrap').style.display = 'block';
             document.getElementById('lp-edit-name-input').value = fav.label;
             document.getElementById('lp-edit-input').value = fav.place ? fav.place.name : '';
@@ -2262,10 +2304,10 @@
                     if(leg.mode==='WALK'){
                         if(!isBike && leg.distance >= 250){
                             if(jbar.length) jbar+=`<span class="jb-arrow">›</span>`;
-                            jbar+=`<span class="jb-walk-icon">🚶‍➡️</span>`;
+                            jbar+=`<i class="ri-walk-line jb-walk-icon" aria-hidden="true"></i>`;
                         }
                     } else if(leg.mode==='BICYCLE'){
-                        jbar+=`<span class="jb-walk-icon">🚲</span>`;
+                        jbar+=`<i class="ti ti-bike jb-walk-icon" aria-hidden="true"></i>`;
                     } else {
                         const n=legName(leg);
                         const c=lineColor(n)||(leg.routeColor?'#'+leg.routeColor:'#777');
@@ -2627,7 +2669,7 @@
                         </div>
                         <div class="step-body">
                             <div class="step-title">${isFirst ? this.from.name : cleanName(leg.from.name)}</div>
-                            <div class="step-sub">🚲 ${durMin} min · ${dist}</div>
+                            <div class="step-sub"><i class="ti ti-bike" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>${durMin} min · ${dist}</div>
                         </div>
                     </div>`;
                 } else if(leg.mode==='WALK'){
@@ -2730,6 +2772,7 @@
         getFavs()   { try{ return JSON.parse(localStorage.getItem('itin_favs')||'[]'); }catch{ return []; } },
         saveHist(p) {
             try {
+                if(p.type === 'geo' || p.name === 'Ma position') return;
                 const h=this.getHistory().filter(x=>x.name!==p.name);
                 h.unshift({name:p.name,lat:p.lat,lon:p.lon,sub:p.sub||'',lines:p.lines||null,type:p.type});
                 localStorage.setItem('itin_hist',JSON.stringify(h.slice(0,5)));
