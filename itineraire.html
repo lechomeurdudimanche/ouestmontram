@@ -1174,7 +1174,8 @@
                     createMarker(this._gpsPos.lat, this._gpsPos.lon);
                     this.map.panTo([this._gpsPos.lat, this._gpsPos.lon], { animate: true });
                 },
-                () => {}, { enableHighAccuracy: true }
+                () => {},
+                { enableHighAccuracy: false, maximumAge: 60000, timeout: 3000 }
             );
 
             this._gpsWatchId = navigator.geolocation.watchPosition(
@@ -1722,7 +1723,8 @@
                     this._lpApply({ name:'Ma position', lat:pos.coords.latitude, lon:pos.coords.longitude, type:'geo' });
                     this.map.setView([pos.coords.latitude, pos.coords.longitude], 14);
                 },
-                () => { item && (item.style.opacity=''); }
+                () => { item && (item.style.opacity=''); },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
             );
         },
 

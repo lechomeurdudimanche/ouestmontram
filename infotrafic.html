@@ -632,11 +632,23 @@ const LINES_FLEXO = [
     { id:"TPV:81", name:"81", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
     { id:"TPV:83", name:"83", color:"rgb(213,114,168)", category:"flexo", textColor:"#fff" },
 ];
-const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO];
+
+const LINES_NATURE = [
+    { id:"SEM:N62", name:"N62", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N93", name:"N93", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N94", name:"N94", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N95", name:"N95", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N96", name:"N96", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N97", name:"N97", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N98", name:"N98", color:"rgb(147, 186, 69)", category:"nature" },
+    { id:"GSV:N99", name:"N99", color:"rgb(147, 186, 69)", category:"nature" },
+];
+
+const ALL_LINES = [...LINES_TRAM, ...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO, ...LINES_NATURE];
 
 const LINE_GROUPS = [
     { key:'tram', label:'Tram', lines: LINES_TRAM },
-    { key:'bus',  label:'Bus',  lines: [...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO] },
+    { key:'bus',  label:'Bus',  lines: [...LINES_CHRONO, ...LINES_PROXIMO, ...LINES_FLEXO, ...LINES_NATURE] },
 ];
 
 function normalizeId(raw) { return (raw || '').replace('_', ':'); }

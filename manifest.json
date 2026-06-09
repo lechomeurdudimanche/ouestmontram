@@ -1,14 +1,14 @@
 {
   "name": "Où est mon tram ?",
   "short_name": "Où est mon tram ?",
-  "version": "1.1",
+  "version": "1.2",
   "start_url": "/ouestmontram/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
   "icons": [
     {
-      "src": "/ouestmontram/logo.png",
+      "src": "/ouestmontram/icone.png",
       "sizes": "511x511",
       "type": "image/png"
     }

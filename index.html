@@ -1297,7 +1297,7 @@
         </div>
 </div>
         </nav>
-        <div id="side-menu-credit">Où est mon tram ? - Version 1.1</div>
+        <div id="side-menu-credit">Où est mon tram ? - Version 1.2</div>
     </div>
 
     <div id="install-overlay">
@@ -1484,6 +1484,17 @@
             { id: "TPV:83", name: "83", color: "rgb(213, 114, 168)", category: "flexo" },
         ];
 
+        const BUS_NATURE = [
+            { id: "SEM:N62", name: "N62", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N93", name: "N93", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N94", name: "N94", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N95", name: "N95", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N96", name: "N96", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N97", name: "N97", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N98", name: "N98", color: "rgb(147, 186, 69)", category: "nature" },
+            { id: "GSV:N99", name: "N99", color: "rgb(147, 186, 69)", category: "nature" },
+        ];
+
         const BUS_NAV_RELAIS = [
             { id: "SEM:NAVA", name: "NAV A", color: "var(--color-a)", category: "nav_relais" },
             { id: "SEM:NAVB", name: "NAV B", color: "var(--color-b)", category: "nav_relais" },
@@ -1492,7 +1503,7 @@
             { id: "SEM:NAVE", name: "NAV E", color: "var(--color-e)", category: "nav_relais" },
         ];
 
-        const ALL_BUS_LINES = [...BUS_CHRONO, ...BUS_CHRONO_PERI, ...BUS_PROXIMO_LINES, ...BUS_FLEXO];
+        const ALL_BUS_LINES = [...BUS_CHRONO, ...BUS_CHRONO_PERI, ...BUS_PROXIMO_LINES, ...BUS_FLEXO, ...BUS_NATURE];
         const ALL_LINES = [...LINES, ...ALL_BUS_LINES, ...BUS_NAV_RELAIS];
 
         let _navRelaisCache = null;
@@ -1782,7 +1793,7 @@ const BUS_RADAR_STOPS = {
 
             async init() {
                 this.favorites = JSON.parse(localStorage.getItem('tram_favorites') || '[]');
-                this.filters = JSON.parse(localStorage.getItem('tram_filters') || '{"tram":true,"chrono":true,"chrono_peri":true,"proximo":true,"flexo":true}');
+                this.filters = JSON.parse(localStorage.getItem('tram_filters') || '{"tram":true,"chrono":true,"chrono_peri":true,"proximo":true,"flexo":true,"nature":true}');
                 await this.renderLines();
                 this.showSearchBar();
                 this.syncShareBtn();
@@ -1902,6 +1913,9 @@ const BUS_RADAR_STOPS = {
                             <div class="filter-chip ${this.filters.flexo?'active':''}" onclick="app.toggleFilter('flexo')">
                                 <span class="filter-chip-dot" style="background:#d572a8;"></span> Bus Flexo
                             </div>
+                            <div class="filter-chip ${this.filters.nature?'active':''}" onclick="app.toggleFilter('nature')">
+                                <span class="filter-chip-dot" style="background:#93ba45;"></span> Bus Destinations Nature
+                            </div>
                         </div>
                         <div id="search-results" class="search-results">
                             <div class="empty">Chargement des arrêts…</div>
@@ -2005,6 +2019,7 @@ const BUS_RADAR_STOPS = {
                     ${cat('Lignes Chrono périurbaines', '', BUS_CHRONO_PERI)}
                     ${cat('Lignes Proximo', '', BUS_PROXIMO_LINES)}
                     ${cat('Lignes Flexo', '', BUS_FLEXO)}
+                    ${cat('Lignes Destinations Nature', '', BUS_NATURE)}
                 </div>`;
             },
 
