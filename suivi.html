@@ -1573,7 +1573,7 @@ const suivi = {
         params.set('trip', this.tripId);
         if (this.lineName && this.lineName !== '?') params.set('line', this.lineName);
         if (this.selectedStopCluster) params.set('stop', this.selectedStopCluster);
-        const url = 'https://lechomeurdudimanche.github.io/ouestmontram/suivi.html?' + params.toString();
+        const url = 'https://ouestmontram.web.app/suivi.html?' + params.toString();
         const title = `Tram ${this.lineName} direction ${this.destination || 'Terminus'}`;
 
         const btn = document.getElementById('share-btn');
