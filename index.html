@@ -789,6 +789,17 @@
         }
         #install-overlay.open { display: flex; }
 
+        #migration-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-dark);
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        #migration-overlay.open { display: flex; }
+
         .install-header {
             display: flex;
             align-items: center;
@@ -1107,6 +1118,119 @@
             flex-shrink: 0;
         }
 
+        .migration-banner {
+            margin: 0px 0px 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(0,210,255,0.12), rgba(0,210,255,0.05));
+            border: 1px solid rgba(0,210,255,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .migration-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .migration-banner-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .migration-banner-btn {
+            align-self: flex-start;
+            margin-top: 2px;
+            padding: 9px 16px;
+            background: rgba(0,210,255,0.15);
+            border: 1px solid rgba(0,210,255,0.45);
+            border-radius: 10px;
+            color: var(--radar-color);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .migration-banner-btn:active {
+            transform: scale(0.96);
+        }
+
+        .article-body {
+            padding: 24px 18px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 560px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .article-lead {
+            font-size: 1rem;
+            color: var(--text-main);
+            line-height: 1.55;
+            font-weight: 500;
+        }
+        .article-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 6px;
+        }
+        .article-p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .article-p strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .article-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0;
+            margin: 0;
+        }
+        .article-list li {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            padding-left: 18px;
+            position: relative;
+        }
+        .article-list li::before {
+            content: "•";
+            position: absolute;
+            left: 4px;
+            color: var(--radar-color);
+        }
+        .article-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(0,210,255,0.15), rgba(0,210,255,0.07));
+            border: 1px solid rgba(0,210,255,0.35);
+            border-radius: 14px;
+            color: var(--radar-color);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+            text-decoration: none;
+            margin-top: 4px;
+        }
+        .article-cta:active {
+            transform: scale(0.97);
+        }
+
         #fav-drag-container.reorder-mode {
             user-select: none;
             -webkit-user-select: none;
@@ -1350,6 +1474,72 @@
             </div>
         </div>
     </div>
+    <div id="migration-overlay">
+        <div class="install-header">
+            <button class="install-back-btn" onclick="closeMigrationOverlay()" aria-label="Retour"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+            <h2>Une nouvelle adresse web pour l'appli</h2>
+        </div>
+        <div class="install-body article-body">
+            <div class="article-lead">L'application change d'adresse web pour passer à <strong>ouestmontram.web.app</strong></div>
+
+            <div>
+                <div class="article-section-title">Pourquoi ce changement ?</div>
+                <p class="article-p">L'ancienne adresse web était hébergée temporairement sur une page personnelle qui n'avait pas vocation à durer. La nouvelle adresse web est plus fiable, plus rapide et permettra de faire évoluer l'application correctement sur le long terme. Elle ouvre la voie à des mises à jour plus ambitieuses ainsi qu'à une meilleure amélioration des fonctionnalités existantes.</p>
+            </div>
+
+            <div>
+                <div class="article-section-title">Qu'est-ce que ça change pour vous ?</div>
+                <ul class="article-list">
+                    <li>L'ancienne appli actuellement installée sur votre téléphone est déjà très fiable mais elle <strong>ne recevra plus aucune mise à jour</strong> (nouvelles fonctionnalités, corrections de bugs...).</li>
+                    <li>La nouvelle appli continuera d'être mise à jour très régulièrement automatiquement.</li>
+                </ul><br>
+                <p class="article-p">Je sais qu'il est contraignant de devoir réinstaller l'application mais promis, c'est la dernière fois. À partir de maintenant, toutes les mises à jour seront quasi instantanées et ne nécessiteront aucune action de votre part.</p>
+            </div>
+
+            <div>
+                <div class="article-section-title">Comment passer à la nouvelle version ?</div>
+                <p class="article-p">Il suffit d'installer l'application depuis la nouvelle adresse web, exactement comme la première fois. Vous pourrez ensuite désinstaller cette appli de votre écran d'accueil. Faites attention à supprimer la bonne appli de votre écran d'accueil.</p><br>
+                <p class="article-p">Les étapes ci-dessous peuvent légèrement varier selon votre téléphone, la marque, ou la version d'Android/iOS installée.</p><br>
+
+                <div class="install-card">
+                    <div class="install-card-header">
+                        <div>
+                            <div class="install-card-name">Sur Android</div>
+                        </div>
+                    </div>
+                    <ul class="install-steps-list">
+                        <li class="install-step"><span class="install-step-num">1</span><span class="install-step-text">Cliquez sur le bouton « Ouvrir la nouvelle application » ci dessous</span></li>
+                        <li class="install-step"><span class="install-step-num">2</span><span class="install-step-text">Une fois la page chargée, appuyez sur les <em>⋮ trois points</em> en haut à droite de l'écran</span></li>
+                        <li class="install-step"><span class="install-step-num">3</span><span class="install-step-text">Dans le menu qui s'affiche, sélectionnez <em>« Ajouter à l'écran d'accueil »</em> (parfois appelé <em>« Installer l'application »</em>)</span></li>
+                        <li class="install-step"><span class="install-step-num">4</span><span class="install-step-text">Confirmez en appuyant sur <em>« Installer »</em> ou <em>« Ajouter »</em></span></li>
+                        <li class="install-step"><span class="install-step-num">5</span><span class="install-step-text">Une icône apparaît sur votre écran d'accueil dans la minute suivante : c'est la nouvelle application, prête à être utilisée</span></li>
+                    </ul>
+                </div><br>
+            <a class="article-cta" href="https://ouestmontram.web.app/" target="_blank" rel="noopener">Ouvrir la nouvelle application</a><br>
+
+                <div class="install-card">
+                    <div class="install-card-header">
+                        <div>
+                            <div class="install-card-name">Sur iPhone / iPad</div>
+                            <div class="install-card-sub">Fonctionne avec Safari uniquement</div>
+                        </div>
+                    </div>
+                    <ul class="install-steps-list">
+                        <li class="install-step"><span class="install-step-num">1</span><span class="install-step-text">Cliquez sur le bouton « Ouvrir la nouvelle application » ci dessous</span></li>
+                        <li class="install-step"><span class="install-step-num">2</span><span class="install-step-text">Une fois la page chargée, appuyez sur l'icône <em>Partager</em> (un carré avec une flèche vers le haut, en bas ou en haut de l'écran selon le modèle)</span></li>
+                        <li class="install-step"><span class="install-step-num">3</span><span class="install-step-text">Faites défiler la liste des options vers le bas et choisissez <em>« Sur l'écran d'accueil »</em></span></li>
+                        <li class="install-step"><span class="install-step-num">4</span><span class="install-step-text">Appuyez sur <em>« Ajouter »</em> en haut à droite de l'écran</span></li>
+                        <li class="install-step"><span class="install-step-num">5</span><span class="install-step-text">Une icône apparaît sur votre écran d'accueil dans la minute suivante : c'est la nouvelle application, prête à être utilisée</span></li>
+                    </ul>
+                </div><br>
+            <a class="article-cta" href="https://ouestmontram.web.app/" target="_blank" rel="noopener">Ouvrir la nouvelle application</a><br>
+                <p class="article-p">Si malgré ces explications vous n'arrivez pas à installer la nouvelle application, n'hésitez pas à demander de l'aide par email à <strong>contact.ouestmontram@gmail.com</strong> en expliquant le modèle de votre téléphone et où vous êtes bloqué(e). Je répondrai à tous les mails en moins de 12 heures.</p>
+            </div>
+
+                <p class="article-p">PS : L'onglet « Partager » a été modifié sur votre version actuelle afin de vous permettre de continuer à partager l'application. Les personnes à qui vous la partagez accéderont directement à la nouvelle version de l'application.</p>
+        </div>
+    </div>
+
     <div id="col-lines" class="col"></div>
 
     <div id="col-stops" class="col">
@@ -2013,6 +2203,11 @@ const BUS_RADAR_STOPS = {
                 const navSection = activeNavLines.length > 0 ? cat('Bus relais Tram', '', activeNavLines) : '';
 
                 return `<div class="lines-list-section">
+                    <div class="migration-banner">
+                        <div class="migration-banner-title">Mise à jour disponible</div>
+                        <div class="migration-banner-text">Cette version ne recevra plus de mises à jour. Installez la nouvelle version de l'appli pour continuer à avoir toutes les mises à jour automatiquement.</div>
+                        <button class="migration-banner-btn" onclick="openMigrationOverlay()">En savoir plus</button>
+                    </div>
                     ${cat('Lignes de Tram', '', LINES)}
                     ${navSection}
                     ${cat('Lignes Chrono', '', BUS_CHRONO)}
@@ -3900,6 +4095,19 @@ Sur iPhone / iPad
 
     function closeInstallOverlay() {
         const overlay = document.getElementById('install-overlay');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function openMigrationOverlay() {
+        const overlay = document.getElementById('migration-overlay');
+        overlay.classList.add('open');
+        overlay.scrollTop = 0;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMigrationOverlay() {
+        const overlay = document.getElementById('migration-overlay');
         overlay.classList.remove('open');
         document.body.style.overflow = '';
     }
