@@ -1461,7 +1461,7 @@
             <div class="install-qr-block">
                 <div class="install-qr-label">Scannez pour ouvrir sur un autre téléphone</div>
                 <div id="qr-canvas-wrapper"><div id="qr-code"></div></div>
-                <div class="install-site-link">https://ouestmontram.web.app/</div>
+                <div class="install-site-link">https://ouestmontram.web.app/installer</div>
             </div>
 
             <button class="install-share-btn" id="install-share-btn" onclick="shareApp()">
@@ -2232,7 +2232,7 @@ const BUS_RADAR_STOPS = {
                     <div class="migration-banner">
                         <div class="migration-banner-title">Mise à jour disponible</div>
                         <div class="migration-banner-text">Cette version de l'appli ne recevra plus de mises à jour. Installez la nouvelle version de l'appli pour continuer à avoir toutes les mises à jour automatiquement.</div>
-                        <button class="migration-banner-btn" onclick="openMigrationOverlay()">En savoir plus</button>
+                        <button class="migration-banner-btn" onclick="window.open('https://ouestmontram.web.app/installer', '_blank')">Mettre à jour rapidement</button>
                     </div>
                     ${cat('Lignes de Tram', '', LINES)}
                     ${navSection}
@@ -4048,28 +4048,13 @@ if ("serviceWorker" in navigator) {
 </script>
 
 <script>
-    const SITE_URL = "https://ouestmontram.web.app/";
+    const SITE_URL = "https://ouestmontram.web.app/installer";
     let qrGenerated = false;
 
     function shareApp() {
         const shareUrl = SITE_URL;
         const shareText =
-`Découvre l'application mobile Où est mon tram : 
-${shareUrl}
-
-Comment installer l'application sur ton téléphone :
-
-Sur Android
-1. Ouvre le lien ci-dessus dans Chrome
-2. Appuie sur les ⋮ trois points en haut à droite
-3. Sélectionne « Ajouter à l'écran d'accueil »
-4. Confirme en appuyant sur « Installer »
-
-Sur iPhone / iPad
-1. Ouvre le lien dans Safari
-2. Appuie sur l'icône Partager
-3. Fais défiler et choisis « Sur l'écran d'accueil »
-4. Appuie sur « Ajouter » en haut à droite`;
+`${shareUrl}`;
 
         const btn = document.getElementById('install-share-btn');
 
