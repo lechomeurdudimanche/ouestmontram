@@ -269,79 +269,12 @@
         <h2>Plans du réseau</h2>
     </div>
 
-    <div class="map-viewer">
-        <div class="map-container" id="mapContainer">
-            <img src="plan_grenoble.png" id="mapImg" alt="Plan du réseau Grenoble" draggable="false">
-            <button class="fullscreen-btn" id="fullscreenBtn" aria-label="Plein écran">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1h4M1 1v4M15 1h-4M15 1v4M1 15h4M1 15v-4M15 15h-4M15 15v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                </svg>
-            </button>
-        </div>
-        <div class="map-hint">Pincez pour zoomer · Glissez pour naviguer</div>
-    </div>
-
-    <div id="mapOverlay">
-        <div class="overlay-header">
-            <span class="overlay-title">Plan du réseau</span>
-            <button class="close-btn" id="closeOverlay" aria-label="Fermer">✕</button>
-        </div>
-        <div class="overlay-container" id="overlayContainer">
-            <img src="plan_grenoble.png" id="overlayImg" alt="Plan du réseau Grenoble" draggable="false" class="overlay-img">
-        </div>
-    </div>
-
     <div class="content">
-        <a class="plan-btn"
-           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4603&path=PLAN-Mreso-NORD-2024-09.pdf"
-           download>
+        <a class="plan-btn" href="https://www.reso-m.fr/plans">
             <div class="plan-info">
-                <div class="plan-name">Grenoble et zone urbaine</div>
-                <div class="plan-sub">PDF (2 Mo)</div>
+                <div class="plan-name">Cliquez pour accéder aux plans du réseau</div>
             </div>
-            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
         </a>
-
-        <a class="plan-btn"
-           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4604&path=PLAN-Mreso-SUD-2025-07.pdf"
-           download>
-            <div class="plan-info">
-                <div class="plan-name">Grand Sud</div>
-                <div class="plan-sub">PDF (1.7 Mo)</div>
-            </div>
-            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
-        </a>
-
-        <a class="plan-btn"
-           href="https://www.reso-m.fr/cms_viewFile.php?idtf=4602&path=PLAN-Mreso-GRESIVAUDAN-2025-11.pdf"
-           download>
-            <div class="plan-info">
-                <div class="plan-name">Secteur Grésivaudan</div>
-                <div class="plan-sub">PDF (0.7 Mo)</div>
-            </div>
-            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
-        </a>
-
-        <a class="plan-btn"
-           href="https://www.reso-m.fr/cms_viewFile.php?idtf=6642&path=Plan-Voironnais-Interurbain-2026-01.pdf"
-           download>
-            <div class="plan-info">
-                <div class="plan-name">Secteur Voironnais</div>
-                <div class="plan-sub">PDF (0.6 Mo)</div>
-            </div>
-            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
-        </a>
-
-        <a class="plan-btn"
-           href="https://www.reso-m.fr/cms_viewFile.php?idtf=6643&path=Plan-Voironnais-2026-01.pdf"
-           download>
-            <div class="plan-info">
-                <div class="plan-name">Voiron, zone urbaine</div>
-                <div class="plan-sub">PDF (0.9 Mo)</div>
-            </div>
-            <span class="plan-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="21" x2="19" y2="21"/></svg></span>
-        </a>
-
     </div>
     <script>
         function makeMapInteraction(container, img, containMode) {
